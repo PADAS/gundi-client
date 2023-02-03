@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "gundi-client"
+version = "0.1.0"
+description = "An async client for Gundi's API"
+authors = [
+    "Rohit Chaudhri <rohitc@vulcan.com>",
+    "Matt Morrissette <matt.morrissette@wildlifeprotectionsolutions.org>",
+    "Chris Doehring <chrisdo@earthranger.com>",
+    "Mariano M <marianom@earthranger.com>"
+]
+license = "Apache-2.0"
+readme = "README.md"
+
+packages = [
+    { include = "gundi_client" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+environs = "^9.5"
+pydantic = "^1.10"
+aiohttp = "^3.8"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
