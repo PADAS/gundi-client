@@ -205,11 +205,12 @@ class PortalApi:
         logger.info(f"update device_states resp: {response.status}")
         return text
 
-    async def _get(self, session: ClientSession, url: str):
+    async def _get(self, session: ClientSession, url: str, params=None):
         headers = await self.get_auth_header(session)
         response = await session.get(
             url=url,
             headers=headers,
+            params=params,
             ssl=settings.CDIP_ADMIN_SSL_VERIFY,
         )
         response.raise_for_status()
@@ -231,4 +232,11 @@ class PortalApi:
         return await self._get(
             session=session,
             url=f"{settings.PORTAL_API_ENDPOINT}/integrations/outbound/configurations/{integration_id}",
+        )
+
+    async def get_outbound_integration_list(self, session: ClientSession, **query_params):
+        return await self._get(
+            session=session,
+            url=f"{settings.PORTAL_API_ENDPOINT}/integrations/outbound/configurations",
+            params=query_params
         )
