@@ -205,33 +205,30 @@ class PortalApi:
         logger.info(f"update device_states resp: {response.status}")
         return text
 
-    async def get_bridge_integration(self, session: ClientSession, bridge_id: str):
-
+    async def _get(self, session: ClientSession, url: str):
         headers = await self.get_auth_header(session)
         response = await session.get(
-            url=f"{settings.PORTAL_API_ENDPOINT}/integrations/bridges/{bridge_id}",
+            url=url,
             headers=headers,
             ssl=settings.CDIP_ADMIN_SSL_VERIFY,
         )
         response.raise_for_status()
         return await response.json()
+
+    async def get_bridge_integration(self, session: ClientSession, bridge_id: str):
+        return await self._get(
+            session=session,
+            url=f"{settings.PORTAL_API_ENDPOINT}/integrations/bridges/{bridge_id}",
+        )
 
     async def get_inbound_integration(self, session: ClientSession, integration_id: str):
-        headers = await self.get_auth_header(session)
-        response = await session.get(
+        return await self._get(
+            session=session,
             url=f"{settings.PORTAL_API_ENDPOINT}/integrations/inbound/configurations/{integration_id}",
-            headers=headers,
-            ssl=settings.CDIP_ADMIN_SSL_VERIFY,
         )
-        response.raise_for_status()
-        return await response.json()
 
     async def get_outbound_integration(self, session: ClientSession, integration_id: str):
-        headers = await self.get_auth_header(session)
-        response = await session.get(
+        return await self._get(
+            session=session,
             url=f"{settings.PORTAL_API_ENDPOINT}/integrations/outbound/configurations/{integration_id}",
-            headers=headers,
-            ssl=settings.CDIP_ADMIN_SSL_VERIFY,
         )
-        response.raise_for_status()
-        return await response.json()
