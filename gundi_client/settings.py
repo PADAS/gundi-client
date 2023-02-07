@@ -1,12 +1,12 @@
 import os
 from environs import Env
 
-cdip_sdk_envfile = os.environ.get("CDIP_SDK_ENVFILE", None)
+envfile = os.environ.get("GUNDI_CLIENT_ENVFILE", None)
 
 env = Env()
 
-if cdip_sdk_envfile:
-    env.read_env(cdip_sdk_envfile)
+if envfile:
+    env.read_env(envfile)
 else:
     # Default behavior
     env.read_env()
