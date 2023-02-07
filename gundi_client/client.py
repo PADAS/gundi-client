@@ -10,7 +10,7 @@ from .schemas import (
     OAuthToken,
     TIntegrationInformation,
     DeviceState,
-    OutboundConfiguration
+    OutboundConfiguration,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,9 +24,7 @@ class PortalApi:
         self.integrations_endpoint = (
             f"{settings.PORTAL_API_ENDPOINT}/integrations/inbound/configurations"
         )
-        self.device_states_endpoint = (
-            f"{settings.PORTAL_API_ENDPOINT}/devices/states"
-        )
+        self.device_states_endpoint = f"{settings.PORTAL_API_ENDPOINT}/devices/states"
         self.devices_endpoint = f"{settings.PORTAL_API_ENDPOINT}/devices"
 
         self.oauth_token_url = settings.OAUTH_TOKEN_URL
@@ -37,7 +35,6 @@ class PortalApi:
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
     async def get_access_token(self, session: ClientSession) -> OAuthToken:
-
         if self.cached_token and self.cached_token_expires_at > datetime.now(
             tz=timezone.utc
         ):
@@ -73,17 +70,20 @@ class PortalApi:
             "authorization": f"{token_object.token_type} {token_object.access_token}"
         }
 
-    async def get_destinations(self, *args, integration_id: str = None, device_id: str = None):
-
+    async def get_destinations(
+        self, *args, integration_id: str = None, device_id: str = None
+    ):
         async with ClientSession() as session:
-
             headers = await self.get_auth_header(session)
-    
-            url = f'{self.portal_api_endpoint}/integrations/outbound/configurations'
-            response = await session.get(url, params={'inbound_id': integration_id, 'device_id': device_id}, headers=headers)
+
+            url = f"{self.portal_api_endpoint}/integrations/outbound/configurations"
+            response = await session.get(
+                url,
+                params={"inbound_id": integration_id, "device_id": device_id},
+                headers=headers,
+            )
 
             if response.ok:
-
                 data = await response.json()
 
                 return [OutboundConfiguration.parse_obj(item) for item in data]
@@ -95,9 +95,7 @@ class PortalApi:
         session: ClientSession,
         t_int_info: TIntegrationInformation = IntegrationInformation,
     ) -> List[IntegrationInformation]:
-        logger.debug(
-            f"get_authorized_integrations for : {settings.KEYCLOAK_CLIENT_ID}"
-        )
+        logger.debug(f"get_authorized_integrations for : {settings.KEYCLOAK_CLIENT_ID}")
         headers = await self.get_auth_header(session)
 
         logger.debug(f"url: {self.integrations_endpoint}")
@@ -222,21 +220,27 @@ class PortalApi:
             url=f"{settings.PORTAL_API_ENDPOINT}/integrations/bridges/{bridge_id}",
         )
 
-    async def get_inbound_integration(self, session: ClientSession, integration_id: str):
+    async def get_inbound_integration(
+        self, session: ClientSession, integration_id: str
+    ):
         return await self._get(
             session=session,
             url=f"{settings.PORTAL_API_ENDPOINT}/integrations/inbound/configurations/{integration_id}",
         )
 
-    async def get_outbound_integration(self, session: ClientSession, integration_id: str):
+    async def get_outbound_integration(
+        self, session: ClientSession, integration_id: str
+    ):
         return await self._get(
             session=session,
             url=f"{settings.PORTAL_API_ENDPOINT}/integrations/outbound/configurations/{integration_id}",
         )
 
-    async def get_outbound_integration_list(self, session: ClientSession, **query_params):
+    async def get_outbound_integration_list(
+        self, session: ClientSession, **query_params
+    ):
         return await self._get(
             session=session,
             url=f"{settings.PORTAL_API_ENDPOINT}/integrations/outbound/configurations",
-            params=query_params
+            params=query_params,
         )

@@ -83,7 +83,6 @@ class CDIPBaseModel(BaseModel):
 
 
 class Position(CDIPBaseModel):
-
     device_id: Optional[str] = Field(
         "none",
         example="901870234",
@@ -127,7 +126,6 @@ class Position(CDIPBaseModel):
 
     @validator("recorded_at")
     def clean_recorded_at(cls, val):
-
         if not val.tzinfo:
             val = val.replace(tzinfo=timezone.utc)
         return val
@@ -152,7 +150,6 @@ class Position(CDIPBaseModel):
 
 
 class GeoEvent(CDIPBaseModel):
-
     device_id: Optional[str] = Field(
         "none",
         example="901870234",
@@ -196,7 +193,6 @@ class GeoEvent(CDIPBaseModel):
 
     @validator("recorded_at")
     def clean_recorded_at(cls, val):
-
         if not val.tzinfo:
             val = val.replace(tzinfo=timezone.utc)
         return val
@@ -346,7 +342,6 @@ class Message(BaseModel):
 
 
 class CameraTrap(CDIPBaseModel):
-
     device_id: Optional[str] = Field(
         "none",
         example="901870234",
