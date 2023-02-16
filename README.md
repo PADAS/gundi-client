@@ -14,6 +14,10 @@ pip install gundi-client
 import aiohttp
 from gundi_client import PortalApi
 
+
+portal = PortalApi()
+
+
 async with aiohttp.ClientSession() as session:
     try:
         response = await portal.get_outbound_integration_list(
