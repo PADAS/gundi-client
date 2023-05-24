@@ -11,14 +11,19 @@ from .schemas import (
     DeviceState,
     OutboundConfiguration,
 )
-from httpx import AsyncClient, RequestError
+from httpx import AsyncClient, AsyncHTTPTransport, RequestError, Timeout
 
 logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
 
 
 class PortalApi:
-    def __init__(self):
+
+    DEFAULT_CONNECT_TIMEOUT_SECONDS = 3.1
+    DEFAULT_DATA_TIMEOUT_SECONDS = 20
+    DEFAULT_CONNECTION_RETRIES = 5
+
+    def __init__(self, **kwargs):
         self.client_id = settings.KEYCLOAK_CLIENT_ID
         self.client_secret = settings.KEYCLOAK_CLIENT_SECRET
         self.integrations_endpoint = (
@@ -33,7 +38,26 @@ class PortalApi:
 
         self.cached_token = None
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
-        self.session = AsyncClient(timeout=120, verify=settings.CDIP_ADMIN_SSL_VERIFY)
+
+        self.max_retries = kwargs.get('max_http_retries', self.DEFAULT_CONNECTION_RETRIES)
+        transport = AsyncHTTPTransport(retries=self.max_retries)
+
+        connect_timeout = kwargs.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT_SECONDS)
+        data_timeout = kwargs.get('data_timeout', self.DEFAULT_DATA_TIMEOUT_SECONDS)
+        timeout = Timeout(data_timeout, connect=connect_timeout, pool=connect_timeout)
+
+        self._session = AsyncClient(transport=transport, timeout=timeout, verify=settings.CDIP_ADMIN_SSL_VERIFY)
+
+    async def close(self):
+        await self._session.aclose()
+
+    # Support using this client as an async context manager.
+    async def __aenter__(self):
+        await self._session.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self._session.__aexit__()
 
     async def get_access_token(self) -> OAuthToken:
         if self.cached_token and self.cached_token_expires_at > datetime.now(
@@ -52,7 +76,7 @@ class PortalApi:
             "scope": "openid",
         }
 
-        response = await self.session.post(
+        response = await self._session.post(
             self.oauth_token_url, data=payload
         )
 
@@ -77,7 +101,7 @@ class PortalApi:
         headers = await self.get_auth_header()
 
         url = f"{self.portal_api_endpoint}/integrations/outbound/configurations"
-        response = await self.session.get(
+        response = await self._session.get(
             url,
             params={"inbound_id": integration_id, "device_id": device_id},
             headers=headers,
@@ -96,7 +120,7 @@ class PortalApi:
         headers = await self.get_auth_header()
 
         logger.debug(f"url: {self.integrations_endpoint}")
-        response = await self.session.get(
+        response = await self._session.get(
             url=self.integrations_endpoint,
             headers=headers,
         )
@@ -116,7 +140,7 @@ class PortalApi:
     ):
         headers = await self.get_auth_header()
 
-        response = await self.session.put(
+        response = await self._session.put(
             url=f"{self.integrations_endpoint}/{integration_info.id}",
             headers=headers,
             json=dict(state=integration_info.state),
@@ -133,7 +157,7 @@ class PortalApi:
             headers = await self.get_auth_header()
 
             # This ought to be quick so just do it straight away.
-            response = await self.session.get(
+            response = await self._session.get(
                 url=f"{self.device_states_endpoint}/",
                 params={"inbound_config_id": str(inbound_id)},
                 headers=headers,
@@ -163,7 +187,7 @@ class PortalApi:
             # device group.
             headers = await self.get_auth_header()
             payload = {"external_id": external_id, "inbound_configuration": inbound_id}
-            response = await self.session.post(
+            response = await self._session.post(
                 url=self.devices_endpoint,
                 json=payload,
                 headers=headers,
@@ -184,7 +208,7 @@ class PortalApi:
         self, inbound_id: UUID, states_dict: Dict[str, Any]
     ):
         headers = await self.get_auth_header()
-        response = await self.session.post(
+        response = await self._session.post(
             url=f"{self.device_states_endpoint}/update/{inbound_id}",
             headers=headers,
             json=states_dict,
@@ -196,7 +220,7 @@ class PortalApi:
 
     async def _get(self, url: str, params=None):
         headers = await self.get_auth_header()
-        response = await self.session.get(
+        response = await self._session.get(
             url=url,
             headers=headers,
             params=params,
