@@ -125,7 +125,7 @@ class PortalApi:
         response.raise_for_status()
 
         return await self.update_states_with_dict(
-            self.session, integration_info.id, integration_info.device_states
+            integration_info.id, integration_info.device_states
         )
 
     async def fetch_device_states(self, inbound_id: UUID):
