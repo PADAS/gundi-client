@@ -11,7 +11,14 @@ from .schemas import (
     DeviceState,
     OutboundConfiguration,
 )
-from httpx import AsyncClient, AsyncHTTPTransport, RequestError, Timeout
+from httpx import (
+    AsyncClient,
+    AsyncHTTPTransport,
+    RequestError,
+    Timeout,
+    TimeoutException,
+    HTTPStatusError
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
@@ -24,17 +31,17 @@ class PortalApi:
     DEFAULT_CONNECTION_RETRIES = 5
 
     def __init__(self, **kwargs):
-        self.client_id = settings.KEYCLOAK_CLIENT_ID
-        self.client_secret = settings.KEYCLOAK_CLIENT_SECRET
+        self.client_id = kwargs.get("KEYCLOAK_CLIENT_ID", settings.KEYCLOAK_CLIENT_ID)
+        self.client_secret = kwargs.get("KEYCLOAK_CLIENT_SECRET", settings.KEYCLOAK_CLIENT_SECRET)
         self.integrations_endpoint = (
-            f"{settings.PORTAL_API_ENDPOINT}/integrations/inbound/configurations"
+            f'{kwargs.get("PORTAL_API_ENDPOINT", settings.PORTAL_API_ENDPOINT)}/integrations/inbound/configurations'
         )
-        self.device_states_endpoint = f"{settings.PORTAL_API_ENDPOINT}/devices/states"
-        self.devices_endpoint = f"{settings.PORTAL_API_ENDPOINT}/devices"
+        self.device_states_endpoint = f'{kwargs.get("PORTAL_API_ENDPOINT", settings.PORTAL_API_ENDPOINT)}/devices/states'
+        self.devices_endpoint = f'{kwargs.get("PORTAL_API_ENDPOINT", settings.PORTAL_API_ENDPOINT)}/devices'
 
-        self.oauth_token_url = settings.OAUTH_TOKEN_URL
-        self.audience = settings.KEYCLOAK_AUDIENCE
-        self.portal_api_endpoint = settings.PORTAL_API_ENDPOINT
+        self.oauth_token_url = kwargs.get("OAUTH_TOKEN_URL", settings.OAUTH_TOKEN_URL)
+        self.audience = kwargs.get("KEYCLOAK_AUDIENCE", settings.KEYCLOAK_AUDIENCE)
+        self.portal_api_endpoint = kwargs.get("PORTAL_API_ENDPOINT", settings.PORTAL_API_ENDPOINT)
 
         self.cached_token = None
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
@@ -164,7 +171,7 @@ class PortalApi:
             )
             response.raise_for_status()
             result = response.json()
-        except RequestError:
+        except (RequestError, TimeoutException, HTTPStatusError):
             logger.exception(f"Failed to get devices for iic: {inbound_id}")
         else:
             states_received = parse_obj_as(List[DeviceState], result)
@@ -196,9 +203,19 @@ class PortalApi:
             response.raise_for_status()
             resp = response.json()
             return resp
-        except Exception:
+        except RequestError:
             logger.exception(
-                "Failed to post device to portal.",
+                "Failed to post device to portal (request failed).",
+                extra={**payload},
+            )
+        except TimeoutException:
+            logger.exception(
+                "Failed to post device to portal (timeout).",
+                extra={**payload},
+            )
+        except HTTPStatusError:
+            logger.exception(
+                "Failed to post device to portal (HTTP returned error).",
                 extra={**payload},
             )
 
@@ -230,27 +247,27 @@ class PortalApi:
 
     async def get_bridge_integration(self, bridge_id: str):
         return await self._get(
-            url=f"{settings.PORTAL_API_ENDPOINT}/integrations/bridges/{bridge_id}",
+            url=f"{self.portal_api_endpoint}/integrations/bridges/{bridge_id}",
         )
 
     async def get_inbound_integration(
         self, integration_id: str
     ):
         return await self._get(
-            url=f"{settings.PORTAL_API_ENDPOINT}/integrations/inbound/configurations/{integration_id}",
+            url=f"{self.portal_api_endpoint}/integrations/inbound/configurations/{integration_id}",
         )
 
     async def get_outbound_integration(
         self, integration_id: str
     ):
         return await self._get(
-            url=f"{settings.PORTAL_API_ENDPOINT}/integrations/outbound/configurations/{integration_id}",
+            url=f"{self.portal_api_endpoint}/integrations/outbound/configurations/{integration_id}",
         )
 
     async def get_outbound_integration_list(
         self, **query_params
     ):
         return await self._get(
-            url=f"{settings.PORTAL_API_ENDPOINT}/integrations/outbound/configurations",
+            url=f"{self.portal_api_endpoint}/integrations/outbound/configurations",
             params=query_params,
         )
