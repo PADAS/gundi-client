@@ -1,17 +1,25 @@
 import pytest
-from aioresponses import aioresponses
 from gundi_client.client import PortalApi
 
 
 @pytest.fixture
-def mock_aioresponse():
-    with aioresponses() as m:
-        yield m
+def portal_settings():
+    return {
+        "CDIP_ADMIN_ENDPOINT": "https://fakeadmin.com",
+        "KEYCLOAK_AUDIENCE": "fake-admin-portal",
+        "KEYCLOAK_CLIENT_ID": "fake-integration",
+        "KEYCLOAK_CLIENT_SECRET": "84c4f67e-286e-48fc-9a2a-075312e6aa01",
+        "KEYCLOAK_ISSUER": "https://fakeauth.com/auth/realms/dev",
+        "LOOK_BACK_WINDOW_HOURS": 720,
+        "LOG_LEVEL": "INFO",
+        "PORTAL_API_ENDPOINT": "https://fakeadmin.com/api/v1.0",
+        "OAUTH_TOKEN_URL": "https://fakeauth.com/auth/realms/dev/protocol/openid-connect/token"
+    }
 
 
 @pytest.fixture
-def gundi_client():
-    return PortalApi()
+def gundi_client(portal_settings):
+    return PortalApi(**portal_settings)
 
 
 @pytest.fixture

@@ -11,26 +11,47 @@ pip install gundi-client
 ## Usage
 
 ```
-import aiohttp
 from gundi_client import PortalApi
+import httpx
 
-
-portal = PortalApi()
-
-
-async with aiohttp.ClientSession() as session:
-    try:
-        response = await portal.get_outbound_integration_list(
-            session=session, inbound_id=str(inbound_id), device_id=str(device_id)
-        )
-    except aiohttp.ServerTimeoutError as e:
-        logger.error("Read Timeout")              
+# You can use it as an async context-managed client
+async with PortalApi() as portal:
+   try:
+    response = await portal.get_outbound_integration_list(
+        session=session, inbound_id=str(inbound_id), device_id=str(device_id)
+    )
+    except httpx.RequestError as e:
+        logger.exception("Request Error")   
         ...
-    except aiohttp.ClientResponseError as e:
-        logger.exception("Failed to get outbound integrations for inbound_id")
-        ..
+    except httpx.TimeoutException as e:
+        logger.exception("Request timed out")
+        ...
+    except httpx.HTTPStatusError as e:
+        logger.exception("Response returned error")
     else:
         # response contains a list configs as dicts
         for integration in response:  
-            .. 
+            ...
+   ...
+
+# Or create an instance and close the client explicitly later
+portal = PortalApi()
+try:
+    response = await portal.get_outbound_integration_list(
+        session=session, inbound_id=str(inbound_id), device_id=str(device_id)
+    )
+    except httpx.RequestError as e:
+        logger.exception("Request Error")   
+        ...
+    except httpx.TimeoutException as e:
+        logger.exception("Request timed out")
+        ...
+    except httpx.HTTPStatusError as e:
+        logger.exception("Response returned error")
+    else:
+        # response contains a list configs as dicts
+        for integration in response:  
+            ...
+   ...
+   await portal.close()  # Close the session used to send requests to ER API
 ```
