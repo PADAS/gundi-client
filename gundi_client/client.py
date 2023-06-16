@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 from uuid import UUID
 from pydantic import parse_obj_as
 from . import settings
-from .schemas import (
+from gundi_core.schemas import (
     IntegrationInformation,
     OAuthToken,
     TIntegrationInformation,
