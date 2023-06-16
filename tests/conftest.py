@@ -1,25 +1,24 @@
 import pytest
-from gundi_client.client import PortalApi
+from gundi_client_v2.client import GundiClient
 
 
 @pytest.fixture
-def portal_settings():
+def client_settings():
     return {
-        "CDIP_ADMIN_ENDPOINT": "https://fakeadmin.com",
+        "OAUTH_TOKEN_URL": "https://fakeauth.com/auth/realms/dev/protocol/openid-connect/token",
         "KEYCLOAK_AUDIENCE": "fake-admin-portal",
         "KEYCLOAK_CLIENT_ID": "fake-integration",
         "KEYCLOAK_CLIENT_SECRET": "84c4f67e-286e-48fc-9a2a-075312e6aa01",
         "KEYCLOAK_ISSUER": "https://fakeauth.com/auth/realms/dev",
         "LOOK_BACK_WINDOW_HOURS": 720,
         "LOG_LEVEL": "INFO",
-        "PORTAL_API_ENDPOINT": "https://fakeadmin.com/api/v1.0",
-        "OAUTH_TOKEN_URL": "https://fakeauth.com/auth/realms/dev/protocol/openid-connect/token"
+        "GUNDI_API_BASE_URL": "https://fakeadmin.com"
     }
 
 
 @pytest.fixture
-def gundi_client(portal_settings):
-    return PortalApi(**portal_settings)
+def gundi_client(client_settings):
+    return GundiClient(**client_settings)
 
 
 @pytest.fixture
@@ -34,59 +33,59 @@ def auth_token_response():
         "not-before-policy": 1602633099,
     }
 
-
-@pytest.fixture
-def inbound_integration_config():
-    return {
-        "state": {},
-        "id": "11115b4f-88cd-49c4-a723-0ddff1f580c4",
-        "type": "b069e5bd-a473-4c02-9227-27b6134615a4",
-        "owner": "088a191a-bcf3-471b-9e7d-6ba8bc71be9e",
-        "endpoint": "https://logins.testbidtrack.co.za/restintegration/",
-        "login": "test",
-        "password": "test",
-        "token": "",
-        "type_slug": "bidtrack",
-        "provider": "bidtrack",
-        "default_devicegroup": "1111cfdc-1aae-44b0-8e0a-22c72355ea85",
-        "enabled": True,
-        "name": "BidTrack - Manyoni",
-    }
-
-
-@pytest.fixture
-def outbound_integration_config_list():
-    return [
-        {
-            "id": "2222dc7e-73e2-4af3-93f5-a1cb322e5add",
-            "type": "f61b0c60-c863-44d7-adc6-d9b49b389e69",
-            "owner": "1111191a-bcf3-471b-9e7d-6ba8bc71be9e",
-            "name": "[Internal] AI2 Test -  Bidtrack to  ER",
-            "endpoint": "https://cdip-er.pamdas.org/api/v1.0",
-            "state": {},
-            "login": "",
-            "password": "",
-            "token": "1111d87681cd1d01ad07c2d0f57d15d6079ae7d7",
-            "type_slug": "earth_ranger",
-            "inbound_type_slug": "bidtrack",
-            "additional": {},
-        }
-    ]
-
-
-@pytest.fixture
-def outbound_integration_config():
-    return {
-        "id": "2222dc7e-73e2-4af3-93f5-a1cb322e5add",
-        "type": "f61b0c60-c863-44d7-adc6-d9b49b389e69",
-        "owner": "1111191a-bcf3-471b-9e7d-6ba8bc71be9e",
-        "name": "[Internal] AI2 Test -  Bidtrack to  ER",
-        "endpoint": "https://cdip-er.pamdas.org/api/v1.0",
-        "state": {},
-        "login": "",
-        "password": "",
-        "token": "1111d87681cd1d01ad07c2d0f57d15d6079ae7d7",
-        "type_slug": "earth_ranger",
-        "inbound_type_slug": "bidtrack",
-        "additional": {},
-    }
+# ToDo: Refactor tests for v2
+# @pytest.fixture
+# def inbound_integration_config():
+#     return {
+#         "state": {},
+#         "id": "11115b4f-88cd-49c4-a723-0ddff1f580c4",
+#         "type": "b069e5bd-a473-4c02-9227-27b6134615a4",
+#         "owner": "088a191a-bcf3-471b-9e7d-6ba8bc71be9e",
+#         "endpoint": "https://logins.testbidtrack.co.za/restintegration/",
+#         "login": "test",
+#         "password": "test",
+#         "token": "",
+#         "type_slug": "bidtrack",
+#         "provider": "bidtrack",
+#         "default_devicegroup": "1111cfdc-1aae-44b0-8e0a-22c72355ea85",
+#         "enabled": True,
+#         "name": "BidTrack - Manyoni",
+#     }
+#
+#
+# @pytest.fixture
+# def outbound_integration_config_list():
+#     return [
+#         {
+#             "id": "2222dc7e-73e2-4af3-93f5-a1cb322e5add",
+#             "type": "f61b0c60-c863-44d7-adc6-d9b49b389e69",
+#             "owner": "1111191a-bcf3-471b-9e7d-6ba8bc71be9e",
+#             "name": "[Internal] AI2 Test -  Bidtrack to  ER",
+#             "endpoint": "https://cdip-er.pamdas.org/api/v1.0",
+#             "state": {},
+#             "login": "",
+#             "password": "",
+#             "token": "1111d87681cd1d01ad07c2d0f57d15d6079ae7d7",
+#             "type_slug": "earth_ranger",
+#             "inbound_type_slug": "bidtrack",
+#             "additional": {},
+#         }
+#     ]
+#
+#
+# @pytest.fixture
+# def outbound_integration_config():
+#     return {
+#         "id": "2222dc7e-73e2-4af3-93f5-a1cb322e5add",
+#         "type": "f61b0c60-c863-44d7-adc6-d9b49b389e69",
+#         "owner": "1111191a-bcf3-471b-9e7d-6ba8bc71be9e",
+#         "name": "[Internal] AI2 Test -  Bidtrack to  ER",
+#         "endpoint": "https://cdip-er.pamdas.org/api/v1.0",
+#         "state": {},
+#         "login": "",
+#         "password": "",
+#         "token": "1111d87681cd1d01ad07c2d0f57d15d6079ae7d7",
+#         "type_slug": "earth_ranger",
+#         "inbound_type_slug": "bidtrack",
+#         "additional": {},
+#     }

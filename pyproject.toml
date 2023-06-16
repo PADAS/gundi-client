@@ -1,10 +1,8 @@
 [tool.poetry]
-name = "gundi-client"
-version = "1.0.1"
+name = "gundi-client-v2"
+version = "2.0.0"
 description = "An async client for Gundi's API"
 authors = [
-    "Rohit Chaudhri <rohitc@vulcan.com>",
-    "Matt Morrissette <matt.morrissette@wildlifeprotectionsolutions.org>",
     "Chris Doehring <chrisdo@earthranger.com>",
     "Mariano M <marianom@earthranger.com>",
     "Victor Garcia <victorg@earthranger.com>"
@@ -13,7 +11,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 packages = [
-    { include = "gundi_client" }
+    { include = "gundi_client_v2" }
 ]
 
 [tool.poetry.dependencies]

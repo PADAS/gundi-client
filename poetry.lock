@@ -146,13 +146,13 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "gundi-core"
-version = "1.0.0"
+version = "1.0.2"
 description = ""
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "gundi_core-1.0.0-py3-none-any.whl", hash = "sha256:1bbb16ed881ee359fc54bca93c0c1f9318c1c003a8f53a304ac090b4edaf8ff7"},
-    {file = "gundi_core-1.0.0.tar.gz", hash = "sha256:cc9efdea3bf0b313605013568523d8f7261a29916bbd9abe34fefc5c807cb9be"},
+    {file = "gundi_core-1.0.2-py3-none-any.whl", hash = "sha256:55a840ef85e737ed34a523826e9189a46ec5adcf797adec14ae8610c8c022cc0"},
+    {file = "gundi_core-1.0.2.tar.gz", hash = "sha256:7a5da57d7bcf54f048d15e2584619ce7c23ef646ce13e511648abe38911dd313"},
 ]
 
 [package.dependencies]
