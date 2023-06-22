@@ -11,7 +11,7 @@ from httpx import (
 from gundi_core.schemas import (
     OAuthToken,
 )
-from gundi_core.schemas.v2 import Connection, Route
+from gundi_core.schemas.v2 import Connection, Route, Integration
 from . import settings, errors
 from . import auth
 
@@ -104,7 +104,6 @@ class GundiClient:
         data = response.json()
         return Connection.parse_obj(data)
 
-
     async def get_route_details(self, route_id):
         headers = await self.get_auth_header()
         url = f"{self.routes_endpoint}/{route_id}/"
@@ -117,3 +116,14 @@ class GundiClient:
         data = response.json()
         return Route.parse_obj(data)
 
+    async def get_integration_details(self, integration_id):
+        headers = await self.get_auth_header()
+        url = f"{self.integrations_endpoint}/{integration_id}/"
+        response = await self._session.get(
+            url,
+            headers=headers,
+        )
+        # ToDo: Handle errors
+        response.raise_for_status()
+        data = response.json()
+        return Integration.parse_obj(data)
