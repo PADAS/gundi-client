@@ -5,19 +5,17 @@ from gundi_client_v2.client import GundiClient
 @pytest.fixture
 def client_settings():
     return {
-        "OAUTH_TOKEN_URL": "https://fakeauth.com/auth/realms/dev/protocol/openid-connect/token",
-        "KEYCLOAK_AUDIENCE": "fake-admin-portal",
-        "KEYCLOAK_CLIENT_ID": "fake-integration",
-        "KEYCLOAK_CLIENT_SECRET": "84c4f67e-286e-48fc-9a2a-075312e6aa01",
-        "KEYCLOAK_ISSUER": "https://fakeauth.com/auth/realms/dev",
-        "LOOK_BACK_WINDOW_HOURS": 720,
-        "LOG_LEVEL": "INFO",
-        "GUNDI_API_BASE_URL": "https://fakeadmin.com"
+        "oauth_token_url": "https://fakeauth.com/auth/realms/dev/protocol/openid-connect/token",
+        "keycloak_audience": "fake-admin-portal",
+        "keycloak_client_id": "fake-integration",
+        "keycloak_client_secret": "84c4f67e-286e-48fc-9a2a-075312e6aa01",
+        "base_url": "https://api.fakeportal.com"
     }
 
 
 @pytest.fixture
-def gundi_client(client_settings):
+def gundi_client_v2(client_settings):
+    # Set env vars and initialize the gundi client
     return GundiClient(**client_settings)
 
 
@@ -33,59 +31,43 @@ def auth_token_response():
         "not-before-policy": 1602633099,
     }
 
-# ToDo: Refactor tests for v2
-# @pytest.fixture
-# def inbound_integration_config():
-#     return {
-#         "state": {},
-#         "id": "11115b4f-88cd-49c4-a723-0ddff1f580c4",
-#         "type": "b069e5bd-a473-4c02-9227-27b6134615a4",
-#         "owner": "088a191a-bcf3-471b-9e7d-6ba8bc71be9e",
-#         "endpoint": "https://logins.testbidtrack.co.za/restintegration/",
-#         "login": "test",
-#         "password": "test",
-#         "token": "",
-#         "type_slug": "bidtrack",
-#         "provider": "bidtrack",
-#         "default_devicegroup": "1111cfdc-1aae-44b0-8e0a-22c72355ea85",
-#         "enabled": True,
-#         "name": "BidTrack - Manyoni",
-#     }
-#
-#
-# @pytest.fixture
-# def outbound_integration_config_list():
-#     return [
-#         {
-#             "id": "2222dc7e-73e2-4af3-93f5-a1cb322e5add",
-#             "type": "f61b0c60-c863-44d7-adc6-d9b49b389e69",
-#             "owner": "1111191a-bcf3-471b-9e7d-6ba8bc71be9e",
-#             "name": "[Internal] AI2 Test -  Bidtrack to  ER",
-#             "endpoint": "https://cdip-er.pamdas.org/api/v1.0",
-#             "state": {},
-#             "login": "",
-#             "password": "",
-#             "token": "1111d87681cd1d01ad07c2d0f57d15d6079ae7d7",
-#             "type_slug": "earth_ranger",
-#             "inbound_type_slug": "bidtrack",
-#             "additional": {},
-#         }
-#     ]
-#
-#
-# @pytest.fixture
-# def outbound_integration_config():
-#     return {
-#         "id": "2222dc7e-73e2-4af3-93f5-a1cb322e5add",
-#         "type": "f61b0c60-c863-44d7-adc6-d9b49b389e69",
-#         "owner": "1111191a-bcf3-471b-9e7d-6ba8bc71be9e",
-#         "name": "[Internal] AI2 Test -  Bidtrack to  ER",
-#         "endpoint": "https://cdip-er.pamdas.org/api/v1.0",
-#         "state": {},
-#         "login": "",
-#         "password": "",
-#         "token": "1111d87681cd1d01ad07c2d0f57d15d6079ae7d7",
-#         "type_slug": "earth_ranger",
-#         "inbound_type_slug": "bidtrack",
-#         "additional": {},
-#     }
+
+@pytest.fixture
+def destination_integration_details():
+    return {
+        'id': 'destination_integration_details', 'name': 'ER Load Testing',
+            'base_url': 'https://gundi-load-testing.pamdas.org', 'enabled': True,
+            'type': {'id': '46c66a61-71e4-4664-a7f2-30d465f87aae', 'name': 'EarthRanger',
+                     'description': 'Integration type for Earth Ranger Sites', 'actions': [
+                    {'id': '42ec4163-2f40-43fc-af62-bca1db77c06c', 'type': 'auth', 'name': 'Authenticate',
+                     'value': 'auth', 'description': 'Authenticate against Earth Ranger',
+                     'schema': {'type': 'object', 'required': ['token'], 'properties': {'token': {'type': 'string'}}}},
+                    {'id': '016c2098-f494-40ec-a595-710b314d5eaf', 'type': 'pull', 'name': 'Pull Positions',
+                     'value': 'pull_positions', 'description': 'Pull position data from an Earth Ranger site',
+                     'schema': {'type': 'object', 'required': ['endpoint'],
+                                'properties': {'endpoint': {'type': 'string'}}}},
+                    {'id': '8886bb71-9aca-425a-881f-7fe0b2dba4f5', 'type': 'push', 'name': 'Push Events',
+                     'value': 'push_events', 'description': 'EarthRanger sites support sending Events (a.k.a Reports)',
+                     'schema': {}},
+                    {'id': 'abe0cf50-fbc7-4810-84fd-53fb75020a55', 'type': 'push', 'name': 'Push Positions',
+                     'value': 'push_positions', 'description': 'Push position data to an Earth Ranger site',
+                     'schema': {'type': 'object', 'required': ['endpoint'],
+                                'properties': {'endpoint': {'type': 'string'}}}}]},
+            'owner': {'id': '12d1b0fc-69fe-408b-afc5-8f54872730c1', 'name': 'Test Organization', 'description': ''},
+            'configurations': [
+                {'id': '013ea7ce-4944-4f7e-8a2f-e5338b3741ce', 'integration': '228225f3-91f9-4fe1-b013-353a229ce505',
+                 'action': {'id': '43ec4163-2f40-43fc-af62-bca1db77c06b', 'type': 'auth', 'name': 'Authenticate',
+                            'value': 'auth'}, 'data': {'token': '0890d87681cd1d01ad07c2d0f57d15d6079ae7d7'}},
+                {'id': '5de91c7b-f28a-4ce7-8137-273ac10674d2', 'integration': '228225f3-91f9-4fe1-b013-353a229ce505',
+                 'action': {'id': 'aae0cf50-fbc7-4810-84fd-53fb75020a43', 'type': 'push', 'name': 'Push Positions',
+                            'value': 'push_positions'}, 'data': {'endpoint': 'api/v1/positions'}},
+                {'id': '7947b19e-1d2d-4ca3-bd6c-74976ae1de68', 'integration': '228225f3-91f9-4fe1-b013-353a229ce505',
+                 'action': {'id': '036c2098-f494-40ec-a595-710b314d5ea5', 'type': 'pull', 'name': 'Pull Positions',
+                            'value': 'pull_positions'}, 'data': {'endpoint': 'api/v1/positions'}}],
+            'additional': {'topic': 'destination-v2-228225f3-91f9-4fe1-b013-353a229ce505-dev', 'broker': 'gcp_pubsub'},
+            'default_route': {'id': '38dd8ec2-b3ee-4c31-940e-b6cc9c1f4326', 'name': 'Mukutan - Load Testing'},
+            'status': {'id': 'mockid-b16a-4dbd-ad32-197c58aeef59', 'is_healthy': True,
+                       'details': 'Last observation has been delivered with success.',
+                       'observation_delivered_24hrs': 50231,
+                       'last_observation_delivered_at': '2023-03-31T11:20:00+0200'}
+    }
