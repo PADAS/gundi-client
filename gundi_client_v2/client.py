@@ -38,10 +38,10 @@ class GundiClient:
 
         # Authentication settings
         self.ssl_verify = kwargs.get("use_ssl", settings.GUNDI_API_SSL_VERIFY)
-        self.client_id = kwargs.get("KEYCLOAK_CLIENT_ID", settings.KEYCLOAK_CLIENT_ID)
-        self.client_secret = kwargs.get("KEYCLOAK_CLIENT_SECRET", settings.KEYCLOAK_CLIENT_SECRET)
-        self.oauth_token_url = kwargs.get("OAUTH_TOKEN_URL", settings.OAUTH_TOKEN_URL)
-        self.audience = kwargs.get("KEYCLOAK_AUDIENCE", settings.KEYCLOAK_AUDIENCE)
+        self.client_id = kwargs.get("keycloak_client_id", settings.KEYCLOAK_CLIENT_ID)
+        self.client_secret = kwargs.get("keycloak_client_secret", settings.KEYCLOAK_CLIENT_SECRET)
+        self.oauth_token_url = kwargs.get("oauth_token_url", settings.OAUTH_TOKEN_URL)
+        self.audience = kwargs.get("keycloak_audience", settings.KEYCLOAK_AUDIENCE)
         self.cached_token = None
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
@@ -99,7 +99,7 @@ class GundiClient:
             url,
             headers=headers,
         )
-        # ToDo: Handle errors
+        # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()
         return Connection.parse_obj(data)
@@ -111,7 +111,7 @@ class GundiClient:
             url,
             headers=headers,
         )
-        # ToDo: Handle errors
+        # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()
         return Route.parse_obj(data)
@@ -123,7 +123,7 @@ class GundiClient:
             url,
             headers=headers,
         )
-        # ToDo: Handle errors
+        # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()
         return Integration.parse_obj(data)
