@@ -71,3 +71,18 @@ def destination_integration_details():
                        'observation_delivered_24hrs': 50231,
                        'last_observation_delivered_at': '2023-03-31T11:20:00+0200'}
     }
+
+
+@pytest.fixture
+def connection_details():
+    return {
+        'id': 'bbd0946d-15b0-4308-b93d-e0470b6c33b7',
+        'provider': {'id': 'bbd0946d-15b0-4308-b93d-e0470b6c33b7', 'name': 'Trap Tagger', 'type': 'traptagger',
+                     'base_url': 'https://test.traptagger.com', 'status': 'healthy'}, 'destinations': [
+        {'id': '338225f3-91f9-4fe1-b013-353a229ce504', 'name': 'ER Load Testing', 'type': 'earth_ranger',
+         'base_url': 'https://gundi-load-testing.pamdas.org', 'status': 'healthy'}],
+        'routing_rules': [{'id': '945897f9-1ef2-7d55-9c6c-ea2663380ca5', 'name': 'TrapTagger Default Route'}],
+        'default_route': {'id': '945897f9-1ef2-7d55-9c6c-ea2663380ca5', 'name': 'TrapTagger Default Route'},
+        'owner': {'id': 'b3d1b0fc-69fe-408b-afc5-7f54872730c1', 'name': 'Test Organization', 'description': ''},
+        'status': 'healthy'
+    }
