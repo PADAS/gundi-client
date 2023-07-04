@@ -15,7 +15,7 @@ async def test_get_connection_details(
             json=auth_token_response
         )
         # Mock configuration
-        connection_id = "228225f3-91f9-4fe1-b013-353a229ce505"
+        connection_id = "bbd0946d-15b0-4308-b93d-e0470b6c33b7"
         connection_details_url = f"{gundi_client_v2.connections_endpoint}/{connection_id}/"
         gundi_portal_mock.get(connection_details_url).respond(
             status_code=httpx.codes.OK,
