@@ -5,20 +5,20 @@ The gundi-client is an async python client to interact with Gundi's REST API.
 
 ## Installation
 ```
-pip install gundi-client
+pip install gundi-client-v2
 ```
 
 ## Usage
 
 ```
-from gundi_client import PortalApi
+from gundi_client_v2 import GundiClient
 import httpx
 
 # You can use it as an async context-managed client
-async with PortalApi() as portal:
+async with GundiClient() as client:
    try:
-    response = await portal.get_outbound_integration_list(
-        session=session, inbound_id=str(inbound_id), device_id=str(device_id)
+    connection = await client.get_connection_details(
+        integration_id="some-integration-uuid"
     )
     except httpx.RequestError as e:
         logger.exception("Request Error")   
@@ -29,16 +29,15 @@ async with PortalApi() as portal:
     except httpx.HTTPStatusError as e:
         logger.exception("Response returned error")
     else:
-        # response contains a list configs as dicts
-        for integration in response:  
+        for integration in connection.destinations:  
             ...
    ...
 
 # Or create an instance and close the client explicitly later
-portal = PortalApi()
+client = GundiClient()
 try:
-    response = await portal.get_outbound_integration_list(
-        session=session, inbound_id=str(inbound_id), device_id=str(device_id)
+    response = await client.get_connection_details(
+        integration_id="some-integration-uuid"
     )
     except httpx.RequestError as e:
         logger.exception("Request Error")   
@@ -49,9 +48,8 @@ try:
     except httpx.HTTPStatusError as e:
         logger.exception("Response returned error")
     else:
-        # response contains a list configs as dicts
-        for integration in response:  
+        for integration in connection.destinations:
             ...
    ...
-   await portal.close()  # Close the session used to send requests to ER API
+   await client.close()  # Close the session used to send requests to Gundi
 ```
