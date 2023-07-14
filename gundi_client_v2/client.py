@@ -138,5 +138,5 @@ class GundiClient:
         )
         # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
-        data = response.json()['results']
+        data = response.json()["results"]
         return parse_obj_as(List[GundiTrace], data)
