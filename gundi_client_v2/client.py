@@ -3,15 +3,14 @@ from datetime import datetime, timezone, timedelta
 from httpx import (
     AsyncClient,
     AsyncHTTPTransport,
-    RequestError,
     Timeout,
-    TimeoutException,
-    HTTPStatusError
 )
+from pydantic import parse_obj_as
+from typing import List
 from gundi_core.schemas import (
     OAuthToken,
 )
-from gundi_core.schemas.v2 import Connection, Route, Integration
+from gundi_core.schemas.v2 import Connection, Route, Integration, GundiTrace
 from . import settings, errors
 from . import auth
 
@@ -35,6 +34,7 @@ class GundiClient:
         self.source_states_endpoint = f"{self.api_base_path}/sources/states"
         self.sources_endpoint = f"{self.api_base_path}/sources"
         self.routes_endpoint = f"{self.api_base_path}/routes"
+        self.traces_endpoint = f"{self.api_base_path}/traces"
 
         # Authentication settings
         self.ssl_verify = kwargs.get("use_ssl", settings.GUNDI_API_SSL_VERIFY)
@@ -127,3 +127,16 @@ class GundiClient:
         response.raise_for_status()
         data = response.json()
         return Integration.parse_obj(data)
+
+    async def get_traces(self, params: dict):
+        headers = await self.get_auth_header()
+        url = f"{self.traces_endpoint}/"
+        response = await self._session.get(
+            url,
+            params=params,
+            headers=headers,
+        )
+        # ToDo: Add custom exceptions to handle errors
+        response.raise_for_status()
+        data = response.json()['results']
+        return parse_obj_as(List[GundiTrace], data)
