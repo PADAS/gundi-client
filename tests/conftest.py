@@ -104,3 +104,34 @@ def route_details():
                     'provider_field': 'event_details__species', 'destination_field': 'event_type'}}}}}},
         'additional': {}
     }
+
+
+@pytest.fixture
+def trace_object_id():
+    return '92855c84-572b-42ae-8183-8deb33fdd476'
+
+
+@pytest.fixture
+def trace_destination_id():
+    return '338225f3-91f9-4fe1-b013-353a229ce504'
+
+
+@pytest.fixture
+def traces_list_response(trace_object_id, trace_destination_id):
+    return {
+        'next': None,
+        'previous': None,
+        'results': [
+            {
+                'object_id': trace_object_id,
+                'object_type': 'ev',
+                'related_to': None,
+                'data_provider': 'ddd0946d-15b0-4308-b93d-e0470b6d33b6',
+                'destination': trace_destination_id,
+                'delivered_at': '2023-07-10T19:35:34.425974Z',
+                'external_id': 'dbfd2e2b-45ae-4961-86b7-cd056217a22f',
+                'created_at': '2023-07-10T19:20:43.977431Z',
+                'updated_at': '2023-07-10T19:36:10.788527Z'
+            }
+        ]
+    }
