@@ -34,56 +34,61 @@ def auth_token_response():
 
 @pytest.fixture
 def destination_integration_details():
-    return {
-        'id': 'destination_integration_details', 'name': 'ER Load Testing',
-        'base_url': 'https://gundi-load-testing.pamdas.org', 'enabled': True,
-        'type': {'id': '46c66a61-71e4-4664-a7f2-30d465f87aae', 'name': 'EarthRanger',
-                 'description': 'Integration type for Earth Ranger Sites', 'actions': [
-                {'id': '42ec4163-2f40-43fc-af62-bca1db77c06c', 'type': 'auth', 'name': 'Authenticate',
-                 'value': 'auth', 'description': 'Authenticate against Earth Ranger',
-                 'schema': {'type': 'object', 'required': ['token'], 'properties': {'token': {'type': 'string'}}}},
-                {'id': '016c2098-f494-40ec-a595-710b314d5eaf', 'type': 'pull', 'name': 'Pull Positions',
-                 'value': 'pull_positions', 'description': 'Pull position data from an Earth Ranger site',
-                 'schema': {'type': 'object', 'required': ['endpoint'],
-                            'properties': {'endpoint': {'type': 'string'}}}},
-                {'id': '8886bb71-9aca-425a-881f-7fe0b2dba4f5', 'type': 'push', 'name': 'Push Events',
-                 'value': 'push_events', 'description': 'EarthRanger sites support sending Events (a.k.a Reports)',
-                 'schema': {}},
-                {'id': 'abe0cf50-fbc7-4810-84fd-53fb75020a55', 'type': 'push', 'name': 'Push Positions',
-                 'value': 'push_positions', 'description': 'Push position data to an Earth Ranger site',
-                 'schema': {'type': 'object', 'required': ['endpoint'],
-                            'properties': {'endpoint': {'type': 'string'}}}}]},
-        'owner': {'id': '12d1b0fc-69fe-408b-afc5-8f54872730c1', 'name': 'Test Organization', 'description': ''},
-        'configurations': [
-            {'id': '013ea7ce-4944-4f7e-8a2f-e5338b3741ce', 'integration': '228225f3-91f9-4fe1-b013-353a229ce505',
-             'action': {'id': '43ec4163-2f40-43fc-af62-bca1db77c06b', 'type': 'auth', 'name': 'Authenticate',
-                        'value': 'auth'}, 'data': {'token': '0890d87681cd1d01ad07c2d0f57d15d6079ae7d7'}},
-            {'id': '5de91c7b-f28a-4ce7-8137-273ac10674d2', 'integration': '228225f3-91f9-4fe1-b013-353a229ce505',
-             'action': {'id': 'aae0cf50-fbc7-4810-84fd-53fb75020a43', 'type': 'push', 'name': 'Push Positions',
-                        'value': 'push_positions'}, 'data': {'endpoint': 'api/v1/positions'}},
-            {'id': '7947b19e-1d2d-4ca3-bd6c-74976ae1de68', 'integration': '228225f3-91f9-4fe1-b013-353a229ce505',
-             'action': {'id': '036c2098-f494-40ec-a595-710b314d5ea5', 'type': 'pull', 'name': 'Pull Positions',
-                        'value': 'pull_positions'}, 'data': {'endpoint': 'api/v1/positions'}}],
-        'additional': {'topic': 'destination-v2-228225f3-91f9-4fe1-b013-353a229ce505-dev', 'broker': 'gcp_pubsub'},
-        'default_route': {'id': '38dd8ec2-b3ee-4c31-940e-b6cc9c1f4326', 'name': 'Mukutan - Load Testing'},
-        'status': {'id': 'mockid-b16a-4dbd-ad32-197c58aeef59', 'is_healthy': True,
-                   'details': 'Last observation has been delivered with success.',
-                   'observation_delivered_24hrs': 50231,
-                   'last_observation_delivered_at': '2023-03-31T11:20:00+0200'}
-    }
+    return {'id': '338225f3-91f9-4fe1-b013-353a229ce504', 'name': 'ER Load Testing',
+            'base_url': 'https://gundi-load-testing.pamdas.org', 'enabled': True,
+            'type': {'id': '45c66a61-71e4-4664-a7f2-30d465f87aa6', 'name': 'EarthRanger', 'value': 'earth_ranger',
+                     'description': 'Integration type for Earth Ranger Sites', 'actions': [
+                    {'id': '43ec4163-2f40-43fc-af62-bca1db77c06b', 'type': 'auth', 'name': 'Authenticate',
+                     'value': 'auth',
+                     'description': 'Authenticate against Earth Ranger',
+                     'schema': {'type': 'object', 'required': ['token'], 'properties': {'token': {'type': 'string'}}}},
+                    {'id': '036c2098-f494-40ec-a595-710b314d5ea5', 'type': 'pull', 'name': 'Pull Positions',
+                     'value': 'pull_positions', 'description': 'Pull position data from an Earth Ranger site',
+                     'schema': {'type': 'object', 'required': ['endpoint'],
+                                'properties': {'endpoint': {'type': 'string'}}}},
+                    {'id': '9286bb71-9aca-425a-881f-7fe0b2dba4f4', 'type': 'push', 'name': 'Push Events',
+                     'value': 'push_events', 'description': 'EarthRanger sites support sending Events (a.k.a Reports)',
+                     'schema': {}},
+                    {'id': 'aae0cf50-fbc7-4810-84fd-53fb75020a43', 'type': 'push', 'name': 'Push Positions',
+                     'value': 'push_positions', 'description': 'Push position data to an Earth Ranger site',
+                     'schema': {'type': 'object', 'required': ['endpoint'],
+                                'properties': {'endpoint': {'type': 'string'}}}}]},
+            'owner': {'id': 'e2d1b0fc-69fe-408b-afc5-7f54872730c0', 'name': 'Test Organization', 'description': ''},
+            'configurations': [
+                {'id': '013ea7ce-4944-4f7e-8a2f-e5338b3741ce', 'integration': '338225f3-91f9-4fe1-b013-353a229ce504',
+                 'action': {'id': '43ec4163-2f40-43fc-af62-bca1db77c06b', 'type': 'auth', 'name': 'Authenticate',
+                            'value': 'auth'}, 'data': {'token': '1190d87681cd1d01ad07c2d0f57d15d6079ae7ab'}},
+                {'id': '5de91c7b-f28a-4ce7-8137-273ac10674d2', 'integration': '338225f3-91f9-4fe1-b013-353a229ce504',
+                 'action': {'id': 'aae0cf50-fbc7-4810-84fd-53fb75020a43', 'type': 'push', 'name': 'Push Positions',
+                            'value': 'push_positions'}, 'data': {'endpoint': 'api/v1/positions'}},
+                {'id': '7947b19e-1d2d-4ca3-bd6c-74976ae1de68', 'integration': '338225f3-91f9-4fe1-b013-353a229ce504',
+                 'action': {'id': '036c2098-f494-40ec-a595-710b314d5ea5', 'type': 'pull', 'name': 'Pull Positions',
+                            'value': 'pull_positions'}, 'data': {'endpoint': 'api/v1/positions'}}],
+            'additional': {'topic': 'destination-v2-338225f3-91f9-4fe1-b013-353a229ce504-dev', 'broker': 'gcp_pubsub'},
+            'default_route': {'id': '38dd8ec2-b3ee-4c31-940e-b6cc9c1f4326', 'name': 'Mukutan - Load Testing'},
+            'status': {'id': 'mockid-b16a-4dbd-ad32-197c58aeef59', 'is_healthy': True,
+                       'details': 'Last observation has been delivered with success.',
+                       'observation_delivered_24hrs': 50231,
+                       'last_observation_delivered_at': '2023-03-31T11:20:00+0200'}
+            }
 
 
 @pytest.fixture
 def connection_details():
     return {
-        'id': 'bbd0946d-15b0-4308-b93d-e0470b6c33b7',
-        'provider': {'id': 'bbd0946d-15b0-4308-b93d-e0470b6c33b7', 'name': 'Trap Tagger', 'type': 'traptagger',
-                     'base_url': 'https://test.traptagger.com', 'status': 'healthy'}, 'destinations': [
-            {'id': '338225f3-91f9-4fe1-b013-353a229ce504', 'name': 'ER Load Testing', 'type': 'earth_ranger',
+        'id': 'ddd0946d-15b0-4308-b93d-e0470b6d33b6',
+        'provider': {'id': 'ddd0946d-15b0-4308-b93d-e0470b6d33b6', 'name': 'Trap Tagger',
+                     'owner': {'id': 'e2d1b0fc-69fe-408b-afc5-7f54872730c0', 'name': 'Test Organization'},
+                     'type': {'id': '190e3710-3a29-4710-b932-f951222209a7', 'name': 'TrapTagger',
+                              'value': 'traptagger'}, 'base_url': 'https://test.traptagger.com',
+                     'status': 'healthy'}, 'destinations': [
+            {'id': '338225f3-91f9-4fe1-b013-353a229ce504', 'name': 'ER Load Testing',
+             'owner': {'id': 'e2d1b0fc-69fe-408b-afc5-7f54872730c0', 'name': 'Test Organization'},
+             'type': {'id': '45c66a61-71e4-4664-a7f2-30d465f87aa6', 'name': 'EarthRanger', 'value': 'earth_ranger'},
              'base_url': 'https://gundi-load-testing.pamdas.org', 'status': 'healthy'}],
-        'routing_rules': [{'id': '945897f9-1ef2-7d55-9c6c-ea2663380ca5', 'name': 'TrapTagger Default Route'}],
-        'default_route': {'id': '945897f9-1ef2-7d55-9c6c-ea2663380ca5', 'name': 'TrapTagger Default Route'},
-        'owner': {'id': 'b3d1b0fc-69fe-408b-afc5-7f54872730c1', 'name': 'Test Organization', 'description': ''},
+        'routing_rules': [{'id': '835897f9-1ef2-4d99-9c6c-ea2663380c1f', 'name': 'TrapTagger Default Route'}],
+        'default_route': {'id': '835897f9-1ef2-4d99-9c6c-ea2663380c1f', 'name': 'TrapTagger Default Route'},
+        'owner': {'id': 'e2d1b0fc-69fe-408b-afc5-7f54872730c0', 'name': 'Test Organization', 'description': ''},
         'status': 'healthy'
     }
 
@@ -91,18 +96,22 @@ def connection_details():
 @pytest.fixture
 def route_details():
     return {
-        'id': '775897f9-1ef2-4d10-9c6c-ea2663380c5b', 'name': 'TrapTagger Default Route',
-        'owner': 'b3d1b0fc-69fe-408b-afc5-7f54872730c1', 'data_providers': [
-            {'id': 'ccd0946d-15b0-4308-b93d-e0470b6d33b5', 'name': 'Trap Tagger', 'type': 'traptagger',
+        'id': '835897f9-1ef2-4d99-9c6c-ea2663380c1f', 'name': 'TrapTagger Default Route',
+        'owner': 'e2d1b0fc-69fe-408b-afc5-7f54872730c0', 'data_providers': [
+            {'id': 'ddd0946d-15b0-4308-b93d-e0470b6d33b6', 'name': 'Trap Tagger',
+             'owner': {'id': 'e2d1b0fc-69fe-408b-afc5-7f54872730c0', 'name': 'Test Organization'},
+             'type': {'id': '190e3710-3a29-4710-b932-f951222209a7', 'name': 'TrapTagger', 'value': 'traptagger'},
              'base_url': 'https://test.traptagger.com', 'status': 'healthy'}], 'destinations': [
-            {'id': '228225f3-91f9-4fe1-b013-353a229ce512', 'name': 'ER Load Testing', 'type': 'earth_ranger',
+            {'id': '338225f3-91f9-4fe1-b013-353a229ce504', 'name': 'ER Load Testing',
+             'owner': {'id': 'e2d1b0fc-69fe-408b-afc5-7f54872730c0', 'name': 'Test Organization'},
+             'type': {'id': '45c66a61-71e4-4664-a7f2-30d465f87aa6', 'name': 'EarthRanger', 'value': 'earth_ranger'},
              'base_url': 'https://gundi-load-testing.pamdas.org', 'status': 'healthy'}],
-        'configuration': {'id': '5b3e3e73-94ad-42cb-a765-09a7193ae0b6',
+        'configuration': {'id': '1a3e3e73-94ad-42cb-a765-09a7193ae0b1',
                           'name': 'Trap Tagger to ER - Event Type Mapping', 'data': {'field_mappings': {
                 'ddd0946d-15b0-4308-b93d-e0470b6d33b6': {'ev': {'558225f3-91f9-4fe1-b013-353a229ce503': {
-                    'map': {'Leopard': 'leopard_sighting', 'wild_dog': 'wild_dog_sighting'},
-                    'provider_field': 'event_details__species', 'destination_field': 'event_type'}}}}}},
-        'additional': {}
+                    'map': {'Leopard': 'leopard_sighting', 'Wilddog': 'wild_dog_sighting'},
+                    'default': 'wildlife_sighting_rep', 'provider_field': 'event_details__species',
+                    'destination_field': 'event_type'}}}}}}, 'additional': {}
     }
 
 
