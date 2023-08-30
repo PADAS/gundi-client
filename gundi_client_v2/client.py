@@ -28,7 +28,7 @@ class GundiClient:
         # API settings
         self.gundi_version = "v2"
         self.base_url = kwargs.get("base_url", settings.GUNDI_API_BASE_URL)
-        self.api_base_path = f"{self.base_url}/api/{self.gundi_version}"
+        self.api_base_path = f"{self.base_url}/{self.gundi_version}"
         self.connections_endpoint = f"{self.api_base_path}/connections"
         self.integrations_endpoint = f"{self.api_base_path}/integrations"
         self.source_states_endpoint = f"{self.api_base_path}/sources/states"
