@@ -128,6 +128,18 @@ class GundiClient:
         data = response.json()
         return Integration.parse_obj(data)
 
+    async def get_integration_api_key(self, integration_id):
+        headers = await self.get_auth_header()
+        url = f"{self.integrations_endpoint}/{integration_id}/api-key/"
+        response = await self._session.get(
+            url,
+            headers=headers,
+        )
+        # ToDo: Add custom exceptions to handle errors
+        response.raise_for_status()
+        data = response.json()
+        return data
+
     async def get_traces(self, params: dict):
         headers = await self.get_auth_header()
         url = f"{self.traces_endpoint}/"
