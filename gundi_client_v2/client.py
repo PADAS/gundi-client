@@ -1,4 +1,7 @@
 import logging
+import json
+import httpx
+
 from datetime import datetime, timezone, timedelta
 from httpx import (
     AsyncClient,
@@ -35,6 +38,7 @@ class GundiClient:
         self.sources_endpoint = f"{self.api_base_path}/sources"
         self.routes_endpoint = f"{self.api_base_path}/routes"
         self.traces_endpoint = f"{self.api_base_path}/traces"
+        self.sensors_api_endpoint = settings.SENSORS_API_BASE_URL
 
         # Authentication settings
         self.ssl_verify = kwargs.get("use_ssl", settings.GUNDI_API_SSL_VERIFY)
@@ -152,3 +156,45 @@ class GundiClient:
         response.raise_for_status()
         data = response.json()["results"]
         return parse_obj_as(List[GundiTrace], data)
+
+    async def post_observations(
+            self,
+            integration_id: str,
+            transformed_data: List[dict]
+    ) -> None:
+        apikey = await self.get_integration_api_key(integration_id)
+        total = 0
+
+        def generate_batches(iterable, n=settings.INTEGRATION_LOAD_BATCH_SIZE):
+            for i in range(0, len(iterable), n):
+                yield iterable[i: i + n]
+
+        for i, batch in enumerate(generate_batches(transformed_data)):
+
+            logger.info(f' -- Posting to routing services --')
+
+            clean_batch = [json.loads(json.dumps(r, default=str)) for r in batch]
+            url = self.sensors_api_endpoint
+
+            for j in range(2):
+                logger.debug(
+                    " -- sending batch. --",
+                    extra={
+                        "batch_no": i,
+                        "length": len(batch),
+                        "attempt": j,
+                        "api": url,
+                    },
+                )
+                async with httpx.AsyncClient(timeout=120) as session:
+                    client_response = await session.post(
+                        url=url,
+                        headers={"apikey": apikey.get("api_key")},
+                        json=clean_batch,
+                    )
+
+                client_response.raise_for_status()
+                total += len(clean_batch)
+                break
+
+        return total
