@@ -185,4 +185,4 @@ class GundiClient:
 
         client_response.raise_for_status()
 
-        return client_response.json()
+        return client_response
