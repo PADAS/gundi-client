@@ -48,6 +48,8 @@ class GundiClient:
         self.audience = kwargs.get("keycloak_audience", settings.KEYCLOAK_AUDIENCE)
         self.cached_token = None
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
+        self.cached_api_key = None
+        self.cached_api_key_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
         # Retries and timeouts settings
         self.max_retries = kwargs.get('max_http_retries', self.DEFAULT_CONNECTION_RETRIES)
@@ -133,6 +135,13 @@ class GundiClient:
         return Integration.parse_obj(data)
 
     async def get_integration_api_key(self, integration_id):
+        if (
+                self.cached_api_key
+                and
+                self.cached_api_key_expires_at > datetime.now(tz=timezone.utc)
+        ):
+            return self.cached_api_key
+
         headers = await self.get_auth_header()
         url = f"{self.integrations_endpoint}/{integration_id}/api-key/"
         response = await self._session.get(
@@ -142,7 +151,11 @@ class GundiClient:
         # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()
-        return data
+        self.cached_api_key_expires_at = datetime.now(tz=timezone.utc) + timedelta(
+            seconds=300
+        )
+        self.cached_api_key = data.get("api_key")
+        return data.get("api_key")
 
     async def get_traces(self, params: dict):
         headers = await self.get_auth_header()
@@ -164,7 +177,10 @@ class GundiClient:
     ):
         apikey = await self.get_integration_api_key(integration_id)
 
-        logger.info(f' -- Posting to routing services --')
+        logger.info(
+            f' -- Posting to routing services --',
+            extra={"integration_id": integration_id}
+        )
 
         clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
         url = self.sensors_api_endpoint
@@ -179,7 +195,7 @@ class GundiClient:
         async with httpx.AsyncClient(timeout=120) as session:
             client_response = await session.post(
                 url=url,
-                headers={"apikey": apikey.get("api_key")},
+                headers={"apikey": apikey},
                 json=clean_batch,
             )
 
