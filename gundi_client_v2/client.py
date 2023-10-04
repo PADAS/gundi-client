@@ -160,19 +160,19 @@ class GundiClient:
     async def post_observations(
             self,
             integration_id: str,
-            transformed_data: List[dict]
+            data: List[dict]
     ):
         apikey = await self.get_integration_api_key(integration_id)
 
         logger.info(f' -- Posting to routing services --')
 
-        clean_batch = [json.loads(json.dumps(r, default=str)) for r in transformed_data]
+        clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
         url = self.sensors_api_endpoint
 
         logger.debug(
             " -- sending observations. --",
             extra={
-                "length": len(transformed_data),
+                "length": len(data),
                 "api": url,
             },
         )
