@@ -161,40 +161,28 @@ class GundiClient:
             self,
             integration_id: str,
             transformed_data: List[dict]
-    ) -> None:
+    ):
         apikey = await self.get_integration_api_key(integration_id)
-        total = 0
 
-        def generate_batches(iterable, n=settings.INTEGRATION_LOAD_BATCH_SIZE):
-            for i in range(0, len(iterable), n):
-                yield iterable[i: i + n]
+        logger.info(f' -- Posting to routing services --')
 
-        for i, batch in enumerate(generate_batches(transformed_data)):
+        clean_batch = [json.loads(json.dumps(r, default=str)) for r in transformed_data]
+        url = self.sensors_api_endpoint
 
-            logger.info(f' -- Posting to routing services --')
+        logger.debug(
+            " -- sending observations. --",
+            extra={
+                "length": len(transformed_data),
+                "api": url,
+            },
+        )
+        async with httpx.AsyncClient(timeout=120) as session:
+            client_response = await session.post(
+                url=url,
+                headers={"apikey": apikey.get("api_key")},
+                json=clean_batch,
+            )
 
-            clean_batch = [json.loads(json.dumps(r, default=str)) for r in batch]
-            url = self.sensors_api_endpoint
+        client_response.raise_for_status()
 
-            for j in range(2):
-                logger.debug(
-                    " -- sending batch. --",
-                    extra={
-                        "batch_no": i,
-                        "length": len(batch),
-                        "attempt": j,
-                        "api": url,
-                    },
-                )
-                async with httpx.AsyncClient(timeout=120) as session:
-                    client_response = await session.post(
-                        url=url,
-                        headers={"apikey": apikey.get("api_key")},
-                        json=clean_batch,
-                    )
-
-                client_response.raise_for_status()
-                total += len(clean_batch)
-                break
-
-        return total
+        return len(transformed_data)

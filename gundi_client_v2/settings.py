@@ -21,7 +21,5 @@ GUNDI_API_BASE_URL = env.str("GUNDI_API_BASE_URL", None)
 GUNDI_API_SSL_VERIFY = env.bool("GUNDI_API_SSL_VERIFY", True)
 
 SENSORS_API_BASE_URL = env.str("SENSORS_API_BASE_URL", None)
-# How many items should be posted to Sensors API in each request.
-INTEGRATION_LOAD_BATCH_SIZE = env.int("INTEGRATION_LOAD_BATCH_SIZE", 100)
 
 LOG_LEVEL = env.log_level("LOG_LEVEL", "INFO")
