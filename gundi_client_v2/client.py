@@ -25,13 +25,13 @@ logger.setLevel(settings.LOG_LEVEL)
 class GundiDataSenderClient:
     def __init__(self, integration_api_key: str = None, **kwargs):
         self._sensors_api_endpoint = settings.SENSORS_API_BASE_URL
-        self._cached_api_key = integration_api_key
+        self._api_key = integration_api_key
 
     async def post_observations(
             self,
             data: List[dict]
     ):
-        apikey = self._cached_api_key
+        apikey = self._api_key
 
         logger.info(
             f' -- Posting to routing services --',
