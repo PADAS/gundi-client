@@ -22,6 +22,44 @@ logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
 
 
+class GundiDataSenderClient:
+    def __init__(self, integration_api_key: str = None, **kwargs):
+        self._sensors_api_endpoint = settings.SENSORS_API_BASE_URL
+        self._cached_api_key = integration_api_key
+
+    async def post_observations(
+            self,
+            data: List[dict]
+    ):
+        apikey = self._cached_api_key
+
+        logger.info(
+            f' -- Posting to routing services --',
+            extra={"integration_api_key": apikey}
+        )
+
+        clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
+        url = self._sensors_api_endpoint
+
+        logger.debug(
+            " -- sending observations. --",
+            extra={
+                "length": len(data),
+                "api": url,
+            },
+        )
+        async with httpx.AsyncClient(timeout=120) as session:
+            client_response = await session.post(
+                url=url,
+                headers={"apikey": apikey},
+                json=clean_batch,
+            )
+
+        client_response.raise_for_status()
+
+        return client_response.json()
+
+
 class GundiClient:
     DEFAULT_CONNECT_TIMEOUT_SECONDS = 3.1
     DEFAULT_DATA_TIMEOUT_SECONDS = 20
@@ -38,7 +76,6 @@ class GundiClient:
         self.sources_endpoint = f"{self.api_base_path}/sources"
         self.routes_endpoint = f"{self.api_base_path}/routes"
         self.traces_endpoint = f"{self.api_base_path}/traces"
-        self.sensors_api_endpoint = settings.SENSORS_API_BASE_URL
 
         # Authentication settings
         self.ssl_verify = kwargs.get("use_ssl", settings.GUNDI_API_SSL_VERIFY)
@@ -48,8 +85,6 @@ class GundiClient:
         self.audience = kwargs.get("keycloak_audience", settings.KEYCLOAK_AUDIENCE)
         self.cached_token = None
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
-        self.cached_api_key = None
-        self.cached_api_key_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
         # Retries and timeouts settings
         self.max_retries = kwargs.get('max_http_retries', self.DEFAULT_CONNECTION_RETRIES)
@@ -135,13 +170,6 @@ class GundiClient:
         return Integration.parse_obj(data)
 
     async def get_integration_api_key(self, integration_id):
-        if (
-                self.cached_api_key
-                and
-                self.cached_api_key_expires_at > datetime.now(tz=timezone.utc)
-        ):
-            return self.cached_api_key
-
         headers = await self.get_auth_header()
         url = f"{self.integrations_endpoint}/{integration_id}/api-key/"
         response = await self._session.get(
@@ -151,10 +179,6 @@ class GundiClient:
         # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()
-        self.cached_api_key_expires_at = datetime.now(tz=timezone.utc) + timedelta(
-            seconds=300
-        )
-        self.cached_api_key = data.get("api_key")
         return data.get("api_key")
 
     async def get_traces(self, params: dict):
@@ -169,36 +193,3 @@ class GundiClient:
         response.raise_for_status()
         data = response.json()["results"]
         return parse_obj_as(List[GundiTrace], data)
-
-    async def post_observations(
-            self,
-            integration_id: str,
-            data: List[dict]
-    ):
-        apikey = await self.get_integration_api_key(integration_id)
-
-        logger.info(
-            f' -- Posting to routing services --',
-            extra={"integration_id": integration_id}
-        )
-
-        clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
-        url = self.sensors_api_endpoint
-
-        logger.debug(
-            " -- sending observations. --",
-            extra={
-                "length": len(data),
-                "api": url,
-            },
-        )
-        async with httpx.AsyncClient(timeout=120) as session:
-            client_response = await session.post(
-                url=url,
-                headers={"apikey": apikey},
-                json=clean_batch,
-            )
-
-        client_response.raise_for_status()
-
-        return client_response
