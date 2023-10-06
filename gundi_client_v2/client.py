@@ -24,7 +24,8 @@ logger.setLevel(settings.LOG_LEVEL)
 
 class GundiDataSenderClient:
     def __init__(self, integration_api_key: str = None, **kwargs):
-        self._sensors_api_endpoint = settings.SENSORS_API_BASE_URL
+        self._gundi_version = "v2"
+        self._sensors_api_endpoint = f"{settings.SENSORS_API_BASE_URL}/{self._gundi_version}"
         self._api_key = integration_api_key
 
     async def post_observations(
@@ -39,7 +40,7 @@ class GundiDataSenderClient:
         )
 
         clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
-        url = self._sensors_api_endpoint
+        url = f"{self._sensors_api_endpoint}/observations/"
 
         logger.debug(
             " -- sending observations. --",
