@@ -1,5 +1,13 @@
 import pytest
-from gundi_client_v2.client import GundiClient
+from gundi_client_v2.client import GundiClient, GundiDataSenderClient
+
+
+@pytest.fixture
+def sender_settings():
+    return {
+        "sensors_api_base_url": "https://sensors.api.fakerealm.gundi.org",
+        "integration_api_key": "fake-api-key"
+    }
 
 
 @pytest.fixture
@@ -11,6 +19,12 @@ def client_settings():
         "keycloak_client_secret": "84c4f67e-286e-48fc-9a2a-075312e6aa01",
         "base_url": "https://api.fakeportal.com"
     }
+
+
+@pytest.fixture
+def gundi_data_sender_client_v2(sender_settings):
+    # Set env vars and initialize the gundi client
+    return GundiDataSenderClient(**sender_settings)
 
 
 @pytest.fixture
@@ -112,6 +126,25 @@ def route_details():
                     'map': {'Leopard': 'leopard_sighting', 'Wilddog': 'wild_dog_sighting'},
                     'default': 'wildlife_sighting_rep', 'provider_field': 'event_details__species',
                     'destination_field': 'event_type'}}}}}}, 'additional': {}
+    }
+
+
+@pytest.fixture
+def observation_request():
+    return {
+        'source': 123,
+        'source_name': 'TEST',
+        'type': 'tracking-device',
+        'recorded_at': '2023-10-02 11:04:49',
+        'location': {
+            'lat': -20.398828,
+            'lon': 14.263916
+        },
+        'additional': {
+            'vehicleId': 555,
+            'speed': 55,
+            'direction': 281
+        }
     }
 
 

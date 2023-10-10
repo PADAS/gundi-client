@@ -1,4 +1,7 @@
 import logging
+import json
+import httpx
+
 from datetime import datetime, timezone, timedelta
 from httpx import (
     AsyncClient,
@@ -17,6 +20,47 @@ from . import auth
 
 logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
+
+
+class GundiDataSenderClient:
+    def __init__(self, integration_api_key: str = None, **kwargs):
+        self.gundi_version = "v2"
+        self.sensors_api_endpoint = (
+            f"{kwargs.get('sensors_api_base_url', settings.SENSORS_API_BASE_URL)}/{self.gundi_version}"
+        )
+        self._api_key = integration_api_key
+
+    async def post_observations(
+            self,
+            data: List[dict]
+    ):
+        apikey = self._api_key
+
+        logger.info(
+            f' -- Posting to routing services --',
+            extra={"integration_api_key": apikey}
+        )
+
+        clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
+        url = f"{self.sensors_api_endpoint}/observations/"
+
+        logger.debug(
+            " -- sending observations. --",
+            extra={
+                "length": len(data),
+                "api": url,
+            },
+        )
+        async with httpx.AsyncClient(timeout=120) as session:
+            client_response = await session.post(
+                url=url,
+                headers={"apikey": apikey},
+                json=clean_batch,
+            )
+
+        client_response.raise_for_status()
+
+        return client_response.json()
 
 
 class GundiClient:
@@ -138,7 +182,7 @@ class GundiClient:
         # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()
-        return data
+        return data.get("api_key")
 
     async def get_traces(self, params: dict):
         headers = await self.get_auth_header()
