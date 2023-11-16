@@ -30,10 +30,13 @@ class GundiDataSenderClient:
         )
         self._api_key = integration_api_key
 
-    async def post_observations(
-            self,
-            data: List[dict]
-    ):
+    async def post_observations(self, data: List[dict]) -> dict:
+        return await self._post_data(data=data, endpoint="observations")
+
+    async def post_events(self, data: List[dict]) -> dict:
+        return await self._post_data(data=data, endpoint="events")
+
+    async def _post_data(self, data: List[dict], endpoint: str) -> dict:
         apikey = self._api_key
 
         logger.info(
@@ -42,15 +45,16 @@ class GundiDataSenderClient:
         )
 
         clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
-        url = f"{self.sensors_api_endpoint}/observations/"
+        url = f"{self.sensors_api_endpoint}/{endpoint}/"
 
         logger.debug(
-            " -- sending observations. --",
+            f" -- sending {endpoint}. --",
             extra={
                 "length": len(data),
                 "api": url,
             },
         )
+
         async with httpx.AsyncClient(timeout=120) as session:
             client_response = await session.post(
                 url=url,
