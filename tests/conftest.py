@@ -130,7 +130,7 @@ def route_details():
 
 
 @pytest.fixture
-def observation_request():
+def observation_payload():
     return {
         'source': 123,
         'source_name': 'TEST',
@@ -146,6 +146,48 @@ def observation_request():
             'direction': 281
         }
     }
+
+
+@pytest.fixture
+def observations_created_response():
+    return [
+        {
+            "object_id": "96422ba3-3ea9-4b0d-8950-850e218e1140",
+            "created_at": "2023-11-16T20:02:08.539777Z"
+        }
+    ]
+
+
+@pytest.fixture
+def event_payload():
+    return {
+        "title": "Animal Detected",
+        "event_type": "wildlife_sighting_rep",
+        "recorded_at":"2023-11-10T13:35-03:00",
+        "location":{
+            "lat":-51.688651,
+            "lon":-72.704446
+        },
+        "event_details":{
+            "site_name":"Camera2M",
+            "species":"lion",
+            "tags":[
+                "adult",
+                "male"
+            ],
+            "animal_count":2
+        }
+    }
+
+
+@pytest.fixture
+def events_created_response():
+    return [
+        {
+            "object_id": "abebe106-3c50-446b-9c98-0b9b503fc900",
+            "created_at": "2023-11-16T19:59:50.612864Z"
+        }
+    ]
 
 
 @pytest.fixture
