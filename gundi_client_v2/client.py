@@ -114,12 +114,27 @@ class GundiClient:
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self._session.__aexit__()
 
-    async def get_access_token(self) -> OAuthToken:
-        if self.cached_token and self.cached_token_expires_at > datetime.now(
-            tz=timezone.utc
-        ):
-            return self.cached_token
+    async def _get(self, url, params=None, headers=None, **kwargs):
+        headers = headers or {}
+        auth_headers = await self.get_auth_header()
+        response = await self._session.get(
+            url,
+            params=params,
+            headers={**auth_headers, **headers},
+            **kwargs,
+        )
+        # Force refresh the token and retry if we get redirected to the login page
+        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+            headers = await self.get_auth_header(force_refresh_token=True)
+            response = await self._session.get(
+                url,
+                params=params,
+                headers=headers,
+                **kwargs,
+            )
+        return response
 
+    async def _refresh_token(self):
         token = await auth.get_access_token(
             session=self._session,
             oauth_token_url=self.oauth_token_url,
@@ -127,75 +142,59 @@ class GundiClient:
             client_secret=self.client_secret,
             audience=self.audience
         )
-
         self.cached_token_expires_at = datetime.now(tz=timezone.utc) + timedelta(
             seconds=token.expires_in - 15
         )  # fudge factor
         self.cached_token = token
         return token
 
-    async def get_auth_header(self) -> dict:
-        token_object = await self.get_access_token()
+    async def get_access_token(self, force_refresh_token=False) -> OAuthToken:
+        if force_refresh_token or not self.cached_token or (
+                self.cached_token and self.cached_token_expires_at > datetime.now(tz=timezone.utc)):
+            return await self._refresh_token()
+        return self.cached_token
+
+    async def get_auth_header(self, force_refresh_token=False) -> dict:
+        token_object = await self.get_access_token(force_refresh_token=force_refresh_token)
         return {
             "authorization": f"{token_object.token_type} {token_object.access_token}"
         }
 
     async def get_connection_details(self, integration_id):
-        headers = await self.get_auth_header()
         url = f"{self.connections_endpoint}/{integration_id}/"
-        response = await self._session.get(
-            url,
-            headers=headers,
-        )
+        response = await self._get(url)
         # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()
         return Connection.parse_obj(data)
 
     async def get_route_details(self, route_id):
-        headers = await self.get_auth_header()
         url = f"{self.routes_endpoint}/{route_id}/"
-        response = await self._session.get(
-            url,
-            headers=headers,
-        )
+        response = await self._get(url)
         # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()
         return Route.parse_obj(data)
 
     async def get_integration_details(self, integration_id):
-        headers = await self.get_auth_header()
         url = f"{self.integrations_endpoint}/{integration_id}/"
-        response = await self._session.get(
-            url,
-            headers=headers,
-        )
+        response = await self._get(url)
         # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()
         return Integration.parse_obj(data)
 
     async def get_integration_api_key(self, integration_id):
-        headers = await self.get_auth_header()
         url = f"{self.integrations_endpoint}/{integration_id}/api-key/"
-        response = await self._session.get(
-            url,
-            headers=headers,
-        )
+        response = await self._get(url)
         # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()
         return data.get("api_key")
 
     async def get_traces(self, params: dict):
-        headers = await self.get_auth_header()
         url = f"{self.traces_endpoint}/"
-        response = await self._session.get(
-            url,
-            params=params,
-            headers=headers,
-        )
+        response = await self._get(url, params=params)
         # ToDo: Add custom exceptions to handle errors
         response.raise_for_status()
         data = response.json()["results"]
