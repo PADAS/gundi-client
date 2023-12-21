@@ -149,8 +149,7 @@ class GundiClient:
         return token
 
     async def get_access_token(self, force_refresh_token=False) -> OAuthToken:
-        if force_refresh_token or not self.cached_token or (
-                self.cached_token and self.cached_token_expires_at > datetime.now(tz=timezone.utc)):
+        if force_refresh_token or not self.cached_token or self.cached_token_expires_at < datetime.now(tz=timezone.utc):
             return await self._refresh_token()
         return self.cached_token
 
