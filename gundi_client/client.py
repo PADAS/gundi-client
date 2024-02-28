@@ -4,6 +4,7 @@ from typing import List, Dict, Any
 from uuid import UUID
 from pydantic import parse_obj_as
 from . import settings
+from . import auth
 from gundi_core.schemas import (
     IntegrationInformation,
     OAuthToken,
@@ -66,41 +67,52 @@ class PortalApi:
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self._session.__aexit__()
 
-    async def get_access_token(self) -> OAuthToken:
-        if self.cached_token and self.cached_token_expires_at > datetime.now(
-            tz=timezone.utc
-        ):
-            return self.cached_token
-
-        logger.debug(
-            f"get_access_token from {self.oauth_token_url} using client_id: {self.client_id}"
+    async def _get(self, url, params=None, headers=None, **kwargs):
+        headers = headers or {}
+        auth_headers = await self.get_auth_header()
+        response = await self._session.get(
+            url,
+            params=params,
+            headers={**auth_headers, **headers},
+            **kwargs,
         )
-        payload = {
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
-            "audience": self.audience,
-            "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-            "scope": "openid",
-        }
-
-        response = await self._session.post(
-            self.oauth_token_url, data=payload
-        )
-
+        # Force refresh the token and retry if we get redirected to the login page
+        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+            headers = await self.get_auth_header(force_refresh_token=True)
+            response = await self._session.get(
+                url,
+                params=params,
+                headers=headers,
+                **kwargs,
+            )
         response.raise_for_status()
-        token = response.json()
-        token = OAuthToken.parse_obj(token)
+        return response.json()
+
+    async def _refresh_token(self):
+        token = await auth.get_access_token(
+            session=self._session,
+            oauth_token_url=self.oauth_token_url,
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            audience=self.audience
+        )
         self.cached_token_expires_at = datetime.now(tz=timezone.utc) + timedelta(
             seconds=token.expires_in - 15
         )  # fudge factor
         self.cached_token = token
         return token
 
-    async def get_auth_header(self) -> dict:
-        token_object = await self.get_access_token()
+    async def get_access_token(self, force_refresh_token=False) -> OAuthToken:
+        if force_refresh_token or not self.cached_token or self.cached_token_expires_at < datetime.now(tz=timezone.utc):
+            return await self._refresh_token()
+        return self.cached_token
+
+    async def get_auth_header(self, force_refresh_token=False) -> dict:
+        token_object = await self.get_access_token(force_refresh_token=force_refresh_token)
         return {
             "authorization": f"{token_object.token_type} {token_object.access_token}"
         }
+
 
     async def get_destinations(
         self, *args, integration_id: str = None, device_id: str = None
@@ -213,9 +225,9 @@ class PortalApi:
                 "Failed to post device to portal (timeout).",
                 extra={**payload},
             )
-        except HTTPStatusError:
+        except HTTPStatusError as e:
             logger.exception(
-                "Failed to post device to portal (HTTP returned error).",
+                f"Failed to post device to portal. HTTP status error: {e.response}.",
                 extra={**payload},
             )
 
@@ -234,16 +246,6 @@ class PortalApi:
         text = response.json()
         logger.info(f"update device_states resp: {response.json()}")
         return text
-
-    async def _get(self, url: str, params=None):
-        headers = await self.get_auth_header()
-        response = await self._session.get(
-            url=url,
-            headers=headers,
-            params=params,
-        )
-        response.raise_for_status()
-        return response.json()
 
     async def get_bridge_integration(self, bridge_id: str):
         return await self._get(
