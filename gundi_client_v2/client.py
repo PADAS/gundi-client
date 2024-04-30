@@ -13,7 +13,7 @@ from typing import List
 from gundi_core.schemas import (
     OAuthToken,
 )
-from gundi_core.schemas.v2 import Connection, Route, Integration, GundiTrace
+from gundi_core.schemas.v2 import Connection, Route, Integration, GundiTrace, IntegrationType
 from . import settings, errors
 from . import auth
 
@@ -134,6 +134,28 @@ class GundiClient:
             )
         return response
 
+    async def _post(self, url, data: dict = None, params=None, headers=None, **kwargs):
+        headers = headers or {}
+        auth_headers = await self.get_auth_header()
+        response = await self._session.post(
+            url,
+            json=data,
+            params=params,
+            headers={**auth_headers, **headers},
+            **kwargs,
+        )
+        # Force refresh the token and retry if we get redirected to the login page
+        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+            headers = await self.get_auth_header(force_refresh_token=True)
+            await self._session.post(
+                url,
+                json=json,
+                params=params,
+                headers={**auth_headers, **headers},
+                **kwargs,
+            )
+        return response
+
     async def _refresh_token(self):
         token = await auth.get_access_token(
             session=self._session,
@@ -198,3 +220,14 @@ class GundiClient:
         response.raise_for_status()
         data = response.json()["results"]
         return parse_obj_as(List[GundiTrace], data)
+
+    async def register_integration_type(self, data: dict):
+        url = f"{self.integrations_endpoint}/types/"
+        response = await self._post(
+            url,
+            data=data,
+        )
+        # ToDo: Add custom exceptions to handle errors
+        response.raise_for_status()
+        data = response.json()
+        return IntegrationType.parse_obj(data)
