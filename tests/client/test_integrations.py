@@ -30,3 +30,27 @@ async def test_get_destination_integration_details(
         assert isinstance(integration, Integration)
         assert integration == Integration.parse_obj(destination_integration_details)
 
+
+@pytest.mark.asyncio
+async def test_get_webhook_integration_details(
+    auth_token_response, webhook_integration_details, gundi_client_v2
+):
+    async with respx.mock(assert_all_called=False) as gundi_portal_mock:
+        # Mock authentication
+        gundi_portal_mock.post(gundi_client_v2.oauth_token_url).respond(
+            status_code=httpx.codes.CREATED,
+            json=auth_token_response
+        )
+        # Mock configuration
+        integration_id = "817d3d4e-5dba-4792-8a30-a87603c5d201"
+        integration_details_url = f"{gundi_client_v2.integrations_endpoint}/{integration_id}/"
+        gundi_portal_mock.get(integration_details_url).respond(
+            status_code=httpx.codes.OK,
+            json=webhook_integration_details
+        )
+        integration = await gundi_client_v2.get_integration_details(
+            integration_id=integration_id
+        )
+        assert isinstance(integration, Integration)
+        assert integration == Integration.parse_obj(webhook_integration_details)
+

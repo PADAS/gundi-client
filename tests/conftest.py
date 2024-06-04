@@ -86,6 +86,228 @@ def destination_integration_details():
                        'last_observation_delivered_at': '2023-03-31T11:20:00+0200'}
             }
 
+@pytest.fixture
+def webhook_integration_details():
+    return {
+        "id": "817d3d4e-5dba-4792-8a30-a87603c5d201",
+        "name": "Webhook Integration Test",
+        "base_url": "",
+        "enabled": True,
+        "type": {
+            "id": "f578b04d-2977-4774-959d-5a914a1a0ca3",
+            "name": "LiquidTech",
+            "value": "liquidtech",
+            "description": "Default type for Liquidtech integration",
+            "actions": [],
+            "webhook": {
+                "id": "c4b524d9-f01e-430f-a6f6-5459d95b5394",
+                "name": "Generic Webhooks",
+                "value": "webhook",
+                "description": "Generic Webhooks Integration with JSON Transformations and hex data",
+                "schema": {
+                    "type": "object",
+                    "title": "Data Transformation",
+                    "required": [
+                        "json_schema",
+                        "jq_filter",
+                        "output_type",
+                        "hex_format",
+                        "hex_data_field"
+                    ],
+                    "properties": {
+                        "jq_filter": {
+                            "type": "string",
+                            "title": "Jq Filter",
+                            "default": ".",
+                            "example": ".",
+                            "description": "JQ filter to transform JSON data to Gundi schema."
+                        },
+                        "hex_format": {
+                            "type": "object",
+                            "title": "Hex Format"
+                        },
+                        "json_schema": {
+                            "type": "object",
+                            "title": "Json Schema"
+                        },
+                        "output_type": {
+                            "type": "string",
+                            "title": "Output Type",
+                            "description": "Output type for the transformed data: 'obv' or 'ev'"
+                        },
+                        "hex_data_field": {
+                            "type": "string",
+                            "title": "Hex Data Field"
+                        }
+                    }
+                }
+            }
+        },
+        "owner": {
+            "id": "a91b400b-482a-4546-8fcb-ee42b01deeb6",
+            "name": "Test Org",
+            "description": ""
+        },
+        "configurations": None,
+        "webhook_configuration": {
+            "id": "c9af3525-7a6f-4611-91e5-0ed19a6c4736",
+            "integration": "817d3d4e-5dba-4792-8a30-a87603c5d201",
+            "webhook": {
+                "id": "c4b524d9-f01e-430f-a6f6-5459d95b5394",
+                "name": "LiquidTech Webhook",
+                "value": "webhook"
+            },
+            "data": {
+                "jq_filter": "{source: .device, title: .device,event_type: \"water_meter_rep\",recorded_at: (.time | tonumber | todateiso8601), location: {lat: 0.0,lon: 0.0},event_details: {}}",
+                "hex_format": {
+                    "fields": [
+                        {
+                            "name": "start_bit",
+                            "format": "B",
+                            "output_type": "int"
+                        },
+                        {
+                            "name": "v",
+                            "format": "I"
+                        },
+                        {
+                            "name": "interval",
+                            "format": "H",
+                            "output_type": "int"
+                        },
+                        {
+                            "name": "meter_state_1",
+                            "format": "B"
+                        },
+                        {
+                            "name": "meter_state_2",
+                            "format": "B",
+                            "bit_fields": [
+                                {
+                                    "name": "meter_batter_alarm",
+                                    "end_bit": 0,
+                                    "start_bit": 0,
+                                    "output_type": "bool"
+                                },
+                                {
+                                    "name": "empty_pipe_alarm",
+                                    "end_bit": 1,
+                                    "start_bit": 1,
+                                    "output_type": "bool"
+                                },
+                                {
+                                    "name": "reverse_flow_alarm",
+                                    "end_bit": 2,
+                                    "start_bit": 2,
+                                    "output_type": "bool"
+                                },
+                                {
+                                    "name": "over_range_alarm",
+                                    "end_bit": 3,
+                                    "start_bit": 3,
+                                    "output_type": "bool"
+                                },
+                                {
+                                    "name": "temp_alarm",
+                                    "end_bit": 4,
+                                    "start_bit": 4,
+                                    "output_type": "bool"
+                                },
+                                {
+                                    "name": "ee_error",
+                                    "end_bit": 5,
+                                    "start_bit": 5,
+                                    "output_type": "bool"
+                                },
+                                {
+                                    "name": "transduce_in_error",
+                                    "end_bit": 6,
+                                    "start_bit": 6,
+                                    "output_type": "bool"
+                                },
+                                {
+                                    "name": "transduce_out_error",
+                                    "end_bit": 7,
+                                    "start_bit": 7,
+                                    "output_type": "bool"
+                                },
+                                {
+                                    "name": "transduce_out_error",
+                                    "end_bit": 7,
+                                    "start_bit": 7,
+                                    "output_type": "bool"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "r1",
+                            "format": "B",
+                            "output_type": "int"
+                        },
+                        {
+                            "name": "r2",
+                            "format": "B",
+                            "output_type": "int"
+                        },
+                        {
+                            "name": "crc",
+                            "format": "B"
+                        }
+                    ],
+                    "byte_order": "<"
+                },
+                "json_schema": {
+                    "type": "object",
+                    "title": "LiquidTechPayload",
+                    "required": [
+                        "device",
+                        "time",
+                        "data"
+                    ],
+                    "properties": {
+                        "data": {
+                            "type": "hex_string",
+                            "title": "Data",
+                            "example": "123456789ABCDEF",
+                            "description": "Hex string data"
+                        },
+                        "time": {
+                            "type": "string",
+                            "title": "Time"
+                        },
+                        "type": {
+                            "type": "string",
+                            "title": "Type"
+                        },
+                        "device": {
+                            "type": "string",
+                            "title": "Device"
+                        },
+                        "hex_format": {
+                            "type": "object",
+                            "title": "Hex Format"
+                        },
+                        "hex_data_field": {
+                            "type": "string",
+                            "title": "Hex Data Field"
+                        }
+                    }
+                },
+                "output_type": "ev",
+                "hex_data_field": "data"
+            }
+        },
+        "additional": {},
+        "default_route": None,
+        "status": {
+            "id": "mockid-b16a-4dbd-ad32-197c58aeef59",
+            "is_healthy": True,
+            "details": "Last observation has been delivered with success.",
+            "observation_delivered_24hrs": 50231,
+            "last_observation_delivered_at": "2023-03-31T11:20:00+0200"
+        }
+    }
+
 
 @pytest.fixture
 def connection_details():
