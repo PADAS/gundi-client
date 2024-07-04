@@ -36,10 +36,10 @@ class GundiDataSenderClient:
     async def post_events(self, data: List[dict]) -> dict:
         return await self._post_data(data=data, endpoint="events")
 
-    async def post_event_attachment(self, event_id: str, attachment: dict) -> dict:
-        return await self._post_data(attachment=attachment, endpoint=f"events/{event_id}/attachments")
+    async def post_event_attachments(self, event_id: str, attachments: List[bytes]) -> dict:
+        return await self._post_data(attachments=attachments, endpoint=f"events/{event_id}/attachments")
 
-    async def _post_data(self, data: List[dict] = None, endpoint: str = None, attachment: dict = None) -> dict:
+    async def _post_data(self, data: List[dict] = None, endpoint: str = None, attachments: List[bytes] = None) -> dict:
         apikey = self._api_key
 
         logger.info(
@@ -58,15 +58,13 @@ class GundiDataSenderClient:
             clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
             request["json"] = clean_batch
 
-        # attachment needs to have the following format:
-        # attachment = {'upload-file': <IMAGE_IN_BYTES>}
-        if attachment:
-            request["files"] = attachment
+        if attachments:
+            request["files"] = [('file', image_binary) for image_binary in attachments]
 
         logger.debug(
             f" -- sending {endpoint}. --",
             extra={
-                "length": len(data or attachment),
+                "length": len(data or attachments),
                 "api": url,
             },
         )

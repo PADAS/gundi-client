@@ -404,9 +404,14 @@ def event_payload():
 
 @pytest.fixture
 def event_attachment_payload():
-    return {
-        'upload-file': b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00x\x00x\x00\x00\xff\xdb\x00C\x00\x02\x01\x01\x02'
-    }
+    # Representation of an image in binary format
+    return b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00x\x00x\x00\x00\xff\xdb\x00C\x00\x02\x01\x01\x02'
+
+
+@pytest.fixture
+def another_event_attachment_payload():
+    # Representation of an image in binary format
+    return b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x06\x01\x01\x00x\x00x\x01\x00\xff\xd5\x00C\x00\x98\x01\x01\x56'
 
 
 @pytest.fixture
@@ -415,6 +420,17 @@ def events_created_response():
         {
             "object_id": "abebe106-3c50-446b-9c98-0b9b503fc900",
             "created_at": "2023-11-16T19:59:50.612864Z"
+        }
+    ]
+
+
+@pytest.fixture
+def event_attachment_created_response():
+    return [
+        {
+            "object_id": "af8e2946-bad6-4d02-8a26-99dde34bd9fa",
+            "created_at": "2024-07-04T13:15:26.559894Z",
+            "updated_at": None
         }
     ]
 
