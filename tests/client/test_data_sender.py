@@ -35,3 +35,21 @@ async def test_post_events(
         response = await gundi_data_sender_client_v2.post_events([event_payload])
         assert response == events_created_response
         assert events_api_mock.called
+
+
+@pytest.mark.asyncio
+async def test_post_event_attachment(
+    gundi_data_sender_client_v2, event_attachment_payload, events_created_response
+):
+    async with respx.mock(assert_all_called=False) as gundi_api_mock:
+        # Mock API response
+        event_id = "dummy-123"
+        events_endpoint = f"{gundi_data_sender_client_v2.sensors_api_endpoint}/events/{event_id}/attachments/"
+        events_api_mock = gundi_api_mock.post(events_endpoint).respond(
+            status_code=httpx.codes.CREATED,
+            json=events_created_response
+        )
+
+        response = await gundi_data_sender_client_v2.post_event_attachment(event_id, event_attachment_payload)
+        assert response == events_created_response
+        assert events_api_mock.called

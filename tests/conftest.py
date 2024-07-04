@@ -403,6 +403,13 @@ def event_payload():
 
 
 @pytest.fixture
+def event_attachment_payload():
+    return {
+        'upload-file': b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00x\x00x\x00\x00\xff\xdb\x00C\x00\x02\x01\x01\x02'
+    }
+
+
+@pytest.fixture
 def events_created_response():
     return [
         {

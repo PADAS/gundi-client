@@ -1,2 +1,2 @@
-from .client import GundiClient
+from .client import GundiClient, GundiDataSenderClient
 from . import errors
