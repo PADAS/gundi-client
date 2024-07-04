@@ -36,7 +36,10 @@ class GundiDataSenderClient:
     async def post_events(self, data: List[dict]) -> dict:
         return await self._post_data(data=data, endpoint="events")
 
-    async def _post_data(self, data: List[dict], endpoint: str) -> dict:
+    async def post_event_attachments(self, event_id: str, attachments: List[bytes]) -> dict:
+        return await self._post_data(attachments=attachments, endpoint=f"events/{event_id}/attachments")
+
+    async def _post_data(self, data: List[dict] = None, endpoint: str = None, attachments: List[bytes] = None) -> dict:
         apikey = self._api_key
 
         logger.info(
@@ -44,23 +47,30 @@ class GundiDataSenderClient:
             extra={"integration_api_key": apikey}
         )
 
-        clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
         url = f"{self.sensors_api_endpoint}/{endpoint}/"
+
+        request = dict(
+            url=url,
+            headers={"apikey": apikey}
+        )
+
+        if data:
+            clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
+            request["json"] = clean_batch
+
+        if attachments:
+            request["files"] = [('file', image_binary) for image_binary in attachments]
 
         logger.debug(
             f" -- sending {endpoint}. --",
             extra={
-                "length": len(data),
+                "length": len(data or attachments),
                 "api": url,
             },
         )
 
         async with httpx.AsyncClient(timeout=120) as session:
-            client_response = await session.post(
-                url=url,
-                headers={"apikey": apikey},
-                json=clean_batch,
-            )
+            client_response = await session.post(**request)
 
         client_response.raise_for_status()
 
