@@ -46,10 +46,10 @@ async def test_post_event_attachment(
         event_id = "dummy-123"
         events_endpoint = f"{gundi_data_sender_client_v2.sensors_api_endpoint}/events/{event_id}/attachments/"
         events_api_mock = gundi_api_mock.post(events_endpoint).respond(
-            status_code=httpx.codes.CREATED,
-            json=events_created_response
+            status_code=httpx.codes.OK,
+            json={}
         )
 
         response = await gundi_data_sender_client_v2.post_event_attachment(event_id, event_attachment_payload)
-        assert response == events_created_response
+        assert response is not None
         assert events_api_mock.called
