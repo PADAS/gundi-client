@@ -39,7 +39,7 @@ async def test_post_events(
 
 @pytest.mark.asyncio
 async def test_post_event_attachment(
-    gundi_data_sender_client_v2, event_attachment_payload, events_created_response
+    gundi_data_sender_client_v2, event_attachment_payload
 ):
     async with respx.mock(assert_all_called=False) as gundi_api_mock:
         # Mock API response
