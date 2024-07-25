@@ -20,7 +20,7 @@ environs = "^9.5"
 pydantic = "^1.10"
 httpx = "^0.24.0"
 respx = "^0.20.1"
-gundi-core = "^1.4.0"
+gundi-core = "^1.5.8"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
