@@ -48,13 +48,13 @@ class PortalApi:
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
         self.max_retries = kwargs.get('max_http_retries', self.DEFAULT_CONNECTION_RETRIES)
-        transport = AsyncHTTPTransport(retries=self.max_retries)
+        transport = AsyncHTTPTransport(retries=self.max_retries, verify=settings.CDIP_ADMIN_SSL_VERIFY)
 
         connect_timeout = kwargs.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT_SECONDS)
         data_timeout = kwargs.get('data_timeout', self.DEFAULT_DATA_TIMEOUT_SECONDS)
         timeout = Timeout(data_timeout, connect=connect_timeout, pool=connect_timeout)
 
-        self._session = AsyncClient(transport=transport, timeout=timeout, verify=settings.CDIP_ADMIN_SSL_VERIFY)
+        self._session = AsyncClient(transport=transport, timeout=timeout)
 
     async def close(self):
         await self._session.aclose()
