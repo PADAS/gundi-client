@@ -37,7 +37,7 @@ class GundiDataSenderClient:
         return await self._post_data(data=data, endpoint="events")
 
     async def update_event(self, event_id: str, data: dict) -> dict:
-        return await self._update_data(data=data, endpoint=f"events/{event_id}/")
+        return await self._update_data(data=data, endpoint=f"events/{event_id}")
 
     async def post_event_attachments(self, event_id: str, attachments: List[tuple]) -> dict:
         return await self._post_data(attachments=attachments, endpoint=f"events/{event_id}/attachments")
