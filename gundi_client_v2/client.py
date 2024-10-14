@@ -85,7 +85,7 @@ class GundiDataSenderClient:
         apikey = self._api_key
 
         logger.info(
-            f' -- Updating event... --',
+            f' -- Updating data... --',
             extra={"integration_api_key": apikey}
         )
 
