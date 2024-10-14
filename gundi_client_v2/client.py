@@ -36,6 +36,9 @@ class GundiDataSenderClient:
     async def post_events(self, data: List[dict]) -> dict:
         return await self._post_data(data=data, endpoint="events")
 
+    async def update_event(self, event_id: str, data: dict) -> dict:
+        return await self._update_data(data=data, endpoint=f"events/{event_id}/")
+
     async def post_event_attachments(self, event_id: str, attachments: List[tuple]) -> dict:
         return await self._post_data(attachments=attachments, endpoint=f"events/{event_id}/attachments")
 
@@ -73,6 +76,39 @@ class GundiDataSenderClient:
 
         async with httpx.AsyncClient(timeout=120) as session:
             client_response = await session.post(**request)
+
+        client_response.raise_for_status()
+
+        return client_response.json()
+
+    async def _update_data(self, data: dict = None, endpoint: str = None) -> dict:
+        apikey = self._api_key
+
+        logger.info(
+            f' -- Updating event... --',
+            extra={"integration_api_key": apikey}
+        )
+
+        url = f"{self.sensors_api_endpoint}/{endpoint}/"
+
+        request = dict(
+            url=url,
+            headers={"apikey": apikey}
+        )
+
+        clean_batch = [json.loads(json.dumps(data, default=str))]
+        request["json"] = clean_batch
+
+        logger.debug(
+            f" -- sending {endpoint}. --",
+            extra={
+                "length": len(clean_batch),
+                "api": url,
+            },
+        )
+
+        async with httpx.AsyncClient(timeout=120) as session:
+            client_response = await session.patch(**request)
 
         client_response.raise_for_status()
 
