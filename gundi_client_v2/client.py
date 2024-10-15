@@ -96,7 +96,7 @@ class GundiDataSenderClient:
             headers={"apikey": apikey}
         )
 
-        clean_batch = [json.loads(json.dumps(data, default=str))]
+        clean_batch = json.loads(json.dumps(data, default=str))
         request["json"] = clean_batch
 
         logger.debug(
