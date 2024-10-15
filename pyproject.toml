@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gundi-client-v2"
-version = "2.3.6"
+version = "2.3.8"
 description = "An async client for Gundi's API"
 authors = [
     "Chris Doehring <chrisdo@earthranger.com>",
