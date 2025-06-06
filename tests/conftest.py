@@ -403,6 +403,28 @@ def event_payload():
 
 
 @pytest.fixture
+def message_payload():
+    return {
+        "sender": "2075752244",
+        "recipients": ["admin@sitex.pamdas.org"],
+        "text": "Assistance needed at the site.",
+        "recorded_at": "2025-06-06 09:50:10-0300",
+        "location": {
+            "latitude": -51.689,
+            "longitude": -72.717
+        },
+        "additional": {
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 1,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        }
+    }
+
+
+@pytest.fixture
 def event_attachment_payload():
     # Representation of an image in binary format
     return ("file1.png", b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00x\x00x\x00\x00\xff\xdb\x00C\x00\x02\x01\x01\x02')
@@ -423,6 +445,13 @@ def events_created_response():
         }
     ]
 
+@pytest.fixture
+def messages_created_response():
+    return {
+        "object_id": "998ac464-07d1-45af-8c5a-701d5171cc99",
+        "created_at": "2025-06-06T18:48:27.207038Z",
+        "updated_at": None
+    }
 
 @pytest.fixture
 def event_attachment_created_response():
