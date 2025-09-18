@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gundi-client-v2"
-version = "2.4.0"
+version = "2.4.1"
 description = "An async client for Gundi's API"
 authors = [
     "Chris Doehring <chrisdo@earthranger.com>",
@@ -18,7 +18,7 @@ packages = [
 python = "^3.7"
 environs = "^9.5"
 pydantic = "^1.10"
-httpx = "^0.24.0"
+httpx = "^0.28.0"
 respx = "^0"
 gundi-core = "^1.5.8"
 
