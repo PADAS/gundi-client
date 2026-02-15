@@ -80,7 +80,13 @@ class GundiDataSenderClient:
         async with httpx.AsyncClient(timeout=120) as session:
             client_response = await session.post(**request)
 
-        client_response.raise_for_status()
+        try:
+            client_response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise errors.GundiAPIError(
+                status_code=e.response.status_code,
+                detail=e.response.text,
+            ) from e
 
         return client_response.json()
 
@@ -113,7 +119,13 @@ class GundiDataSenderClient:
         async with httpx.AsyncClient(timeout=120) as session:
             client_response = await session.patch(**request)
 
-        client_response.raise_for_status()
+        try:
+            client_response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise errors.GundiAPIError(
+                status_code=e.response.status_code,
+                detail=e.response.text,
+            ) from e
 
         return client_response.json()
 
@@ -136,11 +148,17 @@ class GundiClient:
         self.traces_endpoint = f"{self.api_base_path}/traces"
 
         # Authentication settings
+        # New oauth_* names preferred; keycloak_* still accepted for backward compatibility
         self.ssl_verify = kwargs.get("use_ssl", settings.GUNDI_API_SSL_VERIFY)
-        self.client_id = kwargs.get("keycloak_client_id", settings.KEYCLOAK_CLIENT_ID)
-        self.client_secret = kwargs.get("keycloak_client_secret", settings.KEYCLOAK_CLIENT_SECRET)
+        self.client_id = kwargs.get("oauth_client_id",
+                                    kwargs.get("keycloak_client_id", settings.KEYCLOAK_CLIENT_ID))
+        self.client_secret = kwargs.get("oauth_client_secret",
+                                        kwargs.get("keycloak_client_secret", settings.KEYCLOAK_CLIENT_SECRET))
+        self.username = kwargs.get("username", settings.GUNDI_USERNAME)
+        self.password = kwargs.get("password", settings.GUNDI_PASSWORD)
         self.oauth_token_url = kwargs.get("oauth_token_url", settings.OAUTH_TOKEN_URL)
-        self.audience = kwargs.get("keycloak_audience", settings.KEYCLOAK_AUDIENCE)
+        self.audience = kwargs.get("oauth_audience",
+                                   kwargs.get("keycloak_audience", settings.KEYCLOAK_AUDIENCE))
         self.cached_token = None
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
@@ -197,10 +215,10 @@ class GundiClient:
         )
         # Force refresh the token and retry if we get redirected to the login page
         if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
-            headers = await self.get_auth_header(force_refresh_token=True)
-            await self._session.post(
+            auth_headers = await self.get_auth_header(force_refresh_token=True)
+            response = await self._session.post(
                 url,
-                json=json,
+                json=data,
                 params=params,
                 headers={**auth_headers, **headers},
                 **kwargs,
@@ -208,13 +226,32 @@ class GundiClient:
         return response
 
     async def _refresh_token(self):
-        token = await auth.get_access_token(
-            session=self._session,
-            oauth_token_url=self.oauth_token_url,
-            client_id=self.client_id,
-            client_secret=self.client_secret,
-            audience=self.audience
-        )
+        try:
+            if self.username and self.password:
+                token = await auth.get_access_token_password_grant(
+                    session=self._session,
+                    oauth_token_url=self.oauth_token_url,
+                    client_id=self.client_id,
+                    username=self.username,
+                    password=self.password,
+                    audience=self.audience,
+                )
+            elif self.client_id and self.client_secret:
+                token = await auth.get_access_token(
+                    session=self._session,
+                    oauth_token_url=self.oauth_token_url,
+                    client_id=self.client_id,
+                    client_secret=self.client_secret,
+                    audience=self.audience,
+                )
+            else:
+                raise errors.AuthenticationError(
+                    "No credentials configured. Provide username/password or client_id/client_secret."
+                )
+        except httpx.HTTPStatusError as e:
+            raise errors.AuthenticationError(
+                f"Failed to obtain access token: {e.response.status_code}"
+            ) from e
         self.cached_token_expires_at = datetime.now(tz=timezone.utc) + timedelta(
             seconds=token.expires_in - 15
         )  # fudge factor
@@ -232,43 +269,68 @@ class GundiClient:
             "authorization": f"{token_object.token_type} {token_object.access_token}"
         }
 
+    @staticmethod
+    def _raise_for_status(response):
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise errors.GundiAPIError(
+                status_code=e.response.status_code,
+                detail=e.response.text,
+            ) from e
+
+    @staticmethod
+    def _parse_list_response(data, model):
+        if isinstance(data, list):
+            return parse_obj_as(List[model], data)
+        if isinstance(data, dict) and "results" in data:
+            return parse_obj_as(List[model], data["results"])
+        return [model.parse_obj(data)]
+
+    async def get_connections(self, params: dict = None) -> List[Connection]:
+        url = f"{self.connections_endpoint}/"
+        response = await self._get(url, params=params)
+        self._raise_for_status(response)
+        return self._parse_list_response(response.json(), Connection)
+
     async def get_connection_details(self, integration_id):
         url = f"{self.connections_endpoint}/{integration_id}/"
         response = await self._get(url)
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()
         return Connection.parse_obj(data)
 
     async def get_route_details(self, route_id):
         url = f"{self.routes_endpoint}/{route_id}/"
         response = await self._get(url)
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()
         return Route.parse_obj(data)
+
+    async def get_integrations(self, params: dict = None) -> List[Integration]:
+        url = f"{self.integrations_endpoint}/"
+        response = await self._get(url, params=params)
+        self._raise_for_status(response)
+        return self._parse_list_response(response.json(), Integration)
 
     async def get_integration_details(self, integration_id):
         url = f"{self.integrations_endpoint}/{integration_id}/"
         response = await self._get(url)
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()
         return Integration.parse_obj(data)
 
     async def get_integration_api_key(self, integration_id):
         url = f"{self.integrations_endpoint}/{integration_id}/api-key/"
         response = await self._get(url)
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()
         return data.get("api_key")
 
     async def get_traces(self, params: dict):
         url = f"{self.traces_endpoint}/"
         response = await self._get(url, params=params)
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()["results"]
         return parse_obj_as(List[GundiTrace], data)
 
@@ -278,7 +340,6 @@ class GundiClient:
             url,
             data=data,
         )
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()
         return IntegrationType.parse_obj(data)
