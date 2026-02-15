@@ -151,14 +151,14 @@ class GundiClient:
         # New oauth_* names preferred; keycloak_* still accepted for backward compatibility
         self.ssl_verify = kwargs.get("use_ssl", settings.GUNDI_API_SSL_VERIFY)
         self.client_id = kwargs.get("oauth_client_id",
-                                    kwargs.get("keycloak_client_id", settings.KEYCLOAK_CLIENT_ID))
+                                    kwargs.get("keycloak_client_id", settings.OAUTH_CLIENT_ID))
         self.client_secret = kwargs.get("oauth_client_secret",
-                                        kwargs.get("keycloak_client_secret", settings.KEYCLOAK_CLIENT_SECRET))
+                                        kwargs.get("keycloak_client_secret", settings.OAUTH_CLIENT_SECRET))
         self.username = kwargs.get("username", settings.GUNDI_USERNAME)
         self.password = kwargs.get("password", settings.GUNDI_PASSWORD)
         self.oauth_token_url = kwargs.get("oauth_token_url", settings.OAUTH_TOKEN_URL)
         self.audience = kwargs.get("oauth_audience",
-                                   kwargs.get("keycloak_audience", settings.KEYCLOAK_AUDIENCE))
+                                   kwargs.get("keycloak_audience", settings.OAUTH_AUDIENCE))
         self.cached_token = None
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
