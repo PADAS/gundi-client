@@ -9,7 +9,7 @@ from httpx import (
     Timeout,
 )
 from pydantic import parse_obj_as
-from typing import List
+from typing import AsyncGenerator, List
 from gundi_core.schemas import (
     OAuthToken,
 )
@@ -307,11 +307,24 @@ class GundiClient:
         data = response.json()
         return Route.parse_obj(data)
 
-    async def get_integrations(self, params: dict = None) -> List[Integration]:
+    async def get_integrations(self, params: dict = None) -> AsyncGenerator[Integration, None]:
         url = f"{self.integrations_endpoint}/"
-        response = await self._get(url, params=params)
-        self._raise_for_status(response)
-        return self._parse_list_response(response.json(), Integration)
+        while url:
+            response = await self._get(url, params=params)
+            self._raise_for_status(response)
+            data = response.json()
+            params = None  # next URL carries query params
+            if isinstance(data, list):
+                for item in parse_obj_as(List[Integration], data):
+                    yield item
+                return
+            if isinstance(data, dict) and "results" in data:
+                for item in parse_obj_as(List[Integration], data["results"]):
+                    yield item
+                url = data.get("next") or ""
+                continue
+            yield Integration.parse_obj(data)
+            return
 
     async def get_integration_details(self, integration_id):
         url = f"{self.integrations_endpoint}/{integration_id}/"
