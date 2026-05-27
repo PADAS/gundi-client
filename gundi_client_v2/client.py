@@ -136,11 +136,15 @@ class GundiClient:
         self.traces_endpoint = f"{self.api_base_path}/traces"
 
         # Authentication settings
+        # New oauth_* names preferred; keycloak_* still accepted for backward compatibility
         self.ssl_verify = kwargs.get("use_ssl", settings.GUNDI_API_SSL_VERIFY)
-        self.client_id = kwargs.get("keycloak_client_id", settings.KEYCLOAK_CLIENT_ID)
-        self.client_secret = kwargs.get("keycloak_client_secret", settings.KEYCLOAK_CLIENT_SECRET)
+        self.client_id = kwargs.get("oauth_client_id",
+                                    kwargs.get("keycloak_client_id", settings.OAUTH_CLIENT_ID))
+        self.client_secret = kwargs.get("oauth_client_secret",
+                                        kwargs.get("keycloak_client_secret", settings.OAUTH_CLIENT_SECRET))
         self.oauth_token_url = kwargs.get("oauth_token_url", settings.OAUTH_TOKEN_URL)
-        self.audience = kwargs.get("keycloak_audience", settings.KEYCLOAK_AUDIENCE)
+        self.audience = kwargs.get("oauth_audience",
+                                   kwargs.get("keycloak_audience", settings.OAUTH_AUDIENCE))
         self.cached_token = None
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
@@ -176,11 +180,11 @@ class GundiClient:
         )
         # Force refresh the token and retry if we get redirected to the login page
         if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
-            headers = await self.get_auth_header(force_refresh_token=True)
+            auth_headers = await self.get_auth_header(force_refresh_token=True)
             response = await self._session.get(
                 url,
                 params=params,
-                headers=headers,
+                headers={**auth_headers, **headers},
                 **kwargs,
             )
         return response
@@ -197,10 +201,10 @@ class GundiClient:
         )
         # Force refresh the token and retry if we get redirected to the login page
         if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
-            headers = await self.get_auth_header(force_refresh_token=True)
-            await self._session.post(
+            auth_headers = await self.get_auth_header(force_refresh_token=True)
+            response = await self._session.post(
                 url,
-                json=json,
+                json=data,
                 params=params,
                 headers={**auth_headers, **headers},
                 **kwargs,
