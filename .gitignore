@@ -131,3 +131,10 @@ dmypy.json
 # Pycharm
 .idea/
 
+
+# Added by ggshield
+.cache_ggshield
+
+# OS / editor junk
+.DS_Store
+.vscode/
