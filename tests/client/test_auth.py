@@ -57,6 +57,15 @@ async def test_post_retries_on_login_redirect(auth_token_response, gundi_client_
         assert result == IntegrationType.parse_obj(integration_type_payload)
 
 
+def test_keycloak_settings_aliases_preserved():
+    # The pre-rename module constants must remain importable as aliases of the OAUTH_* values.
+    from gundi_client_v2 import settings
+    assert settings.KEYCLOAK_ISSUER == settings.OAUTH_ISSUER
+    assert settings.KEYCLOAK_CLIENT_ID == settings.OAUTH_CLIENT_ID
+    assert settings.KEYCLOAK_CLIENT_SECRET == settings.OAUTH_CLIENT_SECRET
+    assert settings.KEYCLOAK_AUDIENCE == settings.OAUTH_AUDIENCE
+
+
 @pytest.mark.asyncio
 async def test_keycloak_kwargs_backward_compatible():
     client = GundiClient(
