@@ -1,0 +1,79 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+# `id-token: write` is required for PyPI Trusted Publishing (OIDC).
+# `contents: write` is required for the GitHub Release upload step.
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    # Pin to a named environment so the PyPI Trusted Publisher config can
+    # be scoped to `pypi` and PRs from forks cannot trigger a release.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/gundi-client-v2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        # uv sync installs the project plus the `dev` dependency group by default.
+        run: uv sync
+
+      - name: Run tests
+        # Gate the release on the test suite passing against the tagged
+        # commit. Without this, a broken tag would still ship to PyPI.
+        run: uv run pytest -q
+
+      - name: Verify package version matches tag
+        # The package version comes from gundi_client_v2/__init__.py via
+        # hatchling's dynamic version. Make sure the pushed tag matches
+        # it, otherwise the wheel would ship under a version that doesn't
+        # reflect the tag.
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          pkg_version=$(uv run python -c "from gundi_client_v2 import __version__; print(__version__)")
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "::error::Tag ($tag_version) and __version__ ($pkg_version) differ"
+            exit 1
+          fi
+          echo "Tag and package both at $pkg_version"
+
+      - name: Build wheel and sdist
+        run: uv build
+
+      - name: Show built artifacts
+        run: ls -la dist/
+
+      - name: Publish to PyPI
+        # Trusted Publisher (OIDC) — no API token. Requires a one-time
+        # config on pypi.org: pypi.org/manage/account/publishing/ →
+        # add a trusted publisher for `gundi-client-v2` pointing at
+        # this repo, workflow `release.yml`, environment `pypi`.
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            dist/*
