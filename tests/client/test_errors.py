@@ -3,7 +3,6 @@ import pytest
 import respx
 
 from gundi_client_v2 import errors
-from gundi_client_v2.client import GundiDataSenderClient
 
 
 @pytest.mark.asyncio
