@@ -11,11 +11,19 @@ else:
     # Default behavior
     env.read_env()
 
-KEYCLOAK_ISSUER = env.str("KEYCLOAK_ISSUER", None)
-OAUTH_TOKEN_URL = f"{KEYCLOAK_ISSUER}/protocol/openid-connect/token"
-KEYCLOAK_CLIENT_ID = env.str("KEYCLOAK_CLIENT_ID", None)
-KEYCLOAK_CLIENT_SECRET = env.str("KEYCLOAK_CLIENT_SECRET", None)
-KEYCLOAK_AUDIENCE = env.str("KEYCLOAK_AUDIENCE", None)
+# OAuth settings — OAUTH_* preferred; KEYCLOAK_* accepted for backward compatibility
+OAUTH_ISSUER = env.str("OAUTH_ISSUER", env.str("KEYCLOAK_ISSUER", None))
+OAUTH_TOKEN_URL = f"{OAUTH_ISSUER}/protocol/openid-connect/token" if OAUTH_ISSUER else None
+OAUTH_CLIENT_ID = env.str("OAUTH_CLIENT_ID", env.str("KEYCLOAK_CLIENT_ID", None))
+OAUTH_CLIENT_SECRET = env.str("OAUTH_CLIENT_SECRET", env.str("KEYCLOAK_CLIENT_SECRET", None))
+OAUTH_AUDIENCE = env.str("OAUTH_AUDIENCE", env.str("KEYCLOAK_AUDIENCE", None))
+
+# Backward-compatible aliases for the pre-rename setting names. Code importing
+# gundi_client_v2.settings.KEYCLOAK_* keeps working; these mirror the OAUTH_* values.
+KEYCLOAK_ISSUER = OAUTH_ISSUER
+KEYCLOAK_CLIENT_ID = OAUTH_CLIENT_ID
+KEYCLOAK_CLIENT_SECRET = OAUTH_CLIENT_SECRET
+KEYCLOAK_AUDIENCE = OAUTH_AUDIENCE
 
 GUNDI_API_BASE_URL = env.str("GUNDI_API_BASE_URL", None)
 GUNDI_API_SSL_VERIFY = env.bool("GUNDI_API_SSL_VERIFY", True)
