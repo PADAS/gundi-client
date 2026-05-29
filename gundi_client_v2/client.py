@@ -224,23 +224,27 @@ class GundiClient:
             and self.cached_token_refresh_expires_at > now
         ):
             try:
-                token = await auth.refresh_access_token(
+                token, refresh_rotated = await auth.refresh_access_token(
                     session=self._session,
                     oauth_token_url=self.oauth_token_url,
                     client_id=self.client_id,
                     refresh_token=self.cached_token.refresh_token,
+                    fallback=self.cached_token,
                     # Public/password clients must not send a secret on refresh.
                     client_secret=None if (self.username and self.password) else self.client_secret,
                     scope=self.scope,
                 )
-                self._store_token(token)
+                self._store_token(token, refresh_rotated=refresh_rotated)
                 return token
             except errors.AuthenticationError:
                 logger.info("Refresh-token grant failed; falling back to full re-authentication.")
                 self.cached_token_refresh_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
         # 2. Full authentication. Password grant wins when user credentials are present.
-        if self.username and self.password:
+        # A client_id is required for every grant we support, so guard the password
+        # branch on it too — otherwise we'd send a half-formed request and let the IdP
+        # reject it remotely instead of failing locally with a clear configuration error.
+        if self.username and self.password and self.client_id:
             logger.debug("Authenticating via password grant.")
             token = await auth.get_access_token_password_grant(
                 session=self._session,
@@ -263,17 +267,23 @@ class GundiClient:
             )
         else:
             raise errors.AuthenticationError(
-                "No credentials configured. Provide username/password or client_id/client_secret."
+                "No credentials configured. Provide a client_id with either "
+                "username/password (public client) or client_secret (confidential client)."
             )
         self._store_token(token)
         return token
 
-    def _store_token(self, token):
+    def _store_token(self, token, *, refresh_rotated=True):
         # OAuthToken (gundi-core) always carries access + refresh fields on a successful parse.
+        # ``refresh_rotated`` is False only when this token came from a refresh-grant response
+        # that omitted a new refresh_token (RFC 6749 §6) — in that case we preserve the
+        # existing cached_token_refresh_expires_at because the cached refresh token is still
+        # valid for its original lifetime.
         now = datetime.now(tz=timezone.utc)
         self.cached_token = token
         self.cached_token_expires_at = now + timedelta(seconds=self._expiry_with_buffer(token.expires_in))
-        self.cached_token_refresh_expires_at = now + timedelta(seconds=self._expiry_with_buffer(token.refresh_expires_in))
+        if refresh_rotated:
+            self.cached_token_refresh_expires_at = now + timedelta(seconds=self._expiry_with_buffer(token.refresh_expires_in))
 
     @staticmethod
     def _expiry_with_buffer(lifetime_seconds, buffer_seconds=15):

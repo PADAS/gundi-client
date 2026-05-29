@@ -24,13 +24,18 @@ def _extract_oauth_error(response):
     return f"Token request failed: HTTP {status} ({error})"
 
 
-async def _token_request(session, oauth_token_url, payload) -> OAuthToken:
+async def _post_token(session, oauth_token_url, payload) -> dict:
+    """POST to the token endpoint; raise AuthenticationError on non-2xx."""
     response = await session.post(oauth_token_url, data=payload)
     try:
         response.raise_for_status()
     except httpx.HTTPStatusError as e:
         raise AuthenticationError(_extract_oauth_error(e.response)) from e
-    return OAuthToken.parse_obj(response.json())
+    return response.json()
+
+
+async def _token_request(session, oauth_token_url, payload) -> OAuthToken:
+    return OAuthToken.parse_obj(await _post_token(session, oauth_token_url, payload))
 
 
 async def get_access_token(session, oauth_token_url, client_id, client_secret, audience=None, scope="openid"):
@@ -62,7 +67,24 @@ async def get_access_token_password_grant(session, oauth_token_url, client_id, u
     return await _token_request(session, oauth_token_url, payload)
 
 
-async def refresh_access_token(session, oauth_token_url, client_id, refresh_token, client_secret=None, scope="openid"):
+async def refresh_access_token(
+    session,
+    oauth_token_url,
+    client_id,
+    refresh_token,
+    fallback: OAuthToken,
+    client_secret=None,
+    scope="openid",
+):
+    """Exchange a refresh_token for a new access token (RFC 6749 §6).
+
+    Returns a tuple ``(token, refresh_rotated)``. ``refresh_rotated`` is True
+    when the IdP issued a new refresh_token in the response and False when it
+    omitted one (RFC 6749 §6 makes the new refresh_token OPTIONAL). When the
+    server omits it the cached refresh_token/refresh_expires_in from
+    ``fallback`` are reused so the caller can keep its existing refresh
+    metadata and the user's credentials are not re-transmitted.
+    """
     logger.debug(f"refresh_access_token from {oauth_token_url} using client_id: {client_id}")
     payload = {
         "client_id": client_id,
@@ -72,4 +94,9 @@ async def refresh_access_token(session, oauth_token_url, client_id, refresh_toke
     }
     if client_secret:
         payload["client_secret"] = client_secret
-    return await _token_request(session, oauth_token_url, payload)
+    body = await _post_token(session, oauth_token_url, payload)
+    refresh_rotated = "refresh_token" in body
+    # Backfill missing refresh fields before constructing OAuthToken (which requires them).
+    body.setdefault("refresh_token", fallback.refresh_token)
+    body.setdefault("refresh_expires_in", fallback.refresh_expires_in)
+    return OAuthToken.parse_obj(body), refresh_rotated

@@ -193,3 +193,55 @@ async def test_error_body_non_json_falls_back_to_status():
         with pytest.raises(errors.AuthenticationError) as exc:
             await client.get_access_token()
         assert "503" in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_refresh_preserves_cached_refresh_token_when_omitted(auth_token_response):
+    # RFC 6749 §6: the new refresh_token is OPTIONAL on a refresh response. When the
+    # IdP omits it, the cached refresh_token and its expiry must be preserved (and the
+    # user's password must NOT be re-sent).
+    client = _public_password_client()
+    partial_refresh_response = {
+        "access_token": "new-access-token-value",
+        "expires_in": auth_token_response["expires_in"],
+        "token_type": "Bearer",
+    }
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL)
+        route.side_effect = [
+            httpx.Response(httpx.codes.OK, json=auth_token_response),       # initial password grant
+            httpx.Response(httpx.codes.OK, json=partial_refresh_response),  # refresh: no refresh_token
+        ]
+        await client.get_access_token()
+        original_refresh_token = client.cached_token.refresh_token
+        original_refresh_expires_at = client.cached_token_refresh_expires_at
+
+        await client.get_access_token(force_refresh_token=True)
+
+        # The refresh grant fired exactly once — no silent fall-through to a second full auth.
+        assert route.call_count == 2
+        assert _body(route, 1)["grant_type"] == ["refresh_token"]
+        # The user's password was NOT re-sent on the refresh.
+        assert "password" not in _body(route, 1)
+        # Access token rotated to the new value from the partial response.
+        assert client.cached_token.access_token == "new-access-token-value"
+        # Cached refresh token + its expiry are preserved across the partial refresh.
+        assert client.cached_token.refresh_token == original_refresh_token
+        assert client.cached_token_refresh_expires_at == original_refresh_expires_at
+
+
+@pytest.mark.asyncio
+async def test_password_grant_requires_client_id():
+    # username/password without a client_id must fail locally with a clear configuration
+    # error rather than firing a half-formed token request the IdP would reject.
+    client = GundiClient(
+        oauth_token_url=TOKEN_URL,
+        base_url="https://api.fakeportal.com",
+        username="alice",
+        password="s3cret",
+    )
+    client.client_id = None
+    client.client_secret = None
+    with pytest.raises(errors.AuthenticationError) as exc:
+        await client.get_access_token()
+    assert "client_id" in str(exc.value)
