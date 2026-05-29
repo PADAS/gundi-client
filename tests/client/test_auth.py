@@ -57,6 +57,33 @@ async def test_post_retries_on_login_redirect(auth_token_response, gundi_client_
         assert result == IntegrationType.parse_obj(integration_type_payload)
 
 
+@pytest.mark.asyncio
+async def test_get_retries_on_login_redirect_preserves_custom_headers(
+    auth_token_response, gundi_client_v2
+):
+    # The _get 302-retry must merge the refreshed Authorization header with any
+    # caller-supplied headers (regression guard for the headers={**auth_headers, **headers} fix).
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.post(gundi_client_v2.oauth_token_url).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        target_url = f"{gundi_client_v2.connections_endpoint}/some-id/"
+        route = mock.get(target_url)
+        route.side_effect = [
+            httpx.Response(
+                status_code=302,
+                headers={"location": "https://cdip-auth.pamdas.org/auth/realms/x/protocol/openid-connect/auth?response_type=code"},
+            ),
+            httpx.Response(status_code=httpx.codes.OK, json={}),
+        ]
+        response = await gundi_client_v2._get(target_url, headers={"x-custom": "val"})
+        assert response.status_code == 200
+        assert route.call_count == 2
+        retried = route.calls[1].request
+        assert retried.headers.get("x-custom") == "val"
+        assert "authorization" in retried.headers
+
+
 def test_keycloak_settings_aliases_preserved():
     # The pre-rename module constants must remain importable as aliases of the OAUTH_* values.
     from gundi_client_v2 import settings
