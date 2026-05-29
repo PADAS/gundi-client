@@ -196,6 +196,19 @@ async def test_error_body_non_json_falls_back_to_status():
 
 
 @pytest.mark.asyncio
+async def test_error_body_non_object_json_falls_back_to_status():
+    # Valid JSON but not an object (string/list/null) must NOT escape as AttributeError —
+    # the helper must still produce an AuthenticationError carrying the status code so the
+    # refresh-fallback path in _refresh_token continues to work.
+    client = _confidential_client()
+    async with respx.mock as mock:
+        mock.post(TOKEN_URL).respond(status_code=400, json=["invalid_grant"])
+        with pytest.raises(errors.AuthenticationError) as exc:
+            await client.get_access_token()
+        assert "400" in str(exc.value)
+
+
+@pytest.mark.asyncio
 async def test_refresh_preserves_cached_refresh_token_when_omitted(auth_token_response):
     # RFC 6749 §6: the new refresh_token is OPTIONAL on a refresh response. When the
     # IdP omits it, the cached refresh_token and its expiry must be preserved (and the

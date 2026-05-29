@@ -17,6 +17,11 @@ def _extract_oauth_error(response):
         body = response.json()
     except ValueError:
         return f"Token request failed: HTTP {status}"
+    # RFC 6749 §5.2 errors are JSON objects, but a malformed server could return
+    # a non-object (string, list, number, null). Fall back to a status-only message
+    # so this helper cannot raise AttributeError out of _post_token's except path.
+    if not isinstance(body, dict):
+        return f"Token request failed: HTTP {status}"
     error = body.get("error", "unknown_error")
     description = body.get("error_description")
     if description:
