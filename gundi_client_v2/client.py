@@ -80,7 +80,7 @@ class GundiDataSenderClient:
         async with httpx.AsyncClient(timeout=120) as session:
             client_response = await session.post(**request)
 
-        client_response.raise_for_status()
+        errors.raise_for_status(client_response)
 
         return client_response.json()
 
@@ -113,7 +113,7 @@ class GundiDataSenderClient:
         async with httpx.AsyncClient(timeout=120) as session:
             client_response = await session.patch(**request)
 
-        client_response.raise_for_status()
+        errors.raise_for_status(client_response)
 
         return client_response.json()
 
@@ -236,43 +236,42 @@ class GundiClient:
             "authorization": f"{token_object.token_type} {token_object.access_token}"
         }
 
+    @staticmethod
+    def _raise_for_status(response):
+        errors.raise_for_status(response)
+
     async def get_connection_details(self, integration_id):
         url = f"{self.connections_endpoint}/{integration_id}/"
         response = await self._get(url)
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()
         return Connection.parse_obj(data)
 
     async def get_route_details(self, route_id):
         url = f"{self.routes_endpoint}/{route_id}/"
         response = await self._get(url)
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()
         return Route.parse_obj(data)
 
     async def get_integration_details(self, integration_id):
         url = f"{self.integrations_endpoint}/{integration_id}/"
         response = await self._get(url)
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()
         return Integration.parse_obj(data)
 
     async def get_integration_api_key(self, integration_id):
         url = f"{self.integrations_endpoint}/{integration_id}/api-key/"
         response = await self._get(url)
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()
         return data.get("api_key")
 
     async def get_traces(self, params: dict):
         url = f"{self.traces_endpoint}/"
         response = await self._get(url, params=params)
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()["results"]
         return parse_obj_as(List[GundiTrace], data)
 
@@ -282,7 +281,6 @@ class GundiClient:
             url,
             data=data,
         )
-        # ToDo: Add custom exceptions to handle errors
-        response.raise_for_status()
+        self._raise_for_status(response)
         data = response.json()
         return IntegrationType.parse_obj(data)
