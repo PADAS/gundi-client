@@ -9,7 +9,7 @@ from httpx import (
     Timeout,
 )
 from pydantic import parse_obj_as
-from typing import List
+from typing import AsyncGenerator, List
 from gundi_core.schemas import (
     OAuthToken,
 )
@@ -240,6 +240,20 @@ class GundiClient:
     def _raise_for_status(response):
         errors.raise_for_status(response)
 
+    @staticmethod
+    def _parse_list_response(data, model):
+        if isinstance(data, list):
+            return parse_obj_as(List[model], data)
+        if isinstance(data, dict) and "results" in data:
+            return parse_obj_as(List[model], data["results"])
+        return [model.parse_obj(data)]
+
+    async def get_connections(self, params: dict = None) -> List[Connection]:
+        url = f"{self.connections_endpoint}/"
+        response = await self._get(url, params=params)
+        self._raise_for_status(response)
+        return self._parse_list_response(response.json(), Connection)
+
     async def get_connection_details(self, integration_id):
         url = f"{self.connections_endpoint}/{integration_id}/"
         response = await self._get(url)
@@ -253,6 +267,20 @@ class GundiClient:
         self._raise_for_status(response)
         data = response.json()
         return Route.parse_obj(data)
+
+    async def get_integrations(self, params: dict = None) -> AsyncGenerator[Integration, None]:
+        url = f"{self.integrations_endpoint}/"
+        while url:
+            response = await self._get(url, params=params)
+            self._raise_for_status(response)
+            data = response.json()
+            params = None  # the `next` URL already carries the query string
+            for item in self._parse_list_response(data, Integration):
+                yield item
+            if isinstance(data, dict) and "results" in data:
+                url = data.get("next") or ""
+            else:
+                return
 
     async def get_integration_details(self, integration_id):
         url = f"{self.integrations_endpoint}/{integration_id}/"
