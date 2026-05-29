@@ -3,9 +3,20 @@ Example: Authenticate with username/password, get an integration's API key by na
 then use GundiDataSenderClient to send observations to Gundi.
 
 Set credentials via environment variables (recommended) or pass them in code.
-Required: GUNDI_USERNAME, GUNDI_PASSWORD, GUNDI_INTEGRATION_NAME
-Optional: OAUTH_ISSUER (or OAUTH_TOKEN_URL), OAUTH_CLIENT_ID, OAUTH_AUDIENCE,
-          GUNDI_API_BASE_URL, SENSORS_API_BASE_URL
+
+Required: GUNDI_USERNAME, GUNDI_PASSWORD, GUNDI_INTEGRATION_NAME,
+          OAUTH_CLIENT_ID, GUNDI_API_BASE_URL, SENSORS_API_BASE_URL,
+          and at least one of OAUTH_TOKEN_URL or OAUTH_ISSUER.
+Optional: OAUTH_AUDIENCE, GUNDI_API_SSL_VERIFY
+
+Run from the examples/ directory (so the .env file in that directory is loaded):
+
+    cd examples
+    python send_observations.py
+
+Or from the repo root using GUNDI_CLIENT_ENVFILE:
+
+    GUNDI_CLIENT_ENVFILE=examples/.env python examples/send_observations.py
 """
 
 import asyncio
@@ -16,35 +27,56 @@ from gundi_client_v2 import GundiClient, GundiDataSenderClient
 
 
 def get_client_kwargs():
-    """Build GundiClient kwargs from environment."""
+    """Build GundiClient kwargs from environment, validating required settings."""
     username = os.environ.get("GUNDI_USERNAME")
     password = os.environ.get("GUNDI_PASSWORD")
     if not username or not password:
         raise ValueError(
             "Set GUNDI_USERNAME and GUNDI_PASSWORD in the environment, or pass them in code."
         )
-    kwargs = {"username": username, "password": password}
-    if os.environ.get("OAUTH_TOKEN_URL"):
-        kwargs["oauth_token_url"] = os.environ["OAUTH_TOKEN_URL"]
-    elif os.environ.get("OAUTH_ISSUER"):
-        kwargs["oauth_token_url"] = (
-            f"{os.environ['OAUTH_ISSUER'].rstrip('/')}/protocol/openid-connect/token"
+
+    oauth_client_id = os.environ.get("OAUTH_CLIENT_ID")
+    oauth_token_url = os.environ.get("OAUTH_TOKEN_URL")
+    oauth_issuer = os.environ.get("OAUTH_ISSUER")
+    gundi_api_base_url = os.environ.get("GUNDI_API_BASE_URL")
+
+    missing = []
+    if not oauth_client_id:
+        missing.append("OAUTH_CLIENT_ID")
+    if not oauth_token_url and not oauth_issuer:
+        missing.append("OAUTH_TOKEN_URL (or OAUTH_ISSUER)")
+    if not gundi_api_base_url:
+        missing.append("GUNDI_API_BASE_URL")
+    if missing:
+        raise ValueError(
+            f"Missing required environment variable(s): {', '.join(missing)}"
         )
-    if os.environ.get("OAUTH_CLIENT_ID"):
-        kwargs["oauth_client_id"] = os.environ["OAUTH_CLIENT_ID"]
+
+    kwargs = {"username": username, "password": password}
+    if oauth_token_url:
+        kwargs["oauth_token_url"] = oauth_token_url
+    elif oauth_issuer:
+        # Note: OAUTH_ISSUER must not have a trailing slash — the token URL is
+        # derived by appending /protocol/openid-connect/token and the value is
+        # not stripped.
+        kwargs["oauth_token_url"] = (
+            f"{oauth_issuer}/protocol/openid-connect/token"
+        )
+    kwargs["oauth_client_id"] = oauth_client_id
+    kwargs["base_url"] = gundi_api_base_url
     if os.environ.get("OAUTH_AUDIENCE"):
         kwargs["oauth_audience"] = os.environ["OAUTH_AUDIENCE"]
-    if os.environ.get("GUNDI_API_BASE_URL"):
-        kwargs["base_url"] = os.environ["GUNDI_API_BASE_URL"]
     return kwargs
 
 
 def get_sender_kwargs():
-    """Build GundiDataSenderClient kwargs from environment (optional base URL)."""
-    kwargs = {}
-    if os.environ.get("SENSORS_API_BASE_URL"):
-        kwargs["sensors_api_base_url"] = os.environ["SENSORS_API_BASE_URL"]
-    return kwargs
+    """Build GundiDataSenderClient kwargs from environment, validating required settings."""
+    sensors_api_base_url = os.environ.get("SENSORS_API_BASE_URL")
+    if not sensors_api_base_url:
+        raise ValueError(
+            "Missing required environment variable: SENSORS_API_BASE_URL"
+        )
+    return {"sensors_api_base_url": sensors_api_base_url}
 
 
 async def main():
@@ -66,7 +98,7 @@ async def main():
             if i.name == integration_name:
                 integration = i
                 break
-        if not integration:
+        if integration is None:
             raise ValueError(
                 f"No integration named {integration_name!r}. Available: {names}"
             )
