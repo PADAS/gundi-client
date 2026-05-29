@@ -3,8 +3,6 @@ import pytest
 import respx
 from gundi_core.schemas.v2 import Connection, Integration
 
-from gundi_client_v2.client import GundiClient
-
 
 def _integration(idx):
     return {
