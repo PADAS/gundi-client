@@ -4,10 +4,14 @@ then use GundiDataSenderClient to send observations to Gundi.
 
 Set credentials via environment variables (recommended) or pass them in code.
 
-Required: GUNDI_USERNAME, GUNDI_PASSWORD, GUNDI_INTEGRATION_NAME,
-          OAUTH_CLIENT_ID, GUNDI_API_BASE_URL, SENSORS_API_BASE_URL,
-          and at least one of OAUTH_TOKEN_URL or OAUTH_ISSUER.
-Optional: OAUTH_AUDIENCE, GUNDI_API_SSL_VERIFY
+# Required (read by this script; one of OAUTH_ISSUER or OAUTH_TOKEN_URL must be set):
+#   GUNDI_USERNAME, GUNDI_PASSWORD,
+#   GUNDI_API_BASE_URL, SENSORS_API_BASE_URL,
+#   OAUTH_CLIENT_ID, OAUTH_AUDIENCE,
+#   OAUTH_ISSUER  (library derives the token URL as {issuer}/protocol/openid-connect/token)
+#     OR
+#   OAUTH_TOKEN_URL  (read by this script and passed as the oauth_token_url kwarg to GundiClient)
+# Optional: OAUTH_AUDIENCE, GUNDI_API_SSL_VERIFY
 
 Run from the examples/ directory (so the .env file in that directory is loaded):
 

@@ -46,6 +46,7 @@ client = GundiClient(
 
 ```python
 import asyncio
+import os
 from gundi_client_v2 import GundiClient, GundiDataSenderClient
 
 async def main():
@@ -65,7 +66,10 @@ async def main():
         )
 
     # 3. Use the API key to send data
-    sender = GundiDataSenderClient(integration_api_key=api_key)
+    sender = GundiDataSenderClient(
+        integration_api_key=api_key,
+        sensors_api_base_url=os.environ["SENSORS_API_BASE_URL"],  # or pass the URL directly
+    )
     await sender.post_events(data=[
         {
             "title": "Animal Detected",
@@ -214,14 +218,18 @@ if __name__ == "__main__":
 
 ## Usage: GundiDataSenderClient
 
-Use `GundiDataSenderClient` to post data through the Gundi sensors/routing API. This client authenticates with an integration API key rather than user credentials.
+Use `GundiDataSenderClient` to post data through the Gundi sensors/routing API. This client authenticates with an integration API key rather than user credentials. `sensors_api_base_url` is required — you can set it via the `SENSORS_API_BASE_URL` environment variable (as the example script does) or pass it directly.
 
 ```python
 import asyncio
+import os
 from gundi_client_v2 import GundiDataSenderClient
 
 async def main():
-    sender = GundiDataSenderClient(integration_api_key="your-api-key")
+    sender = GundiDataSenderClient(
+        integration_api_key="your-api-key",
+        sensors_api_base_url=os.environ["SENSORS_API_BASE_URL"],  # or pass the URL directly
+    )
 
     # Post observations
     await sender.post_observations(data=[

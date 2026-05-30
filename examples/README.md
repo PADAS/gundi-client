@@ -32,8 +32,8 @@ Demonstrates:
 - `GUNDI_API_BASE_URL` – Gundi API base URL (portal/configuration API)
 - `SENSORS_API_BASE_URL` – Sensors/ingestion API base URL (used by `GundiDataSenderClient`)
 - At least one of:
-  - `OAUTH_TOKEN_URL` – full OAuth token URL
-  - `OAUTH_ISSUER` – OAuth issuer base URL (e.g. `https://auth.example.com/auth/realms/my-realm`); token URL is derived as `{OAUTH_ISSUER}/protocol/openid-connect/token`. Do not include a trailing slash.
+  - `OAUTH_ISSUER` – OAuth issuer base URL (e.g. `https://auth.example.com/realms/my-realm`); the library derives the token URL as `{OAUTH_ISSUER}/protocol/openid-connect/token`. Do not include a trailing slash.
+  - `OAUTH_TOKEN_URL` – Read by `send_observations.py` and passed as the `oauth_token_url` kwarg to `GundiClient`. The library itself only derives the token URL from `OAUTH_ISSUER`; setting `OAUTH_TOKEN_URL` in the environment without using this example script has no effect on the library.
 
 **Optional:**
 
