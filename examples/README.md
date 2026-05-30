@@ -35,9 +35,12 @@ Demonstrates:
   - `OAUTH_ISSUER` – OIDC issuer base URL (e.g. `https://auth.example.com/realms/my-realm`); the token endpoint is discovered automatically via `{OAUTH_ISSUER}/.well-known/openid-configuration`.
   - `OAUTH_TOKEN_URL` – explicit OAuth token endpoint URL (overrides OIDC discovery when set).
 
+**Conditional:**
+
+- `OAUTH_AUDIENCE` – OAuth audience. Required by some IdPs (e.g., Auth0 needs it to issue a usable API access token); ignored by others (Keycloak password grant). Set if your IdP requires it.
+
 **Optional:**
 
-- `OAUTH_AUDIENCE` – OAuth audience
 - `GUNDI_API_SSL_VERIFY` – set to `false` to skip SSL verification (default: `true`)
 
 **Setting up credentials with a `.env` file:**

@@ -98,7 +98,7 @@ Settings can be provided as **environment variables** or **constructor keyword a
 | `OAUTH_CLIENT_SECRET` | OAuth client secret — required for client-credentials grant | — |
 | `OAUTH_ISSUER` | OIDC issuer URL. When set without `OAUTH_TOKEN_URL`, the token endpoint is discovered at runtime from `{OAUTH_ISSUER}/.well-known/openid-configuration`. A trailing slash is normalized. | — |
 | `OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. When set, overrides OIDC discovery from `OAUTH_ISSUER`. | — |
-| `OAUTH_AUDIENCE` | OAuth audience | — |
+| `OAUTH_AUDIENCE` | OAuth audience. Sent to the token endpoint when set. Required by some IdPs (e.g. Auth0 won't issue a usable API access token without it); ignored by others (Keycloak password grant). | — |
 | `OAUTH_SCOPE` | OAuth scope | `openid` |
 | `GUNDI_API_BASE_URL` | Gundi API base URL | — |
 | `SENSORS_API_BASE_URL` | Sensors/routing API base URL (used by `GundiDataSenderClient`) | — |
@@ -118,7 +118,7 @@ Settings can be provided as **environment variables** or **constructor keyword a
 | `oauth_client_secret` | `OAUTH_CLIENT_SECRET` | OAuth client secret |
 | `oauth_token_url` | `OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. When set, used as-is. |
 | `oauth_issuer` | `OAUTH_ISSUER` | OIDC issuer URL. When set without `oauth_token_url`, the token endpoint is discovered via OIDC discovery. |
-| `oauth_audience` | `OAUTH_AUDIENCE` | OAuth audience |
+| `oauth_audience` | `OAUTH_AUDIENCE` | OAuth audience. IdP-dependent — required for Auth0, optional for Keycloak password grant. |
 | `oauth_scope` | `OAUTH_SCOPE` | OAuth scope |
 | `max_http_retries` | — | Max HTTP retries (default `5`) |
 | `connect_timeout` | — | Connect timeout in seconds (default `3.1`) |
@@ -148,6 +148,15 @@ The client resolves the OAuth token endpoint in this order:
 3. **Neither set** — `AuthenticationError("No token URL configured.")` is raised on the first auth attempt.
 
 OIDC discovery works for any compliant IdP (Keycloak, Auth0, Okta, …). Configure `OAUTH_ISSUER` and the token endpoint is found automatically.
+
+### Audience
+
+`OAUTH_AUDIENCE` is sent to the token endpoint when configured. Whether it is required depends on the IdP:
+
+- **Auth0** — required. Without `audience`, Auth0 issues an opaque token that cannot authorize API requests.
+- **Keycloak** — optional. The password grant ignores it; UMA flows use it for scope matching.
+
+The parameter name `audience` reflects the Auth0/Keycloak convention. The OAuth 2.0 / OIDC standard equivalent is `resource` (RFC 8707, *Resource Indicators*). If we add support for IdPs that strictly require `resource` instead, it will be introduced as a `resource` kwarg alongside `audience`, not as a rename. Existing `OAUTH_AUDIENCE` / `oauth_audience` configurations will keep working.
 
 > **Backward compatibility:** The legacy `KEYCLOAK_*` env var names (`KEYCLOAK_ISSUER`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`, `KEYCLOAK_AUDIENCE`) are still accepted as fallbacks for the corresponding `OAUTH_*` env vars. Three legacy constructor kwargs are also still accepted: `keycloak_client_id`, `keycloak_client_secret`, and `keycloak_audience`. There is no `keycloak_issuer` constructor kwarg — use `oauth_token_url` or `oauth_issuer` instead.
 
