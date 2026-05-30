@@ -105,3 +105,45 @@ async def refresh_access_token(
     body.setdefault("refresh_token", fallback.refresh_token)
     body.setdefault("refresh_expires_in", fallback.refresh_expires_in)
     return OAuthToken.parse_obj(body), refresh_rotated
+
+
+_DISCOVERY_CACHE: dict[str, str] = {}
+
+
+def clear_discovery_cache() -> None:
+    """Clear the OIDC discovery cache. Useful for tests and for long-running
+    processes that need to pick up an IdP configuration change without a restart."""
+    _DISCOVERY_CACHE.clear()
+
+
+async def discover_token_endpoint(session, issuer: str) -> str:
+    """Fetch the OIDC discovery document at ``{issuer}/.well-known/openid-configuration``
+    and return its ``token_endpoint``. Cached per-issuer for the process lifetime;
+    call :func:`clear_discovery_cache` to invalidate.
+
+    The cache key is ``issuer.rstrip('/')`` so values differing only by a trailing
+    slash share one cache entry.
+    """
+    key = issuer.rstrip("/")
+    if key in _DISCOVERY_CACHE:
+        return _DISCOVERY_CACHE[key]
+    discovery_url = f"{key}/.well-known/openid-configuration"
+    try:
+        response = await session.get(discovery_url)
+        response.raise_for_status()
+    except httpx.HTTPError as e:
+        raise AuthenticationError(
+            f"OIDC discovery failed for {issuer}: {e}"
+        ) from e
+    try:
+        token_endpoint = response.json()["token_endpoint"]
+    except (ValueError, KeyError, TypeError) as e:
+        raise AuthenticationError(
+            f"OIDC discovery document at {discovery_url} is missing 'token_endpoint'"
+        ) from e
+    if not isinstance(token_endpoint, str):
+        raise AuthenticationError(
+            f"OIDC discovery document at {discovery_url} has a non-string 'token_endpoint': {token_endpoint!r}"
+        )
+    _DISCOVERY_CACHE[key] = token_endpoint
+    return token_endpoint
