@@ -252,3 +252,62 @@ async def test_clear_discovery_cache_forces_rediscovery_for_existing_client(auth
         auth.clear_discovery_cache()                          # operator invalidates
         await client.get_access_token(force_refresh_token=True)  # next auth on the SAME client
         assert discovery_route.call_count == 2                # must have re-discovered
+
+
+@pytest.mark.asyncio
+async def test_discover_token_endpoint_issuer_mismatch_raises():
+    """OIDC Discovery 1.0 §4.3: a discovery doc whose `issuer` claim does not
+    match the URL used to fetch it MUST be rejected — otherwise a misconfigured
+    or hostile response could redirect credentials to a token endpoint for a
+    different IdP."""
+    expected_issuer = "https://idp.example.com/realms/dev"
+    rogue_issuer = "https://attacker.example/realms/dev"
+    discovery_url = f"{expected_issuer}/.well-known/openid-configuration"
+    async with respx.mock as mock:
+        mock.get(discovery_url).respond(
+            status_code=httpx.codes.OK,
+            json={
+                "issuer": rogue_issuer,
+                "token_endpoint": f"{rogue_issuer}/protocol/openid-connect/token",
+            },
+        )
+        async with httpx.AsyncClient() as session:
+            with pytest.raises(errors.AuthenticationError) as exc:
+                await auth.discover_token_endpoint(session, expected_issuer)
+        msg = str(exc.value)
+        assert rogue_issuer in msg
+        assert expected_issuer in msg
+
+
+@pytest.mark.asyncio
+async def test_discover_token_endpoint_missing_issuer_raises():
+    """A discovery document with no `issuer` claim can't be validated; reject it."""
+    expected_issuer = "https://idp.example.com/realms/dev"
+    discovery_url = f"{expected_issuer}/.well-known/openid-configuration"
+    async with respx.mock as mock:
+        mock.get(discovery_url).respond(
+            status_code=httpx.codes.OK,
+            json={"token_endpoint": f"{expected_issuer}/protocol/openid-connect/token"},
+        )
+        async with httpx.AsyncClient() as session:
+            with pytest.raises(errors.AuthenticationError) as exc:
+                await auth.discover_token_endpoint(session, expected_issuer)
+        assert expected_issuer in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_discover_token_endpoint_trailing_slash_in_returned_issuer_ok():
+    """A discovery doc whose `issuer` has a trailing slash should still match
+    a trailing-slash-less expected issuer (normalized via rstrip on both sides)."""
+    expected_issuer = "https://idp.example.com/realms/dev"
+    returned_issuer = "https://idp.example.com/realms/dev/"  # trailing slash
+    discovery_url = f"{expected_issuer}/.well-known/openid-configuration"
+    expected_token = f"{expected_issuer}/protocol/openid-connect/token"
+    async with respx.mock as mock:
+        mock.get(discovery_url).respond(
+            status_code=httpx.codes.OK,
+            json={"issuer": returned_issuer, "token_endpoint": expected_token},
+        )
+        async with httpx.AsyncClient() as session:
+            result = await auth.discover_token_endpoint(session, expected_issuer)
+        assert result == expected_token

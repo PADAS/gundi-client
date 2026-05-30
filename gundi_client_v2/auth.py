@@ -138,7 +138,13 @@ async def discover_token_endpoint(session, issuer: str) -> str:
     call :func:`clear_discovery_cache` to invalidate.
 
     The cache key is ``issuer.rstrip('/')`` so values differing only by a trailing
-    slash share one cache entry.
+    slash share one cache entry. The same normalization is applied when comparing
+    the returned ``issuer`` claim to the expected value.
+
+    Per OIDC Discovery 1.0 §4.3 (Validation of Issuer Identifier), the ``issuer``
+    field in the discovery document MUST match the URL used to fetch it; otherwise
+    a misconfigured (or hostile) response could redirect credentials at a token
+    endpoint for a different IdP. A mismatch raises ``AuthenticationError``.
     """
     key = issuer.rstrip("/")
     if key in _DISCOVERY_CACHE:
@@ -152,11 +158,26 @@ async def discover_token_endpoint(session, issuer: str) -> str:
             f"OIDC discovery failed for {issuer}: {e}"
         ) from e
     try:
-        token_endpoint = response.json()["token_endpoint"]
-    except (ValueError, KeyError, TypeError) as e:
+        body = response.json()
+    except ValueError as e:
+        raise AuthenticationError(
+            f"OIDC discovery document at {discovery_url} is not valid JSON"
+        ) from e
+    if not isinstance(body, dict):
+        raise AuthenticationError(
+            f"OIDC discovery document at {discovery_url} is not a JSON object"
+        )
+    returned_issuer = body.get("issuer")
+    if not isinstance(returned_issuer, str) or returned_issuer.rstrip("/") != key:
+        raise AuthenticationError(
+            f"OIDC discovery document at {discovery_url} returned issuer "
+            f"{returned_issuer!r} which does not match the expected issuer {issuer!r}"
+        )
+    if "token_endpoint" not in body:
         raise AuthenticationError(
             f"OIDC discovery document at {discovery_url} is missing 'token_endpoint'"
-        ) from e
+        )
+    token_endpoint = body["token_endpoint"]
     if not isinstance(token_endpoint, str):
         raise AuthenticationError(
             f"OIDC discovery document at {discovery_url} has a non-string 'token_endpoint': {token_endpoint!r}"
