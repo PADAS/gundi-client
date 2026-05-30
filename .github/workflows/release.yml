@@ -42,14 +42,26 @@ jobs:
         # commit. Without this, a broken tag would still ship to PyPI.
         run: uv run pytest -q
 
-      - name: Verify package version matches tag
-        # The package version comes from gundi_client_v2/__init__.py via
-        # hatchling's dynamic version. Make sure the pushed tag matches
-        # it, otherwise the wheel would ship under a version that doesn't
-        # reflect the tag.
+      - name: Verify tag is a strict release and matches __version__
+        # 1. The trigger glob `v*.*.*` would happily match pre-release tags
+        #    like `v1.2.3-rc1` — the last `*` is greedy. Reject anything
+        #    that isn't strictly vX.Y.Z so a stray pre-release tag can't
+        #    accidentally publish to production PyPI.
+        # 2. Parse __version__ directly from the source file (matching how
+        #    hatchling reads it) instead of importing the package — that
+        #    avoids pulling in httpx, gundi-core, and every other
+        #    module-level import just to read a string.
         run: |
           tag_version="${GITHUB_REF_NAME#v}"
-          pkg_version=$(uv run python -c "from gundi_client_v2 import __version__; print(__version__)")
+          if [[ ! "$tag_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$GITHUB_REF_NAME' is not a strict vX.Y.Z release tag; pre-release/build tags are not allowed by this workflow."
+            exit 1
+          fi
+          pkg_version=$(awk -F'["'"'"']' '/^__version__[[:space:]]*=/ {print $2; exit}' gundi_client_v2/__init__.py)
+          if [ -z "$pkg_version" ]; then
+            echo "::error::Could not parse __version__ from gundi_client_v2/__init__.py"
+            exit 1
+          fi
           if [ "$tag_version" != "$pkg_version" ]; then
             echo "::error::Tag ($tag_version) and __version__ ($pkg_version) differ"
             exit 1
@@ -67,13 +79,27 @@ jobs:
         # config on pypi.org: pypi.org/manage/account/publishing/ →
         # add a trusted publisher for `gundi-client-v2` pointing at
         # this repo, workflow `release.yml`, environment `pypi`.
+        # skip-existing makes a re-run of the workflow (e.g. after a
+        # transient failure later in the job) safe — PyPI rejects
+        # re-uploading the same version, and without this flag the action
+        # would surface that rejection as a hard error.
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
 
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
+        # Idempotent: on a re-run, the release for this tag already exists;
+        # `gh release create` would fail. Detect that case and upload (with
+        # --clobber to overwrite) instead of trying to recreate.
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes \
-            dist/*
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; uploading artifacts to it."
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes \
+              dist/*
+          fi
