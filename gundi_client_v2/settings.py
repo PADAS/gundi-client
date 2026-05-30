@@ -11,9 +11,11 @@ else:
     # Default behavior
     env.read_env()
 
-# OAuth settings — OAUTH_* preferred; KEYCLOAK_* accepted for backward compatibility
+# OAuth settings — OAUTH_* preferred; KEYCLOAK_* accepted for backward compatibility.
+# The token URL is either set directly via OAUTH_TOKEN_URL or discovered at runtime
+# from OAUTH_ISSUER via the OIDC discovery document.
 OAUTH_ISSUER = env.str("OAUTH_ISSUER", env.str("KEYCLOAK_ISSUER", None))
-OAUTH_TOKEN_URL = f"{OAUTH_ISSUER}/protocol/openid-connect/token" if OAUTH_ISSUER else None
+OAUTH_TOKEN_URL = env.str("OAUTH_TOKEN_URL", None)
 OAUTH_CLIENT_ID = env.str("OAUTH_CLIENT_ID", env.str("KEYCLOAK_CLIENT_ID", None))
 OAUTH_CLIENT_SECRET = env.str("OAUTH_CLIENT_SECRET", env.str("KEYCLOAK_CLIENT_SECRET", None))
 OAUTH_AUDIENCE = env.str("OAUTH_AUDIENCE", env.str("KEYCLOAK_AUDIENCE", None))
