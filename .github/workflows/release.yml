@@ -13,7 +13,9 @@ permissions:
 
 jobs:
   build-and-publish:
-    runs-on: ubuntu-latest
+    # Pinned (not `ubuntu-latest`) so a future GitHub runner refresh can't
+    # silently change the OS/packages under a release pipeline.
+    runs-on: ubuntu-24.04
     # Pin to a named environment so the PyPI Trusted Publisher config can
     # be scoped to `pypi` and PRs from forks cannot trigger a release.
     environment:
@@ -25,13 +27,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up uv
+      - name: Set up uv (with a pinned Python)
+        # `python-version` on setup-uv installs the requested CPython AND makes
+        # it the interpreter every subsequent `uv sync` / `uv run` resolves to,
+        # so the release build/tests are reproducible regardless of what
+        # interpreter happens to be first on the runner's PATH.
         uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
-
-      - name: Set up Python
-        run: uv python install 3.11
+          python-version: "3.11"
 
       - name: Install dependencies
         # uv sync installs the project plus the `dev` dependency group by default.
