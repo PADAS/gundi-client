@@ -145,6 +145,7 @@ class GundiClient:
         self.username = kwargs.get("username", settings.GUNDI_USERNAME)
         self.password = kwargs.get("password", settings.GUNDI_PASSWORD)
         self.oauth_token_url = kwargs.get("oauth_token_url", settings.OAUTH_TOKEN_URL)
+        self.oauth_issuer = kwargs.get("oauth_issuer", settings.OAUTH_ISSUER)
         self.audience = kwargs.get("oauth_audience",
                                    kwargs.get("keycloak_audience", settings.OAUTH_AUDIENCE))
         self.scope = kwargs.get("oauth_scope", settings.OAUTH_SCOPE)
@@ -215,6 +216,22 @@ class GundiClient:
             )
         return response
 
+    async def _resolve_token_url(self) -> str:
+        """Return the token endpoint URL. Explicit oauth_token_url wins; otherwise
+        discover it from oauth_issuer via OIDC discovery and memoize the result on
+        the instance so subsequent reads of self.oauth_token_url see it. Raises
+        AuthenticationError if neither is set."""
+        if self.oauth_token_url:
+            return self.oauth_token_url
+        if self.oauth_issuer:
+            self.oauth_token_url = await auth.discover_token_endpoint(
+                self._session, self.oauth_issuer
+            )
+            return self.oauth_token_url
+        raise errors.AuthenticationError(
+            "No token URL configured. Set oauth_token_url or oauth_issuer."
+        )
+
     async def _refresh_token(self):
         now = datetime.now(tz=timezone.utc)
         # 1. Prefer the refresh-token grant when we hold a live refresh token.
@@ -246,9 +263,10 @@ class GundiClient:
         # reject it remotely instead of failing locally with a clear configuration error.
         if self.username and self.password and self.client_id:
             logger.debug("Authenticating via password grant.")
+            token_url = await self._resolve_token_url()
             token = await auth.get_access_token_password_grant(
                 session=self._session,
-                oauth_token_url=self.oauth_token_url,
+                oauth_token_url=token_url,
                 client_id=self.client_id,
                 username=self.username,
                 password=self.password,
