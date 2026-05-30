@@ -1,10 +1,11 @@
 import httpx
 import pytest
 import respx
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qs
 
 from gundi_client_v2 import auth, errors
+from gundi_core.schemas import OAuthToken
 from gundi_client_v2.client import GundiClient
 
 TOKEN_URL = "https://fakeauth.com/realms/dev/protocol/openid-connect/token"
@@ -355,3 +356,41 @@ async def test_get_access_token_client_credentials_explicit_null_refresh_fields(
         assert token.access_token == "cc-token-value"
         assert token.refresh_token == ""
         assert token.refresh_expires_in == 0
+
+
+def test_store_token_refreshless_disables_refresh_tracking():
+    """When a token has no usable refresh fields (e.g., a client_credentials response
+    that's been backfilled with empty refresh_token/refresh_expires_in=0), _store_token
+    must set cached_token_refresh_expires_at to datetime.min so the refresh-grant branch
+    in _refresh_token is skipped on the next call."""
+    client = _confidential_client()
+    refreshless = OAuthToken.parse_obj({
+        "access_token": "fresh-access",
+        "expires_in": 1800,
+        "refresh_token": "",
+        "refresh_expires_in": 0,
+        "token_type": "Bearer",
+    })
+    client._store_token(refreshless)
+    assert client.cached_token.access_token == "fresh-access"
+    assert client.cached_token_refresh_expires_at == datetime.min.replace(tzinfo=timezone.utc)
+    # access-token expiry should still be set to a future moment via the buffer math
+    assert client.cached_token_expires_at > datetime.now(tz=timezone.utc)
+
+
+def test_store_token_refresh_not_rotated_preserves_existing_expiry():
+    """refresh_rotated=False (RFC 6749 §6 partial response — IdP omitted refresh_token)
+    must never touch cached_token_refresh_expires_at, even when the token's own refresh
+    fields are empty. Locks in the no-touch semantics from PR #38."""
+    client = _confidential_client()
+    sentinel = datetime.now(tz=timezone.utc) + timedelta(hours=12)
+    client.cached_token_refresh_expires_at = sentinel
+    partial = OAuthToken.parse_obj({
+        "access_token": "new-access",
+        "expires_in": 1800,
+        "refresh_token": "",
+        "refresh_expires_in": 0,
+        "token_type": "Bearer",
+    })
+    client._store_token(partial, refresh_rotated=False)
+    assert client.cached_token_refresh_expires_at is sentinel

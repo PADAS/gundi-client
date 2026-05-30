@@ -292,16 +292,29 @@ class GundiClient:
         return token
 
     def _store_token(self, token, *, refresh_rotated=True):
-        # OAuthToken (gundi-core) always carries access + refresh fields on a successful parse.
+        # OAuthToken (gundi-core) always carries access + refresh fields on a successful parse,
+        # but for grants that don't issue refresh tokens (e.g. client_credentials) the auth
+        # helper backfills empty refresh_token and refresh_expires_in=0. Detect that here.
         # ``refresh_rotated`` is False only when this token came from a refresh-grant response
         # that omitted a new refresh_token (RFC 6749 §6) — in that case we preserve the
         # existing cached_token_refresh_expires_at because the cached refresh token is still
         # valid for its original lifetime.
         now = datetime.now(tz=timezone.utc)
         self.cached_token = token
-        self.cached_token_expires_at = now + timedelta(seconds=self._expiry_with_buffer(token.expires_in))
+        self.cached_token_expires_at = now + timedelta(
+            seconds=self._expiry_with_buffer(token.expires_in)
+        )
         if refresh_rotated:
-            self.cached_token_refresh_expires_at = now + timedelta(seconds=self._expiry_with_buffer(token.refresh_expires_in))
+            # `> 0` treats both zero (the backfilled refreshless case) and any negative
+            # `refresh_expires_in` (server bug / weird IdP) as 'no refresh available'.
+            if token.refresh_token and token.refresh_expires_in > 0:
+                self.cached_token_refresh_expires_at = now + timedelta(
+                    seconds=self._expiry_with_buffer(token.refresh_expires_in)
+                )
+            else:
+                # Refreshless grant — disable refresh tracking so the refresh-token
+                # branch in _refresh_token doesn't pick this up.
+                self.cached_token_refresh_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
     @staticmethod
     def _expiry_with_buffer(lifetime_seconds, buffer_seconds=15):
