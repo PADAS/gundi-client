@@ -7,9 +7,6 @@ from .errors import AuthenticationError
 
 logger = logging.getLogger(__name__)
 
-UMA_TICKET_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:uma-ticket"
-
-
 def _extract_oauth_error(response):
     """Build a detail string from an RFC 6749 §5.2 token-error response."""
     status = response.status_code
@@ -41,19 +38,6 @@ async def _post_token(session, oauth_token_url, payload) -> dict:
 
 async def _token_request(session, oauth_token_url, payload) -> OAuthToken:
     return OAuthToken.parse_obj(await _post_token(session, oauth_token_url, payload))
-
-
-async def get_access_token(session, oauth_token_url, client_id, client_secret, audience=None, scope="openid"):
-    logger.debug(f"get_access_token from {oauth_token_url} using client_id: {client_id}")
-    payload = {
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "grant_type": UMA_TICKET_GRANT_TYPE,
-        "scope": scope,
-    }
-    if audience:
-        payload["audience"] = audience
-    return await _token_request(session, oauth_token_url, payload)
 
 
 # NOTE: The Resource Owner Password Credentials (ROPC) grant is discouraged by OAuth 2.1

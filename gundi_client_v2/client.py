@@ -234,6 +234,8 @@ class GundiClient:
 
     async def _refresh_token(self):
         now = datetime.now(tz=timezone.utc)
+        token_url = await self._resolve_token_url()
+
         # 1. Prefer the refresh-token grant when we hold a live refresh token.
         if (
             self.cached_token
@@ -243,7 +245,7 @@ class GundiClient:
             try:
                 token, refresh_rotated = await auth.refresh_access_token(
                     session=self._session,
-                    oauth_token_url=self.oauth_token_url,
+                    oauth_token_url=token_url,
                     client_id=self.client_id,
                     refresh_token=self.cached_token.refresh_token,
                     fallback=self.cached_token,
@@ -263,7 +265,6 @@ class GundiClient:
         # reject it remotely instead of failing locally with a clear configuration error.
         if self.username and self.password and self.client_id:
             logger.debug("Authenticating via password grant.")
-            token_url = await self._resolve_token_url()
             token = await auth.get_access_token_password_grant(
                 session=self._session,
                 oauth_token_url=token_url,
@@ -274,10 +275,10 @@ class GundiClient:
                 scope=self.scope,
             )
         elif self.client_id and self.client_secret:
-            logger.debug("Authenticating via client-credentials (uma-ticket) grant.")
-            token = await auth.get_access_token(
+            logger.debug("Authenticating via client_credentials grant.")
+            token = await auth.get_access_token_client_credentials(
                 session=self._session,
-                oauth_token_url=self.oauth_token_url,
+                oauth_token_url=token_url,
                 client_id=self.client_id,
                 client_secret=self.client_secret,
                 audience=self.audience,

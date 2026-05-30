@@ -173,11 +173,11 @@ async def test_short_lived_token_not_immediately_expired(auth_token_response):
 
 @pytest.mark.asyncio
 async def test_confidential_refresh_sends_client_secret(auth_token_response):
-    # A confidential (uma-ticket) client MUST send its client_secret on the refresh grant.
+    # A confidential (client_credentials) client MUST send its client_secret on the refresh grant.
     client = _confidential_client()
     async with respx.mock as mock:
         route = mock.post(TOKEN_URL).respond(status_code=httpx.codes.OK, json=auth_token_response)
-        await client.get_access_token()                          # initial uma-ticket grant
+        await client.get_access_token()                          # initial client_credentials grant
         await client.get_access_token(force_refresh_token=True)  # refresh grant
         assert route.call_count == 2
         second = _body(route, 1)
@@ -394,3 +394,27 @@ def test_store_token_refresh_not_rotated_preserves_existing_expiry():
     })
     client._store_token(partial, refresh_rotated=False)
     assert client.cached_token_refresh_expires_at is sentinel
+
+
+@pytest.mark.asyncio
+async def test_confidential_refresh_after_client_credentials_falls_back_to_full_auth(auth_token_response):
+    """A client_credentials initial response that lacks refresh_token must not be retried
+    on the refresh-token path; the next force_refresh must re-authenticate via client_credentials."""
+    client_credentials_response = {
+        "access_token": "cc-access-token",
+        "expires_in": auth_token_response["expires_in"],
+        "token_type": "Bearer",
+    }
+    client = _confidential_client()
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=client_credentials_response
+        )
+        await client.get_access_token()                          # initial client_credentials
+        # Mechanism: _store_token recognizes the refreshless response and disables refresh tracking.
+        assert client.cached_token_refresh_expires_at == datetime.min.replace(tzinfo=timezone.utc)
+        await client.get_access_token(force_refresh_token=True)  # forced re-auth
+        assert route.call_count == 2
+        # Both calls must be client_credentials — refresh path was disabled by the empty refresh_token.
+        assert _body(route, 0)["grant_type"] == ["client_credentials"]
+        assert _body(route, 1)["grant_type"] == ["client_credentials"]
