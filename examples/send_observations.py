@@ -60,12 +60,9 @@ def get_client_kwargs():
     if oauth_token_url:
         kwargs["oauth_token_url"] = oauth_token_url
     elif oauth_issuer:
-        # Note: OAUTH_ISSUER must not have a trailing slash — the token URL is
-        # derived by appending /protocol/openid-connect/token and the value is
-        # not stripped.
-        kwargs["oauth_token_url"] = (
-            f"{oauth_issuer}/protocol/openid-connect/token"
-        )
+        # Pass the issuer to the client; it discovers the token endpoint via
+        # OIDC discovery ({issuer}/.well-known/openid-configuration) automatically.
+        kwargs["oauth_issuer"] = oauth_issuer
     kwargs["oauth_client_id"] = oauth_client_id
     kwargs["base_url"] = gundi_api_base_url
     if os.environ.get("OAUTH_AUDIENCE"):

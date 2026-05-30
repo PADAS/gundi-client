@@ -96,7 +96,8 @@ Settings can be provided as **environment variables** or **constructor keyword a
 | `GUNDI_PASSWORD` | Your Gundi password — required for password grant | — |
 | `OAUTH_CLIENT_ID` | OAuth client ID | — |
 | `OAUTH_CLIENT_SECRET` | OAuth client secret — required for client-credentials grant | — |
-| `OAUTH_ISSUER` | OAuth issuer base URL; the token URL is derived from it as `{OAUTH_ISSUER}/protocol/openid-connect/token`. **Do not include a trailing slash** — the value is not stripped and a trailing slash will produce a double-slash in the derived URL. There is no `OAUTH_TOKEN_URL` env var; use the `oauth_token_url` kwarg if you need to override the derivation. | — |
+| `OAUTH_ISSUER` | OIDC issuer URL. When set without `OAUTH_TOKEN_URL`, the token endpoint is discovered at runtime from `{OAUTH_ISSUER}/.well-known/openid-configuration`. A trailing slash is normalized. | — |
+| `OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. When set, overrides OIDC discovery from `OAUTH_ISSUER`. | — |
 | `OAUTH_AUDIENCE` | OAuth audience | — |
 | `OAUTH_SCOPE` | OAuth scope | `openid` |
 | `GUNDI_API_BASE_URL` | Gundi API base URL | — |
@@ -115,14 +116,13 @@ Settings can be provided as **environment variables** or **constructor keyword a
 | `password` | `GUNDI_PASSWORD` | Gundi password |
 | `oauth_client_id` | `OAUTH_CLIENT_ID` | OAuth client ID |
 | `oauth_client_secret` | `OAUTH_CLIENT_SECRET` | OAuth client secret |
-| `oauth_token_url` | — (derived from `OAUTH_ISSUER`) | Full OAuth token endpoint URL. No direct env-var counterpart — set `OAUTH_ISSUER` to have the token URL derived, or pass this kwarg to override. |
+| `oauth_token_url` | `OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. When set, used as-is. |
+| `oauth_issuer` | `OAUTH_ISSUER` | OIDC issuer URL. When set without `oauth_token_url`, the token endpoint is discovered via OIDC discovery. |
 | `oauth_audience` | `OAUTH_AUDIENCE` | OAuth audience |
 | `oauth_scope` | `OAUTH_SCOPE` | OAuth scope |
 | `max_http_retries` | — | Max HTTP retries (default `5`) |
 | `connect_timeout` | — | Connect timeout in seconds (default `3.1`) |
 | `data_timeout` | — | Data timeout in seconds (default `20`) |
-
-> **Note:** `OAUTH_ISSUER` has no constructor kwarg counterpart. Set `oauth_token_url` directly when constructing a client programmatically.
 
 ### GundiDataSenderClient constructor kwargs
 
@@ -139,7 +139,17 @@ The client supports two authentication modes:
 
 **Client credentials grant (for services)** — Provide `OAUTH_CLIENT_ID` and `OAUTH_CLIENT_SECRET`. This is used by internal backend services.
 
-> **Backward compatibility:** The legacy `KEYCLOAK_*` env var names (`KEYCLOAK_ISSUER`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`, `KEYCLOAK_AUDIENCE`) are still accepted as fallbacks for the corresponding `OAUTH_*` env vars. Three legacy constructor kwargs are also still accepted: `keycloak_client_id`, `keycloak_client_secret`, and `keycloak_audience`. There is no `keycloak_issuer` constructor kwarg — use `oauth_token_url` instead.
+### Token URL resolution
+
+The client resolves the OAuth token endpoint in this order:
+
+1. **`oauth_token_url` (kwarg) / `OAUTH_TOKEN_URL` (env)** — used as-is when set.
+2. **`oauth_issuer` (kwarg) / `OAUTH_ISSUER` (env)** — the client fetches `{issuer}/.well-known/openid-configuration` (OIDC discovery) and uses its `token_endpoint`. Result is cached for the process lifetime; call `gundi_client_v2.auth.clear_discovery_cache()` to invalidate.
+3. **Neither set** — `AuthenticationError("No token URL configured.")` is raised on the first auth attempt.
+
+OIDC discovery works for any compliant IdP (Keycloak, Auth0, Okta, …). Configure `OAUTH_ISSUER` and the token endpoint is found automatically.
+
+> **Backward compatibility:** The legacy `KEYCLOAK_*` env var names (`KEYCLOAK_ISSUER`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`, `KEYCLOAK_AUDIENCE`) are still accepted as fallbacks for the corresponding `OAUTH_*` env vars. Three legacy constructor kwargs are also still accepted: `keycloak_client_id`, `keycloak_client_secret`, and `keycloak_audience`. There is no `keycloak_issuer` constructor kwarg — use `oauth_token_url` or `oauth_issuer` instead.
 
 If both are configured, password grant takes precedence. Contact the Gundi team for credentials.
 
