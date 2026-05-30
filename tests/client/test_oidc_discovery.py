@@ -129,7 +129,10 @@ async def test_explicit_oauth_token_url_skips_discovery(auth_token_response):
         password="s3cret",
         base_url="https://api.fakeportal.com",
     )
-    async with respx.mock as mock:
+    # discovery_route is registered specifically to assert it is NOT called
+    # (explicit oauth_token_url wins); set assert_all_called=False explicitly
+    # so the intent survives future respx default changes.
+    async with respx.mock(assert_all_called=False) as mock:
         discovery_route = mock.get(discovery_url).respond(
             status_code=httpx.codes.OK,
             json={"issuer": issuer, "token_endpoint": "https://wrong.example/token"},

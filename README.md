@@ -145,7 +145,7 @@ The client resolves the OAuth token endpoint in this order:
 
 1. **`oauth_token_url` (kwarg) / `OAUTH_TOKEN_URL` (env)** — used as-is when set.
 2. **`oauth_issuer` (kwarg) / `OAUTH_ISSUER` (env)** — the client fetches `{issuer}/.well-known/openid-configuration` (OIDC discovery) and uses its `token_endpoint`. Result is cached for the process lifetime; call `gundi_client_v2.auth.clear_discovery_cache()` to invalidate.
-3. **Neither set** — `AuthenticationError("No token URL configured.")` is raised on the first auth attempt.
+3. **Neither set** — `AuthenticationError("No token URL configured. Set oauth_token_url or oauth_issuer.")` is raised on the first auth attempt.
 
 OIDC discovery works for any compliant IdP (Keycloak, Auth0, Okta, …). Configure `OAUTH_ISSUER` and the token endpoint is found automatically.
 
