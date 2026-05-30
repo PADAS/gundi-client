@@ -29,7 +29,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-Set your credentials via environment variables (see [Configuration](#configuration)) or pass them directly:
+Configure the client via environment variables (see [Configuration](#configuration)) or pass values directly. The Quick Start snippet needs more than credentials at runtime — at minimum a `base_url` / `GUNDI_API_BASE_URL`, an `OAUTH_CLIENT_ID`, and either an `OAUTH_ISSUER` or `oauth_token_url`. Example with kwargs:
 
 ```python
 client = GundiClient(
@@ -92,8 +92,7 @@ Settings can be provided as **environment variables** or **constructor keyword a
 | `GUNDI_PASSWORD` | Your Gundi password — required for password grant | — |
 | `OAUTH_CLIENT_ID` | OAuth client ID | — |
 | `OAUTH_CLIENT_SECRET` | OAuth client secret — required for client-credentials grant | — |
-| `OAUTH_ISSUER` | OAuth issuer base URL; token URL is derived as `{OAUTH_ISSUER}/protocol/openid-connect/token`. **Do not include a trailing slash** — the value is not stripped and a trailing slash will produce a double-slash in the derived URL. | — |
-| `OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. Takes precedence over the value derived from `OAUTH_ISSUER` when set explicitly in the environment. | — |
+| `OAUTH_ISSUER` | OAuth issuer base URL; the token URL is derived from it as `{OAUTH_ISSUER}/protocol/openid-connect/token`. **Do not include a trailing slash** — the value is not stripped and a trailing slash will produce a double-slash in the derived URL. There is no `OAUTH_TOKEN_URL` env var; use the `oauth_token_url` kwarg if you need to override the derivation. | — |
 | `OAUTH_AUDIENCE` | OAuth audience | — |
 | `OAUTH_SCOPE` | OAuth scope | `openid` |
 | `GUNDI_API_BASE_URL` | Gundi API base URL | — |
@@ -112,7 +111,7 @@ Settings can be provided as **environment variables** or **constructor keyword a
 | `password` | `GUNDI_PASSWORD` | Gundi password |
 | `oauth_client_id` | `OAUTH_CLIENT_ID` | OAuth client ID |
 | `oauth_client_secret` | `OAUTH_CLIENT_SECRET` | OAuth client secret |
-| `oauth_token_url` | `OAUTH_TOKEN_URL` | Full OAuth token endpoint URL |
+| `oauth_token_url` | — (derived from `OAUTH_ISSUER`) | Full OAuth token endpoint URL. No direct env-var counterpart — set `OAUTH_ISSUER` to have the token URL derived, or pass this kwarg to override. |
 | `oauth_audience` | `OAUTH_AUDIENCE` | OAuth audience |
 | `oauth_scope` | `OAUTH_SCOPE` | OAuth scope |
 | `max_http_retries` | — | Max HTTP retries (default `5`) |
