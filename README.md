@@ -154,7 +154,7 @@ OIDC discovery works for any compliant IdP (Keycloak, Auth0, Okta, …). Configu
 `OAUTH_AUDIENCE` is sent to the token endpoint when configured. Whether it is required depends on the IdP:
 
 - **Auth0** — required. Without `audience`, Auth0 issues an opaque token that cannot authorize API requests.
-- **Keycloak** — optional. The password grant ignores it; UMA flows use it for scope matching.
+- **Keycloak** — optional. Both grant types this library supports (password and client_credentials) ignore it.
 
 The parameter name `audience` reflects the Auth0/Keycloak convention. The OAuth 2.0 / OIDC standard equivalent is `resource` (RFC 8707, *Resource Indicators*). If we add support for IdPs that strictly require `resource` instead, it will be introduced as a `resource` kwarg alongside `audience`, not as a rename. Existing `OAUTH_AUDIENCE` / `oauth_audience` configurations will keep working.
 
