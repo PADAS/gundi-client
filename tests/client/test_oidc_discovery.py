@@ -170,8 +170,6 @@ async def test_oauth_issuer_only_triggers_discovery(auth_token_response):
         await client.get_access_token()
         assert discovery_route.call_count == 1
         assert token_route.call_count == 1
-        # Memoization: after the first auth, the discovered URL is on self.
-        assert client.oauth_token_url == discovered_token_url
 
 
 @pytest.mark.asyncio
@@ -193,7 +191,7 @@ async def test_no_token_url_or_issuer_raises():
 async def test_refresh_branch_uses_discovered_url_after_initial_auth(auth_token_response):
     """Regression: in the issuer-only flow, the refresh branch fires after the
     access token expires; it must reuse the URL discovered during the initial auth
-    (memoized on self.oauth_token_url), not pass None."""
+    (served from auth._DISCOVERY_CACHE on the second call), not pass None."""
     issuer = "https://idp.example.com/realms/dev"
     discovery_url = f"{issuer}/.well-known/openid-configuration"
     discovered_token_url = "https://idp.example.com/realms/dev/protocol/openid-connect/token"
@@ -221,3 +219,33 @@ async def test_refresh_branch_uses_discovered_url_after_initial_auth(auth_token_
         # Second call should have been the refresh grant — confirm via grant_type.
         second_body = parse_qs(token_route.calls[1].request.content.decode())
         assert second_body["grant_type"] == ["refresh_token"]
+
+
+@pytest.mark.asyncio
+async def test_clear_discovery_cache_forces_rediscovery_for_existing_client(auth_token_response):
+    """After clear_discovery_cache(), a client that previously discovered must rediscover
+    on its next auth attempt — i.e. the cache invalidation reaches the live client."""
+    issuer = "https://idp.example.com/realms/dev"
+    discovery_url = f"{issuer}/.well-known/openid-configuration"
+    discovered_token_url = "https://idp.example.com/realms/dev/protocol/openid-connect/token"
+    client = GundiClient(
+        oauth_token_url=None,
+        oauth_issuer=issuer,
+        oauth_client_id="public-client",
+        username="alice",
+        password="s3cret",
+        base_url="https://api.fakeportal.com",
+    )
+    async with respx.mock as mock:
+        discovery_route = mock.get(discovery_url).respond(
+            status_code=httpx.codes.OK,
+            json={"issuer": issuer, "token_endpoint": discovered_token_url},
+        )
+        mock.post(discovered_token_url).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        await client.get_access_token()                       # initial auth via discovery
+        assert discovery_route.call_count == 1
+        auth.clear_discovery_cache()                          # operator invalidates
+        await client.get_access_token(force_refresh_token=True)  # next auth on the SAME client
+        assert discovery_route.call_count == 2                # must have re-discovered

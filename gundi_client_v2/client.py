@@ -218,16 +218,14 @@ class GundiClient:
 
     async def _resolve_token_url(self) -> str:
         """Return the token endpoint URL. Explicit oauth_token_url wins; otherwise
-        discover it from oauth_issuer via OIDC discovery and memoize the result on
-        the instance so subsequent reads of self.oauth_token_url see it. Raises
-        AuthenticationError if neither is set."""
+        discover it from oauth_issuer via OIDC discovery. Discovery results are
+        cached process-wide in auth._DISCOVERY_CACHE, so repeated calls with the
+        same issuer are cheap (one dict lookup). Raises AuthenticationError if
+        neither is set."""
         if self.oauth_token_url:
             return self.oauth_token_url
         if self.oauth_issuer:
-            self.oauth_token_url = await auth.discover_token_endpoint(
-                self._session, self.oauth_issuer
-            )
-            return self.oauth_token_url
+            return await auth.discover_token_endpoint(self._session, self.oauth_issuer)
         raise errors.AuthenticationError(
             "No token URL configured. Set oauth_token_url or oauth_issuer."
         )
