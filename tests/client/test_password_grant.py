@@ -4,7 +4,7 @@ import respx
 from datetime import datetime, timezone
 from urllib.parse import parse_qs
 
-from gundi_client_v2 import errors
+from gundi_client_v2 import auth, errors
 from gundi_client_v2.client import GundiClient
 
 TOKEN_URL = "https://fakeauth.com/realms/dev/protocol/openid-connect/token"
@@ -258,3 +258,100 @@ async def test_password_grant_requires_client_id():
     with pytest.raises(errors.AuthenticationError) as exc:
         await client.get_access_token()
     assert "client_id" in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_get_access_token_client_credentials_payload(auth_token_response):
+    """RFC 6749 §4.4: client_credentials grant sends client_id+secret with grant_type=client_credentials."""
+    token_url = "https://idp.example.com/oauth/token"
+    async with respx.mock as mock:
+        route = mock.post(token_url).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        async with httpx.AsyncClient() as session:
+            token = await auth.get_access_token_client_credentials(
+                session,
+                oauth_token_url=token_url,
+                client_id="cid",
+                client_secret="csecret",
+            )
+        params = parse_qs(route.calls.last.request.content.decode())
+        assert params["grant_type"] == ["client_credentials"]
+        assert params["client_id"] == ["cid"]
+        assert params["client_secret"] == ["csecret"]
+        assert params["scope"] == ["openid"]
+        assert "audience" not in params
+        assert token.access_token == auth_token_response["access_token"]
+
+
+@pytest.mark.asyncio
+async def test_get_access_token_client_credentials_with_audience_and_scope(auth_token_response):
+    token_url = "https://idp.example.com/oauth/token"
+    async with respx.mock as mock:
+        route = mock.post(token_url).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        async with httpx.AsyncClient() as session:
+            token = await auth.get_access_token_client_credentials(
+                session,
+                oauth_token_url=token_url,
+                client_id="cid",
+                client_secret="csecret",
+                audience="my-api",
+                scope="openid api",
+            )
+        params = parse_qs(route.calls.last.request.content.decode())
+        assert params["audience"] == ["my-api"]
+        assert params["scope"] == ["openid api"]
+        assert token.access_token == auth_token_response["access_token"]
+
+
+@pytest.mark.asyncio
+async def test_get_access_token_client_credentials_refreshless_response_parses():
+    """RFC 6749 §4.4.3: client_credentials response SHOULD NOT include refresh_token.
+    The function backfills empty refresh fields so OAuthToken (which requires them) still parses."""
+    refreshless = {
+        "access_token": "cc-token-value",
+        "expires_in": 1800,
+        "token_type": "Bearer",
+        # NO refresh_token or refresh_expires_in
+    }
+    token_url = "https://idp.example.com/oauth/token"
+    async with respx.mock as mock:
+        mock.post(token_url).respond(status_code=httpx.codes.OK, json=refreshless)
+        async with httpx.AsyncClient() as session:
+            token = await auth.get_access_token_client_credentials(
+                session,
+                oauth_token_url=token_url,
+                client_id="cid",
+                client_secret="csecret",
+            )
+        assert token.access_token == "cc-token-value"
+        assert token.refresh_token == ""
+        assert token.refresh_expires_in == 0
+
+
+@pytest.mark.asyncio
+async def test_get_access_token_client_credentials_explicit_null_refresh_fields():
+    """Some IdPs serialize 'no refresh token' as explicit null. The function must
+    still produce a valid OAuthToken, treating null like missing."""
+    null_refresh_response = {
+        "access_token": "cc-token-value",
+        "expires_in": 1800,
+        "token_type": "Bearer",
+        "refresh_token": None,
+        "refresh_expires_in": None,
+    }
+    token_url = "https://idp.example.com/oauth/token"
+    async with respx.mock as mock:
+        mock.post(token_url).respond(status_code=httpx.codes.OK, json=null_refresh_response)
+        async with httpx.AsyncClient() as session:
+            token = await auth.get_access_token_client_credentials(
+                session,
+                oauth_token_url=token_url,
+                client_id="cid",
+                client_secret="csecret",
+            )
+        assert token.access_token == "cc-token-value"
+        assert token.refresh_token == ""
+        assert token.refresh_expires_in == 0

@@ -107,6 +107,38 @@ async def refresh_access_token(
     return OAuthToken.parse_obj(body), refresh_rotated
 
 
+async def get_access_token_client_credentials(
+    session,
+    oauth_token_url,
+    client_id,
+    client_secret,
+    audience=None,
+    scope="openid",
+):
+    """Standard OAuth2 client_credentials grant (RFC 6749 §4.4) for confidential clients.
+
+    Responses for client_credentials typically do NOT include a refresh_token
+    (RFC 6749 §4.4.3 says SHOULD NOT). We backfill empty values so the OAuthToken
+    schema (which requires both fields) still parses; the client orchestrator
+    treats the empty refresh_token + refresh_expires_in=0 as 'no refresh available'
+    and re-authenticates on each access-token expiry.
+    """
+    logger.debug(f"get_access_token (client_credentials) from {oauth_token_url} using client_id: {client_id}")
+    payload = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "grant_type": "client_credentials",
+        "scope": scope,
+    }
+    if audience:
+        payload["audience"] = audience
+    body = await _post_token(session, oauth_token_url, payload)
+    # Treat missing OR explicit-null refresh fields as 'no refresh available'.
+    body["refresh_token"] = body.get("refresh_token") or ""
+    body["refresh_expires_in"] = body.get("refresh_expires_in") or 0
+    return OAuthToken.parse_obj(body)
+
+
 _DISCOVERY_CACHE: dict[str, str] = {}
 
 
