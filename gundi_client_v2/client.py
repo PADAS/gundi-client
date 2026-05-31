@@ -216,6 +216,46 @@ class GundiClient:
             )
         return response
 
+    async def _patch(self, url, data: dict = None, params=None, headers=None, **kwargs):
+        headers = headers or {}
+        auth_headers = await self.get_auth_header()
+        response = await self._session.patch(
+            url,
+            json=data,
+            params=params,
+            headers={**auth_headers, **headers},
+            **kwargs,
+        )
+        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+            auth_headers = await self.get_auth_header(force_refresh_token=True)
+            response = await self._session.patch(
+                url,
+                json=data,
+                params=params,
+                headers={**auth_headers, **headers},
+                **kwargs,
+            )
+        return response
+
+    async def _delete(self, url, params=None, headers=None, **kwargs):
+        headers = headers or {}
+        auth_headers = await self.get_auth_header()
+        response = await self._session.delete(
+            url,
+            params=params,
+            headers={**auth_headers, **headers},
+            **kwargs,
+        )
+        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+            auth_headers = await self.get_auth_header(force_refresh_token=True)
+            response = await self._session.delete(
+                url,
+                params=params,
+                headers={**auth_headers, **headers},
+                **kwargs,
+            )
+        return response
+
     async def _resolve_token_url(self) -> str:
         """Return the token endpoint URL. Explicit oauth_token_url wins; otherwise
         discover it from oauth_issuer via OIDC discovery. Discovery results are
@@ -357,12 +397,46 @@ class GundiClient:
         data = response.json()
         return Connection.parse_obj(data)
 
+    async def get_routes(self, params: dict = None) -> List[Route]:
+        url = f"{self.routes_endpoint}/"
+        response = await self._get(url, params=params)
+        self._raise_for_status(response)
+        return self._parse_list_response(response.json(), Route)
+
+    async def get_routes_for_connection(self, connection_id) -> List[Route]:
+        """List routes where the given connection appears as a data provider.
+
+        This is a convenience wrapper around ``get_routes(params={"provider": ...})``.
+        To combine the provider filter with other server-side filters (e.g.
+        ``owner``, ``destination``), call ``get_routes`` directly with a merged
+        params dict.
+        """
+        return await self.get_routes(params={"provider": str(connection_id)})
+
     async def get_route_details(self, route_id):
         url = f"{self.routes_endpoint}/{route_id}/"
         response = await self._get(url)
         self._raise_for_status(response)
         data = response.json()
         return Route.parse_obj(data)
+
+    async def create_route(self, data: dict) -> Route:
+        url = f"{self.routes_endpoint}/"
+        response = await self._post(url, data=data)
+        self._raise_for_status(response)
+        return Route.parse_obj(response.json())
+
+    async def update_route(self, route_id, data: dict) -> Route:
+        url = f"{self.routes_endpoint}/{route_id}/"
+        response = await self._patch(url, data=data)
+        self._raise_for_status(response)
+        return Route.parse_obj(response.json())
+
+    async def delete_route(self, route_id) -> None:
+        url = f"{self.routes_endpoint}/{route_id}/"
+        response = await self._delete(url)
+        self._raise_for_status(response)
+        # 204 No Content on success — no body to return.
 
     async def get_integrations(self, params: dict = None) -> AsyncGenerator[Integration, None]:
         url = f"{self.integrations_endpoint}/"

@@ -201,8 +201,33 @@ async def main():
             integration_id="some-uuid"
         )
 
+        # List routes (optionally pass params= for server-side filtering)
+        routes = await client.get_routes()
+
+        # List routes where a connection is the data provider
+        routes = await client.get_routes_for_connection(
+            connection_id="some-provider-uuid"
+        )
+
         # Get route details
         route = await client.get_route_details(route_id="some-uuid")
+
+        # Create a route
+        new_route = await client.create_route(data={
+            "name": "TrapTagger → ER (events)",
+            "owner": "your-org-uuid",
+            "data_providers": ["provider-integration-uuid"],
+            "destinations": ["destination-integration-uuid"],
+        })
+
+        # Update a route (partial update via PATCH)
+        updated_route = await client.update_route(
+            route_id="some-uuid",
+            data={"name": "Renamed Route"},
+        )
+
+        # Delete a route
+        await client.delete_route(route_id="some-uuid")
 
         # Query traces
         traces = await client.get_traces(params={"object_id": "some-uuid"})
