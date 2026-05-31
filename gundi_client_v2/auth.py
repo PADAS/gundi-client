@@ -7,9 +7,6 @@ from .errors import AuthenticationError
 
 logger = logging.getLogger(__name__)
 
-UMA_TICKET_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:uma-ticket"
-
-
 def _extract_oauth_error(response):
     """Build a detail string from an RFC 6749 §5.2 token-error response."""
     status = response.status_code
@@ -41,19 +38,6 @@ async def _post_token(session, oauth_token_url, payload) -> dict:
 
 async def _token_request(session, oauth_token_url, payload) -> OAuthToken:
     return OAuthToken.parse_obj(await _post_token(session, oauth_token_url, payload))
-
-
-async def get_access_token(session, oauth_token_url, client_id, client_secret, audience=None, scope="openid"):
-    logger.debug(f"get_access_token from {oauth_token_url} using client_id: {client_id}")
-    payload = {
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "grant_type": UMA_TICKET_GRANT_TYPE,
-        "scope": scope,
-    }
-    if audience:
-        payload["audience"] = audience
-    return await _token_request(session, oauth_token_url, payload)
 
 
 # NOTE: The Resource Owner Password Credentials (ROPC) grant is discouraged by OAuth 2.1
@@ -105,3 +89,98 @@ async def refresh_access_token(
     body.setdefault("refresh_token", fallback.refresh_token)
     body.setdefault("refresh_expires_in", fallback.refresh_expires_in)
     return OAuthToken.parse_obj(body), refresh_rotated
+
+
+async def get_access_token_client_credentials(
+    session,
+    oauth_token_url,
+    client_id,
+    client_secret,
+    audience=None,
+    scope="openid",
+):
+    """Standard OAuth2 client_credentials grant (RFC 6749 §4.4) for confidential clients.
+
+    Responses for client_credentials typically do NOT include a refresh_token
+    (RFC 6749 §4.4.3 says SHOULD NOT). We backfill empty values so the OAuthToken
+    schema (which requires both fields) still parses; the client orchestrator
+    treats the empty refresh_token + refresh_expires_in=0 as 'no refresh available'
+    and re-authenticates on each access-token expiry.
+    """
+    logger.debug(f"get_access_token (client_credentials) from {oauth_token_url} using client_id: {client_id}")
+    payload = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "grant_type": "client_credentials",
+        "scope": scope,
+    }
+    if audience:
+        payload["audience"] = audience
+    body = await _post_token(session, oauth_token_url, payload)
+    # Treat missing OR explicit-null refresh fields as 'no refresh available'.
+    body["refresh_token"] = body.get("refresh_token") or ""
+    body["refresh_expires_in"] = body.get("refresh_expires_in") or 0
+    return OAuthToken.parse_obj(body)
+
+
+_DISCOVERY_CACHE: dict[str, str] = {}
+
+
+def clear_discovery_cache() -> None:
+    """Clear the OIDC discovery cache. Useful for tests and for long-running
+    processes that need to pick up an IdP configuration change without a restart."""
+    _DISCOVERY_CACHE.clear()
+
+
+async def discover_token_endpoint(session, issuer: str) -> str:
+    """Fetch the OIDC discovery document at ``{issuer}/.well-known/openid-configuration``
+    and return its ``token_endpoint``. Cached per-issuer for the process lifetime;
+    call :func:`clear_discovery_cache` to invalidate.
+
+    The cache key is ``issuer.rstrip('/')`` so values differing only by a trailing
+    slash share one cache entry. The same normalization is applied when comparing
+    the returned ``issuer`` claim to the expected value.
+
+    Per OIDC Discovery 1.0 §4.3 (Validation of Issuer Identifier), the ``issuer``
+    field in the discovery document MUST match the URL used to fetch it; otherwise
+    a misconfigured (or hostile) response could redirect credentials at a token
+    endpoint for a different IdP. A mismatch raises ``AuthenticationError``.
+    """
+    key = issuer.rstrip("/")
+    if key in _DISCOVERY_CACHE:
+        return _DISCOVERY_CACHE[key]
+    discovery_url = f"{key}/.well-known/openid-configuration"
+    try:
+        response = await session.get(discovery_url)
+        response.raise_for_status()
+    except httpx.HTTPError as e:
+        raise AuthenticationError(
+            f"OIDC discovery failed for {issuer}: {e}"
+        ) from e
+    try:
+        body = response.json()
+    except ValueError as e:
+        raise AuthenticationError(
+            f"OIDC discovery document at {discovery_url} is not valid JSON"
+        ) from e
+    if not isinstance(body, dict):
+        raise AuthenticationError(
+            f"OIDC discovery document at {discovery_url} is not a JSON object"
+        )
+    returned_issuer = body.get("issuer")
+    if not isinstance(returned_issuer, str) or returned_issuer.rstrip("/") != key:
+        raise AuthenticationError(
+            f"OIDC discovery document at {discovery_url} returned issuer "
+            f"{returned_issuer!r} which does not match the expected issuer {issuer!r}"
+        )
+    if "token_endpoint" not in body:
+        raise AuthenticationError(
+            f"OIDC discovery document at {discovery_url} is missing 'token_endpoint'"
+        )
+    token_endpoint = body["token_endpoint"]
+    if not isinstance(token_endpoint, str):
+        raise AuthenticationError(
+            f"OIDC discovery document at {discovery_url} has a non-string 'token_endpoint': {token_endpoint!r}"
+        )
+    _DISCOVERY_CACHE[key] = token_endpoint
+    return token_endpoint

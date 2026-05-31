@@ -2,6 +2,15 @@ import pytest
 from gundi_client_v2.client import GundiClient, GundiDataSenderClient
 
 
+@pytest.fixture(autouse=True)
+def _clear_oidc_discovery_cache():
+    """Keep the per-issuer OIDC discovery cache test-isolated."""
+    from gundi_client_v2 import auth as _auth
+    _auth.clear_discovery_cache()
+    yield
+    _auth.clear_discovery_cache()
+
+
 @pytest.fixture
 def sender_settings():
     return {

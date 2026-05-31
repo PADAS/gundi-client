@@ -145,6 +145,7 @@ class GundiClient:
         self.username = kwargs.get("username", settings.GUNDI_USERNAME)
         self.password = kwargs.get("password", settings.GUNDI_PASSWORD)
         self.oauth_token_url = kwargs.get("oauth_token_url", settings.OAUTH_TOKEN_URL)
+        self.oauth_issuer = kwargs.get("oauth_issuer", settings.OAUTH_ISSUER)
         self.audience = kwargs.get("oauth_audience",
                                    kwargs.get("keycloak_audience", settings.OAUTH_AUDIENCE))
         self.scope = kwargs.get("oauth_scope", settings.OAUTH_SCOPE)
@@ -215,8 +216,64 @@ class GundiClient:
             )
         return response
 
+    async def _patch(self, url, data: dict = None, params=None, headers=None, **kwargs):
+        headers = headers or {}
+        auth_headers = await self.get_auth_header()
+        response = await self._session.patch(
+            url,
+            json=data,
+            params=params,
+            headers={**auth_headers, **headers},
+            **kwargs,
+        )
+        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+            auth_headers = await self.get_auth_header(force_refresh_token=True)
+            response = await self._session.patch(
+                url,
+                json=data,
+                params=params,
+                headers={**auth_headers, **headers},
+                **kwargs,
+            )
+        return response
+
+    async def _delete(self, url, params=None, headers=None, **kwargs):
+        headers = headers or {}
+        auth_headers = await self.get_auth_header()
+        response = await self._session.delete(
+            url,
+            params=params,
+            headers={**auth_headers, **headers},
+            **kwargs,
+        )
+        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+            auth_headers = await self.get_auth_header(force_refresh_token=True)
+            response = await self._session.delete(
+                url,
+                params=params,
+                headers={**auth_headers, **headers},
+                **kwargs,
+            )
+        return response
+
+    async def _resolve_token_url(self) -> str:
+        """Return the token endpoint URL. Explicit oauth_token_url wins; otherwise
+        discover it from oauth_issuer via OIDC discovery. Discovery results are
+        cached process-wide in auth._DISCOVERY_CACHE, so repeated calls with the
+        same issuer are cheap (one dict lookup). Raises AuthenticationError if
+        neither is set."""
+        if self.oauth_token_url:
+            return self.oauth_token_url
+        if self.oauth_issuer:
+            return await auth.discover_token_endpoint(self._session, self.oauth_issuer)
+        raise errors.AuthenticationError(
+            "No token URL configured. Set oauth_token_url or oauth_issuer."
+        )
+
     async def _refresh_token(self):
         now = datetime.now(tz=timezone.utc)
+        token_url = await self._resolve_token_url()
+
         # 1. Prefer the refresh-token grant when we hold a live refresh token.
         if (
             self.cached_token
@@ -226,7 +283,7 @@ class GundiClient:
             try:
                 token, refresh_rotated = await auth.refresh_access_token(
                     session=self._session,
-                    oauth_token_url=self.oauth_token_url,
+                    oauth_token_url=token_url,
                     client_id=self.client_id,
                     refresh_token=self.cached_token.refresh_token,
                     fallback=self.cached_token,
@@ -248,7 +305,7 @@ class GundiClient:
             logger.debug("Authenticating via password grant.")
             token = await auth.get_access_token_password_grant(
                 session=self._session,
-                oauth_token_url=self.oauth_token_url,
+                oauth_token_url=token_url,
                 client_id=self.client_id,
                 username=self.username,
                 password=self.password,
@@ -256,10 +313,10 @@ class GundiClient:
                 scope=self.scope,
             )
         elif self.client_id and self.client_secret:
-            logger.debug("Authenticating via client-credentials (uma-ticket) grant.")
-            token = await auth.get_access_token(
+            logger.debug("Authenticating via client_credentials grant.")
+            token = await auth.get_access_token_client_credentials(
                 session=self._session,
-                oauth_token_url=self.oauth_token_url,
+                oauth_token_url=token_url,
                 client_id=self.client_id,
                 client_secret=self.client_secret,
                 audience=self.audience,
@@ -274,16 +331,29 @@ class GundiClient:
         return token
 
     def _store_token(self, token, *, refresh_rotated=True):
-        # OAuthToken (gundi-core) always carries access + refresh fields on a successful parse.
+        # OAuthToken (gundi-core) always carries access + refresh fields on a successful parse,
+        # but for grants that don't issue refresh tokens (e.g. client_credentials) the auth
+        # helper backfills empty refresh_token and refresh_expires_in=0. Detect that here.
         # ``refresh_rotated`` is False only when this token came from a refresh-grant response
         # that omitted a new refresh_token (RFC 6749 §6) — in that case we preserve the
         # existing cached_token_refresh_expires_at because the cached refresh token is still
         # valid for its original lifetime.
         now = datetime.now(tz=timezone.utc)
         self.cached_token = token
-        self.cached_token_expires_at = now + timedelta(seconds=self._expiry_with_buffer(token.expires_in))
+        self.cached_token_expires_at = now + timedelta(
+            seconds=self._expiry_with_buffer(token.expires_in)
+        )
         if refresh_rotated:
-            self.cached_token_refresh_expires_at = now + timedelta(seconds=self._expiry_with_buffer(token.refresh_expires_in))
+            # `> 0` treats both zero (the backfilled refreshless case) and any negative
+            # `refresh_expires_in` (server bug / weird IdP) as 'no refresh available'.
+            if token.refresh_token and token.refresh_expires_in > 0:
+                self.cached_token_refresh_expires_at = now + timedelta(
+                    seconds=self._expiry_with_buffer(token.refresh_expires_in)
+                )
+            else:
+                # Refreshless grant — disable refresh tracking so the refresh-token
+                # branch in _refresh_token doesn't pick this up.
+                self.cached_token_refresh_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
     @staticmethod
     def _expiry_with_buffer(lifetime_seconds, buffer_seconds=15):
@@ -327,12 +397,46 @@ class GundiClient:
         data = response.json()
         return Connection.parse_obj(data)
 
+    async def get_routes(self, params: dict = None) -> List[Route]:
+        url = f"{self.routes_endpoint}/"
+        response = await self._get(url, params=params)
+        self._raise_for_status(response)
+        return self._parse_list_response(response.json(), Route)
+
+    async def get_routes_for_connection(self, connection_id) -> List[Route]:
+        """List routes where the given connection appears as a data provider.
+
+        This is a convenience wrapper around ``get_routes(params={"provider": ...})``.
+        To combine the provider filter with other server-side filters (e.g.
+        ``owner``, ``destination``), call ``get_routes`` directly with a merged
+        params dict.
+        """
+        return await self.get_routes(params={"provider": str(connection_id)})
+
     async def get_route_details(self, route_id):
         url = f"{self.routes_endpoint}/{route_id}/"
         response = await self._get(url)
         self._raise_for_status(response)
         data = response.json()
         return Route.parse_obj(data)
+
+    async def create_route(self, data: dict) -> Route:
+        url = f"{self.routes_endpoint}/"
+        response = await self._post(url, data=data)
+        self._raise_for_status(response)
+        return Route.parse_obj(response.json())
+
+    async def update_route(self, route_id, data: dict) -> Route:
+        url = f"{self.routes_endpoint}/{route_id}/"
+        response = await self._patch(url, data=data)
+        self._raise_for_status(response)
+        return Route.parse_obj(response.json())
+
+    async def delete_route(self, route_id) -> None:
+        url = f"{self.routes_endpoint}/{route_id}/"
+        response = await self._delete(url)
+        self._raise_for_status(response)
+        # 204 No Content on success — no body to return.
 
     async def get_integrations(self, params: dict = None) -> AsyncGenerator[Integration, None]:
         url = f"{self.integrations_endpoint}/"

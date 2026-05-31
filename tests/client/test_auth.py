@@ -27,7 +27,7 @@ async def test_authenticates_with_oauth_kwargs(auth_token_response):
         header = await client.get_auth_header()
         assert header["authorization"].startswith("Bearer ")
         params = _token_body(token_route)
-        assert params["grant_type"] == ["urn:ietf:params:oauth:grant-type:uma-ticket"]
+        assert params["grant_type"] == ["client_credentials"]
         assert params["client_id"] == ["confidential-client"]
         assert params["client_secret"] == ["shhh"]
 

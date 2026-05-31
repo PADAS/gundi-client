@@ -1,10 +1,11 @@
 import httpx
 import pytest
 import respx
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qs
 
-from gundi_client_v2 import errors
+from gundi_client_v2 import auth, errors
+from gundi_core.schemas import OAuthToken
 from gundi_client_v2.client import GundiClient
 
 TOKEN_URL = "https://fakeauth.com/realms/dev/protocol/openid-connect/token"
@@ -172,11 +173,11 @@ async def test_short_lived_token_not_immediately_expired(auth_token_response):
 
 @pytest.mark.asyncio
 async def test_confidential_refresh_sends_client_secret(auth_token_response):
-    # A confidential (uma-ticket) client MUST send its client_secret on the refresh grant.
+    # A confidential (client_credentials) client MUST send its client_secret on the refresh grant.
     client = _confidential_client()
     async with respx.mock as mock:
         route = mock.post(TOKEN_URL).respond(status_code=httpx.codes.OK, json=auth_token_response)
-        await client.get_access_token()                          # initial uma-ticket grant
+        await client.get_access_token()                          # initial client_credentials grant
         await client.get_access_token(force_refresh_token=True)  # refresh grant
         assert route.call_count == 2
         second = _body(route, 1)
@@ -258,3 +259,162 @@ async def test_password_grant_requires_client_id():
     with pytest.raises(errors.AuthenticationError) as exc:
         await client.get_access_token()
     assert "client_id" in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_get_access_token_client_credentials_payload(auth_token_response):
+    """RFC 6749 §4.4: client_credentials grant sends client_id+secret with grant_type=client_credentials."""
+    token_url = "https://idp.example.com/oauth/token"
+    async with respx.mock as mock:
+        route = mock.post(token_url).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        async with httpx.AsyncClient() as session:
+            token = await auth.get_access_token_client_credentials(
+                session,
+                oauth_token_url=token_url,
+                client_id="cid",
+                client_secret="csecret",
+            )
+        params = parse_qs(route.calls.last.request.content.decode())
+        assert params["grant_type"] == ["client_credentials"]
+        assert params["client_id"] == ["cid"]
+        assert params["client_secret"] == ["csecret"]
+        assert params["scope"] == ["openid"]
+        assert "audience" not in params
+        assert token.access_token == auth_token_response["access_token"]
+
+
+@pytest.mark.asyncio
+async def test_get_access_token_client_credentials_with_audience_and_scope(auth_token_response):
+    token_url = "https://idp.example.com/oauth/token"
+    async with respx.mock as mock:
+        route = mock.post(token_url).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        async with httpx.AsyncClient() as session:
+            token = await auth.get_access_token_client_credentials(
+                session,
+                oauth_token_url=token_url,
+                client_id="cid",
+                client_secret="csecret",
+                audience="my-api",
+                scope="openid api",
+            )
+        params = parse_qs(route.calls.last.request.content.decode())
+        assert params["audience"] == ["my-api"]
+        assert params["scope"] == ["openid api"]
+        assert token.access_token == auth_token_response["access_token"]
+
+
+@pytest.mark.asyncio
+async def test_get_access_token_client_credentials_refreshless_response_parses():
+    """RFC 6749 §4.4.3: client_credentials response SHOULD NOT include refresh_token.
+    The function backfills empty refresh fields so OAuthToken (which requires them) still parses."""
+    refreshless = {
+        "access_token": "cc-token-value",
+        "expires_in": 1800,
+        "token_type": "Bearer",
+        # NO refresh_token or refresh_expires_in
+    }
+    token_url = "https://idp.example.com/oauth/token"
+    async with respx.mock as mock:
+        mock.post(token_url).respond(status_code=httpx.codes.OK, json=refreshless)
+        async with httpx.AsyncClient() as session:
+            token = await auth.get_access_token_client_credentials(
+                session,
+                oauth_token_url=token_url,
+                client_id="cid",
+                client_secret="csecret",
+            )
+        assert token.access_token == "cc-token-value"
+        assert token.refresh_token == ""
+        assert token.refresh_expires_in == 0
+
+
+@pytest.mark.asyncio
+async def test_get_access_token_client_credentials_explicit_null_refresh_fields():
+    """Some IdPs serialize 'no refresh token' as explicit null. The function must
+    still produce a valid OAuthToken, treating null like missing."""
+    null_refresh_response = {
+        "access_token": "cc-token-value",
+        "expires_in": 1800,
+        "token_type": "Bearer",
+        "refresh_token": None,
+        "refresh_expires_in": None,
+    }
+    token_url = "https://idp.example.com/oauth/token"
+    async with respx.mock as mock:
+        mock.post(token_url).respond(status_code=httpx.codes.OK, json=null_refresh_response)
+        async with httpx.AsyncClient() as session:
+            token = await auth.get_access_token_client_credentials(
+                session,
+                oauth_token_url=token_url,
+                client_id="cid",
+                client_secret="csecret",
+            )
+        assert token.access_token == "cc-token-value"
+        assert token.refresh_token == ""
+        assert token.refresh_expires_in == 0
+
+
+def test_store_token_refreshless_disables_refresh_tracking():
+    """When a token has no usable refresh fields (e.g., a client_credentials response
+    that's been backfilled with empty refresh_token/refresh_expires_in=0), _store_token
+    must set cached_token_refresh_expires_at to datetime.min so the refresh-grant branch
+    in _refresh_token is skipped on the next call."""
+    client = _confidential_client()
+    refreshless = OAuthToken.parse_obj({
+        "access_token": "fresh-access",
+        "expires_in": 1800,
+        "refresh_token": "",
+        "refresh_expires_in": 0,
+        "token_type": "Bearer",
+    })
+    client._store_token(refreshless)
+    assert client.cached_token.access_token == "fresh-access"
+    assert client.cached_token_refresh_expires_at == datetime.min.replace(tzinfo=timezone.utc)
+    # access-token expiry should still be set to a future moment via the buffer math
+    assert client.cached_token_expires_at > datetime.now(tz=timezone.utc)
+
+
+def test_store_token_refresh_not_rotated_preserves_existing_expiry():
+    """refresh_rotated=False (RFC 6749 §6 partial response — IdP omitted refresh_token)
+    must never touch cached_token_refresh_expires_at, even when the token's own refresh
+    fields are empty. Locks in the no-touch semantics from PR #38."""
+    client = _confidential_client()
+    sentinel = datetime.now(tz=timezone.utc) + timedelta(hours=12)
+    client.cached_token_refresh_expires_at = sentinel
+    partial = OAuthToken.parse_obj({
+        "access_token": "new-access",
+        "expires_in": 1800,
+        "refresh_token": "",
+        "refresh_expires_in": 0,
+        "token_type": "Bearer",
+    })
+    client._store_token(partial, refresh_rotated=False)
+    assert client.cached_token_refresh_expires_at is sentinel
+
+
+@pytest.mark.asyncio
+async def test_confidential_refresh_after_client_credentials_falls_back_to_full_auth(auth_token_response):
+    """A client_credentials initial response that lacks refresh_token must not be retried
+    on the refresh-token path; the next force_refresh must re-authenticate via client_credentials."""
+    client_credentials_response = {
+        "access_token": "cc-access-token",
+        "expires_in": auth_token_response["expires_in"],
+        "token_type": "Bearer",
+    }
+    client = _confidential_client()
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=client_credentials_response
+        )
+        await client.get_access_token()                          # initial client_credentials
+        # Mechanism: _store_token recognizes the refreshless response and disables refresh tracking.
+        assert client.cached_token_refresh_expires_at == datetime.min.replace(tzinfo=timezone.utc)
+        await client.get_access_token(force_refresh_token=True)  # forced re-auth
+        assert route.call_count == 2
+        # Both calls must be client_credentials — refresh path was disabled by the empty refresh_token.
+        assert _body(route, 0)["grant_type"] == ["client_credentials"]
+        assert _body(route, 1)["grant_type"] == ["client_credentials"]
