@@ -66,3 +66,30 @@ GUNDI_CLIENT_ENVFILE=examples/.env python examples/send_observations.py
 ```
 
 Ensure the integration named in `GUNDI_INTEGRATION_NAME` exists in your Gundi deployment and has an API key configured.
+
+### Listing connections — three auth paths
+
+These small scripts each list the Gundi connections accessible to the
+configured client, demonstrating the three OAuth2 auth paths the library
+supports. The library call is identical (`client.get_connections(...)`)
+in all three — the variation is purely how the client is configured.
+
+| Script | Auth path | Token URL source |
+|---|---|---|
+| `list_connections_client_credentials.py` | client_credentials grant (confidential client / M2M) | explicit `OAUTH_TOKEN_URL` |
+| `list_connections_password_grant.py` | password grant (public client / user-facing) | explicit `OAUTH_TOKEN_URL` |
+| `list_connections_discovery.py` | password grant + OIDC discovery (IdP-agnostic) | discovered from `OAUTH_ISSUER` — requires `gundi-client-v2 >= 2.6.0` |
+
+All three run the same way as `send_observations.py`:
+
+```bash
+cd examples
+python list_connections_<mode>.py
+```
+
+Each script also demonstrates passing `params={...}` to
+`get_connections` for server-side filtering — see the Gundi API docs for
+the available filter keys. The bundled example uses `params={"status": "healthy"}`.
+
+The required env vars for each are listed in the script's module
+docstring; `.env.example` also annotates which variables each example uses.
