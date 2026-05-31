@@ -78,7 +78,7 @@ in all three — the variation is purely how the client is configured.
 |---|---|---|
 | `list_connections_client_credentials.py` | client_credentials grant (confidential client / M2M) | explicit `OAUTH_TOKEN_URL` |
 | `list_connections_password_grant.py` | password grant (public client / user-facing) | explicit `OAUTH_TOKEN_URL` |
-| `list_connections_discovery.py` | password grant + OIDC discovery (IdP-agnostic) | discovered from `OAUTH_ISSUER` — requires `gundi-client-v2 >= 2.6.0` |
+| `list_connections_discovery.py` | password grant + OIDC discovery (IdP-agnostic) | discovered from `OAUTH_ISSUER` — requires `gundi-client-v2 >= 3.0.0` |
 
 All three run the same way as `send_observations.py`:
 

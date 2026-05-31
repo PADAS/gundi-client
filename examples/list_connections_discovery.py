@@ -17,7 +17,7 @@ the Auth0 tenant and this same script keeps working.
 #   OAUTH_AUDIENCE  — required by some IdPs (e.g. Auth0 won't issue a usable
 #                     API access token without it); ignored by Keycloak.
 
-# Requires gundi-client-v2 >= 2.6.0 (OIDC discovery support).
+# Requires gundi-client-v2 >= 3.0.0 (OIDC discovery support).
 
 # Performance: the first auth incurs one extra HTTP request (the discovery
 # document); the resolved token endpoint is cached process-wide thereafter.
