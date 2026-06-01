@@ -18,6 +18,12 @@ dependencies = [
     "gundi-core>=1.5.8,<3",
 ]
 
+[project.optional-dependencies]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocs-exclude>=1.0",
+]
+
 [dependency-groups]
 dev = [
     "respx>=0.22",
