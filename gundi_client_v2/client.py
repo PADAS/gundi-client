@@ -34,9 +34,10 @@ class GundiDataSenderClient:
 
         Args:
             integration_api_key: The per-integration API key used as the
-                ``apikey`` HTTP header on every request. Falls back to
-                ``None`` (requests will be rejected by the server) if
-                omitted.
+                ``apikey`` HTTP header on every request. May be left
+                ``None`` at construction time (e.g. to be set later),
+                but every method that issues a request will raise
+                ``ValueError`` if the key is still missing when called.
             **kwargs: Optional keyword overrides.
 
                 * ``sensors_api_base_url`` (str): Override the sensors API
@@ -140,6 +141,11 @@ class GundiDataSenderClient:
 
     async def _post_data(self, data: List[dict] = None, endpoint: str = None, attachments: List[tuple] = None) -> dict:
         apikey = self._api_key
+        if apikey is None:
+            raise ValueError(
+                "GundiDataSenderClient requires an integration_api_key. "
+                "Obtain one via GundiClient.get_integration_api_key(integration_id)."
+            )
 
         logger.info(
             f' -- Posting to routing services --',
@@ -179,6 +185,11 @@ class GundiDataSenderClient:
 
     async def _update_data(self, data: dict = None, endpoint: str = None) -> dict:
         apikey = self._api_key
+        if apikey is None:
+            raise ValueError(
+                "GundiDataSenderClient requires an integration_api_key. "
+                "Obtain one via GundiClient.get_integration_api_key(integration_id)."
+            )
 
         logger.info(
             f' -- Updating data... --',
@@ -328,7 +339,7 @@ class GundiClient:
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         """Exit the async context manager, closing the underlying session."""
-        await self._session.__aexit__(exc_type, exc_value, traceback)
+        return await self._session.__aexit__(exc_type, exc_value, traceback)
 
     async def _get(self, url, params=None, headers=None, **kwargs):
         headers = headers or {}

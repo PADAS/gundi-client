@@ -43,7 +43,15 @@ async def _token_request(session: httpx.AsyncClient, oauth_token_url: str, paylo
 
 # NOTE: The Resource Owner Password Credentials (ROPC) grant is discouraged by OAuth 2.1
 # (RFC 9700). It is supported here intentionally, for public clients that require it.
-async def get_access_token_password_grant(session: httpx.AsyncClient, oauth_token_url: str, client_id: str, username: str, password: str, audience: str | None = None, scope: str = "openid") -> OAuthToken:
+async def get_access_token_password_grant(
+    session: httpx.AsyncClient,
+    oauth_token_url: str,
+    client_id: str,
+    username: str,
+    password: str,
+    audience: str | None = None,
+    scope: str = "openid",
+) -> OAuthToken:
     """Obtain an access token via the OAuth2 Resource Owner Password Credentials grant.
 
     This grant is deprecated in OAuth 2.1 (RFC 9700) and should be avoided for
