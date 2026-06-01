@@ -46,6 +46,8 @@ plugins:
           paths: [.]
           options:
             docstring_style: google
+            docstring_options:
+              warn_missing_types: false
             show_source: false
             show_root_heading: true
             show_root_toc_entry: false
