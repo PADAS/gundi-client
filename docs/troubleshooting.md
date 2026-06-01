@@ -20,17 +20,18 @@ your code. Common gotchas:
 
 ## `httpx.ConnectTimeout` or `httpx.ReadTimeout`
 
-The server isn't responding within the configured timeout.
+The server isn't responding within the configured timeout. The defaults are
+3.1 seconds for `connect` and 20 seconds for `data` (read).
 
-**Fix:** Increase timeouts at construction time:
+**Fix:** Increase timeouts at construction time using the
+`connect_timeout` and `data_timeout` kwargs:
 
 ```python
-import httpx
 from gundi_client_v2 import GundiClient
 
 client = GundiClient(
-    transport=httpx.AsyncHTTPTransport(),
-    timeout=httpx.Timeout(60.0),  # 60 seconds for all phases
+    connect_timeout=60.0,  # seconds to establish the connection
+    data_timeout=60.0,     # seconds to read the response body
 )
 ```
 
