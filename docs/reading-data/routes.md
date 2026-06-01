@@ -97,25 +97,17 @@ as `ConnectionIntegration` objects (not raw IDs). The same applies to
 fields you include are changed:
 
 ```python
-updated = await client.update_route(
-    route_id=route.id,
-    data={"name": "TrapTagger → ER (renamed)"},
+route = await client.update_route(
+    route_id="<route-id>",
+    data={"name": "Renamed"},
 )
-print(updated.name)
+print(route.name)
 ```
 
-To update the transformation configuration:
-
-```python
-updated = await client.update_route(
-    route_id=route.id,
-    data={
-        "configuration": {
-            "jq_filter": '.observations[] | {source, recorded_at, location}',
-        }
-    },
-)
-```
+You can update any of the writable fields via the same partial-dict pattern.
+For transformation logic (the `configuration` field), the inner `data` shape is
+deployment-specific — consult your deployment's documentation for the exact
+structure.
 
 ## Delete a route
 
