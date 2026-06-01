@@ -1,0 +1,83 @@
+site_name: gundi-client-v2 (Python)
+site_description: Async Python client for the Gundi platform API
+site_url: https://padas.github.io/gundi-client/
+repo_url: https://github.com/PADAS/gundi-client
+repo_name: PADAS/gundi-client
+edit_uri: edit/v2/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.action.edit
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - exclude:
+      glob:
+        - "superpowers/**"
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: ["."]
+  - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Getting started:
+    - Installation: getting-started/install.md
+    - Authentication setup: getting-started/auth-setup.md
+    - First request: getting-started/first-request.md
+  - Concepts:
+    - Gundi data model: concepts/data-model.md
+  - Authentication:
+    - Overview: authentication/overview.md
+    - Client credentials: authentication/client-credentials.md
+    - Password grant: authentication/password-grant.md
+    - OIDC discovery: authentication/oidc-discovery.md
+    - Refresh and errors: authentication/refresh-and-errors.md
+  - Reading data:
+    - Connections: reading-data/connections.md
+    - Integrations: reading-data/integrations.md
+  - Migration (2.x → 3.0): migration.md
+  - Troubleshooting: troubleshooting.md
+  - Changelog: changelog.md
