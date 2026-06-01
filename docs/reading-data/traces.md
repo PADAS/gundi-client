@@ -92,19 +92,18 @@ For the canonical field list, see the
 
 ### Confirm a specific observation was delivered
 
-Filter by `object_id` and check that at least one trace has `has_error=False`
-and a non-null `delivered_at`:
+Filter by `object_id` and inspect each trace's status flags:
 
 ```python
 traces = await client.get_traces(params={"object_id": "<gundi-object-id>"})
 
 for t in traces:
-    if not t.has_error:
-        print(f"Delivered to {t.destination} at {t.delivered_at}")
+    if t.is_duplicate:
+        print(f"Suppressed as duplicate at {t.destination}")
     elif t.has_error:
         print(f"Delivery to {t.destination} errored")
-    elif t.is_duplicate:
-        print(f"Suppressed as duplicate at {t.destination}")
+    else:
+        print(f"Delivered to {t.destination} at {t.delivered_at}")
 ```
 
 ### Find all errors for a destination

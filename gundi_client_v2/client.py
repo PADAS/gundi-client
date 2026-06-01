@@ -24,7 +24,7 @@ logger.setLevel(settings.LOG_LEVEL)
 
 
 class GundiDataSenderClient:
-    def __init__(self, integration_api_key: str = None, **kwargs: Any):
+    def __init__(self, integration_api_key: Optional[str] = None, **kwargs: Any):
         """Initialize the data-sender client for posting observations and events.
 
         This client authenticates using an integration API key rather than OAuth

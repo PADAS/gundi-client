@@ -71,7 +71,7 @@ Optional fields:
 |---|---|
 | `event_id` | Links this message to an existing Event |
 | `recorded_at` | ISO-8601 timestamp when the message was created |
-| `location.lat` / `location.lon` | WGS-84 decimal degrees |
+| `location.latitude` / `location.longitude` | WGS-84 decimal degrees. **Note:** Messages use the long form `latitude`/`longitude`, unlike Observations and Events which use `lat`/`lon`. |
 
 Messages are sent in batches.
 
