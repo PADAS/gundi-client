@@ -1,5 +1,7 @@
 # Payload types
 
+## Three payload types
+
 Gundi forwards three payload types: **Observations**, **Events**, and
 **Messages**. Each maps to a different kind of real-world datum and a different
 `GundiDataSenderClient` method. The [side-by-side table](#side-by-side-comparison)
@@ -38,7 +40,7 @@ Common fields:
 | Field | Notes |
 |---|---|
 | `event_type` | Domain-specific type string (e.g. `wildlife_sighting`, `fence_alarm`) |
-| `time` | ISO-8601 timestamp when the incident occurred |
+| `recorded_at` | ISO-8601 timestamp when the incident occurred |
 | `location.lat` / `location.lon` | WGS-84 decimal degrees (both required) |
 | `event_details` | Dict of event-specific structured attributes |
 | `title` | Short human-readable description |
@@ -55,12 +57,21 @@ neatly into structured fields, but they can also stand alone.
 
 Common fields:
 
+Minimum fields:
+
 | Field | Notes |
 |---|---|
-| `text` | The message body |
-| `recipient` | Identifier of the intended recipient (user, group, channel) |
 | `sender` | Identifier of the sending party |
-| `event_id` | Optional — links this message to an existing Event |
+| `recipients` | List of recipient identifiers (users, groups, or channels) |
+| `text` | The message body |
+
+Optional fields:
+
+| Field | Notes |
+|---|---|
+| `event_id` | Links this message to an existing Event |
+| `recorded_at` | ISO-8601 timestamp when the message was created |
+| `location.lat` / `location.lon` | WGS-84 decimal degrees |
 
 Messages are sent in batches.
 
@@ -70,8 +81,8 @@ Messages are sent in batches.
 
 | Aspect | Observation | Event | Message |
 |---|---|---|---|
-| Has a location | Yes (required) | Yes (required) | No |
-| Has a time | `recorded_at` | `time` | implicit (sent-at) |
+| Has a location | Yes (required) | Yes (required) | Optional |
+| Has a time | `recorded_at` | `recorded_at` | `recorded_at` (optional) |
 | Sent in batches | Yes (`List[dict]`) | Yes (`List[dict]`) | Yes (`List[dict]`) |
 | Common source | Telemetry / sensors | Operator-entered incidents | Comms / context |
 
