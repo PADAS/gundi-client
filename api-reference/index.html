@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://padas.github.io/gundi-client/troubleshooting/">
+        <link rel="canonical" href="https://padas.github.io/gundi-client/api-reference/">
       
       
-        <link rel="prev" href="../migration/">
+        <link rel="prev" href="../recipes/error-handling/">
       
       
-        <link rel="next" href="../changelog/">
+        <link rel="next" href="gundi-client/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Troubleshooting - gundi-client-v2 (Python)</title>
+        <title>Overview - gundi-client-v2 (Python)</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#troubleshooting" class="md-skip">
+        <a href="#api-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Troubleshooting
+              Overview
             
           </span>
         </div>
@@ -364,11 +364,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../api-reference/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -403,11 +405,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../troubleshooting/" class="md-tabs__link">
         
   
   
@@ -1497,28 +1497,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
-        
-          
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -1536,7 +1539,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1551,10 +1554,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../api-reference/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1570,6 +1582,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -1582,7 +1595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/gundi-client/" class="md-nav__link">
+      <a href="gundi-client/" class="md-nav__link">
         
   
   
@@ -1610,7 +1623,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/data-sender-client/" class="md-nav__link">
+      <a href="data-sender-client/" class="md-nav__link">
         
   
   
@@ -1638,7 +1651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/auth/" class="md-nav__link">
+      <a href="auth/" class="md-nav__link">
         
   
   
@@ -1666,7 +1679,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/errors/" class="md-nav__link">
+      <a href="errors/" class="md-nav__link">
         
   
   
@@ -1725,37 +1738,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Troubleshooting
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
         
   
   
@@ -1771,114 +1757,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-errors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication errors
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#httpxconnecterror-errno-2-name-or-service-not-known" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        httpx.ConnectError: [Errno -2] Name or service not known
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#httpxconnecttimeout-or-httpxreadtimeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        httpx.ConnectTimeout or httpx.ReadTimeout
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typeerror-client__init__-got-an-unexpected-keyword-argument-app" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TypeError: Client.__init__() got an unexpected keyword argument 'app'
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validationerror-from-pydantic-when-parsing-a-response" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ValidationError from Pydantic when parsing a response
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-403" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 403
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-404" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 404
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stuck" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stuck?
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1930,102 +1808,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-errors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication errors
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#httpxconnecterror-errno-2-name-or-service-not-known" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        httpx.ConnectError: [Errno -2] Name or service not known
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#httpxconnecttimeout-or-httpxreadtimeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        httpx.ConnectTimeout or httpx.ReadTimeout
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typeerror-client__init__-got-an-unexpected-keyword-argument-app" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TypeError: Client.__init__() got an unexpected keyword argument 'app'
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validationerror-from-pydantic-when-parsing-a-response" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ValidationError from Pydantic when parsing a response
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-403" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 403
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-404" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 404
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stuck" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stuck?
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -2042,6 +1824,46 @@
   
 
 
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href=".." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    API reference
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
               
               <article class="md-content__inner md-typeset">
                 
@@ -2049,7 +1871,7 @@
 
 
   
-    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/troubleshooting.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/api-reference/index.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2057,72 +1879,36 @@
   
 
 
-<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
-<p>Common errors when using <code>gundi-client-v2</code>, with their causes and fixes.</p>
-<h2 id="authentication-errors">Authentication errors<a class="headerlink" href="#authentication-errors" title="Permanent link">&para;</a></h2>
-<p>See <a href="../authentication/refresh-and-errors/">Authentication → Refresh and errors</a>
-for the full catalog with explanations.</p>
-<h2 id="httpxconnecterror-errno-2-name-or-service-not-known"><code>httpx.ConnectError: [Errno -2] Name or service not known</code><a class="headerlink" href="#httpxconnecterror-errno-2-name-or-service-not-known" title="Permanent link">&para;</a></h2>
-<p>The hostname in <code>GUNDI_API_BASE_URL</code> or <code>OAUTH_ISSUER</code> doesn't resolve.</p>
-<p><strong>Fix:</strong> Verify the URLs are correct and reachable from the host running
-your code. Common gotchas:</p>
-<ul>
-<li>Typos in the host (<code>gundiservice.org</code> vs <code>gundiserice.org</code>)</li>
-<li>Missing <code>https://</code> scheme</li>
-<li>Internal hostnames that don't resolve outside a VPN</li>
-</ul>
-<h2 id="httpxconnecttimeout-or-httpxreadtimeout"><code>httpx.ConnectTimeout</code> or <code>httpx.ReadTimeout</code><a class="headerlink" href="#httpxconnecttimeout-or-httpxreadtimeout" title="Permanent link">&para;</a></h2>
-<p>The server isn't responding within the configured timeout. The defaults are
-3.1 seconds for <code>connect</code> and 20 seconds for <code>data</code> (read).</p>
-<p><strong>Fix:</strong> Increase timeouts at construction time using the
-<code>connect_timeout</code> and <code>data_timeout</code> kwargs:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiClient</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">client</span> <span class="o">=</span> <span class="n">GundiClient</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">connect_timeout</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span>  <span class="c1"># seconds to establish the connection</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">data_timeout</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span>     <span class="c1"># seconds to read the response body</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
-</code></pre></div>
-<h2 id="typeerror-client__init__-got-an-unexpected-keyword-argument-app"><code>TypeError: Client.__init__() got an unexpected keyword argument 'app'</code><a class="headerlink" href="#typeerror-client__init__-got-an-unexpected-keyword-argument-app" title="Permanent link">&para;</a></h2>
-<p>You're on <code>httpx&gt;=0.28</code> but <code>starlette&lt;0.37</code>. This usually surfaces in
-FastAPI test code (<code>TestClient(app)</code>).</p>
-<p><strong>Fix:</strong> See <a href="../migration/#troubleshooting">Migration → Troubleshooting</a>.
-Short version: bump <code>fastapi</code> to <code>&gt;=0.110.3</code> (which allows
-<code>starlette&gt;=0.37</code>).</p>
-<h2 id="validationerror-from-pydantic-when-parsing-a-response"><code>ValidationError</code> from Pydantic when parsing a response<a class="headerlink" href="#validationerror-from-pydantic-when-parsing-a-response" title="Permanent link">&para;</a></h2>
-<p>The API returned a payload that doesn't match the expected <code>gundi-core</code>
-schema. This typically happens during version skew (your client and the
-server are out of sync) or for newly-introduced fields.</p>
-<p><strong>Fix:</strong></p>
-<ul>
-<li>Confirm the deployed Gundi version matches your client major version.</li>
-<li>If the field is benign, you may need to upgrade <code>gundi-core</code> to a release
-  that knows about it.</li>
-<li>If you suspect a server bug, capture the raw response by intercepting
-  the HTTPX transport and report it to your Gundi administrator.</li>
-</ul>
-<h2 id="gundiapierror-http-403"><code>GundiAPIError: HTTP 403</code><a class="headerlink" href="#gundiapierror-http-403" title="Permanent link">&para;</a></h2>
-<p>The authenticated principal doesn't have permission to access the
-requested resource.</p>
-<p><strong>Fix:</strong> Check that your client/user has the necessary roles in the IdP
-realm. For per-Integration resources, your principal must own or be
-granted access to that Integration's Organization.</p>
-<h2 id="gundiapierror-http-404"><code>GundiAPIError: HTTP 404</code><a class="headerlink" href="#gundiapierror-http-404" title="Permanent link">&para;</a></h2>
-<p>The resource doesn't exist or you don't have permission to see it (some
-APIs return 404 instead of 403 to avoid leaking resource existence).</p>
-<p><strong>Fix:</strong> Verify the ID is correct. If you have an <code>integration_id</code> from
-elsewhere, confirm it actually exists with
-<code>client.get_integration_details(integration_id)</code>.</p>
-<h2 id="stuck">Stuck?<a class="headerlink" href="#stuck" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Need patterns for catching exceptions and logging? See
-  <a href="../recipes/error-handling/">Recipes → Error handling</a>.</li>
-<li>Check the <a href="../authentication/overview/">Authentication overview</a> for
-  grant-selection issues.</li>
-<li>Check the <a href="../migration/">Migration guide</a> if you recently upgraded.</li>
-<li>Open an issue at
-  <a href="https://github.com/PADAS/gundi-client/issues">github.com/PADAS/gundi-client/issues</a>.</li>
-</ul>
+<h1 id="api-reference">API reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
+<p>Auto-generated from the in-source docstrings of <code>gundi_client_v2</code>. For
+conceptual and tutorial content see the rest of the site; this section is
+a method-by-method reference.</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="gundi-client/">GundiClient</a></td>
+<td>Portal/configuration API client (auth, Connections, Integrations, Routes, Traces).</td>
+</tr>
+<tr>
+<td><a href="data-sender-client/">GundiDataSenderClient</a></td>
+<td>Sender for Observations, Events, Messages, and Attachments using an Integration API key.</td>
+</tr>
+<tr>
+<td><a href="auth/">auth</a></td>
+<td>Standalone OAuth2 grant and OIDC discovery functions.</td>
+</tr>
+<tr>
+<td><a href="errors/">errors</a></td>
+<td>Exception hierarchy: <code>GundiClientError</code>, <code>AuthenticationError</code>, <code>GundiAPIError</code>.</td>
+</tr>
+</tbody>
+</table>
 
 
 

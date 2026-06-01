@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://padas.github.io/gundi-client/concepts/data-model/">
+        <link rel="canonical" href="https://padas.github.io/gundi-client/api-reference/data-sender-client/">
       
       
-        <link rel="prev" href="../../getting-started/first-request/">
+        <link rel="prev" href="../gundi-client/">
       
       
-        <link rel="next" href="../payload-types/">
+        <link rel="next" href="../auth/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Gundi data model - gundi-client-v2 (Python)</title>
+        <title>GundiDataSenderClient - gundi-client-v2 (Python)</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gundi-data-model" class="md-skip">
+        <a href="#gundidatasenderclient" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Gundi data model
+              GundiDataSenderClient
             
           </span>
         </div>
@@ -264,13 +264,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../concepts/data-model/" class="md-tabs__link">
           
   
   
@@ -366,11 +364,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../api-reference/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -660,31 +660,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
             
   
   
@@ -702,7 +699,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -717,37 +714,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gundi data model
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../concepts/data-model/" class="md-nav__link">
         
   
   
@@ -763,92 +733,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#connection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Connection
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#route" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Route
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#observation-event-message" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Observation, Event, Message
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#trace" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trace
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-they-fit-together" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How they fit together
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -861,7 +745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../payload-types/" class="md-nav__link">
+      <a href="../../concepts/payload-types/" class="md-nav__link">
         
   
   
@@ -889,7 +773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tracing-lifecycle/" class="md-nav__link">
+      <a href="../../concepts/tracing-lifecycle/" class="md-nav__link">
         
   
   
@@ -1613,28 +1497,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
-        
-          
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -1652,7 +1539,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1670,7 +1557,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api-reference/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -1698,7 +1585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api-reference/gundi-client/" class="md-nav__link">
+      <a href="../gundi-client/" class="md-nav__link">
         
   
   
@@ -1723,10 +1610,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../api-reference/data-sender-client/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GundiDataSenderClient
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1742,6 +1656,109 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GundiDataSenderClient
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GundiDataSenderClient">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.post_observations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        post_observations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.post_events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        post_events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.post_messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        post_messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.update_event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update_event
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.post_event_attachments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        post_event_attachments
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1754,7 +1771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api-reference/auth/" class="md-nav__link">
+      <a href="../auth/" class="md-nav__link">
         
   
   
@@ -1782,7 +1799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api-reference/errors/" class="md-nav__link">
+      <a href="../errors/" class="md-nav__link">
         
   
   
@@ -1918,68 +1935,85 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#integration" class="md-nav__link">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration
+        GundiDataSenderClient
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GundiDataSenderClient">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#connection" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.post_observations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Connection
+        post_observations
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#route" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.post_events" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Route
+        post_events
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#observation-event-message" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.post_messages" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Observation, Event, Message
+        post_messages
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trace" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.update_event" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Trace
+        update_event
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#how-they-fit-together" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiDataSenderClient.post_event_attachments" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How they fit together
+        post_event_attachments
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2026,10 +2060,10 @@
     
     
       <li class="md-path__item">
-        <a href="./" class="md-path__link">
+        <a href="../" class="md-path__link">
           
   <span class="md-ellipsis">
-    Concepts
+    API reference
   </span>
 
         </a>
@@ -2048,7 +2082,7 @@
 
 
   
-    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/concepts/data-model.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/api-reference/data-sender-client.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2056,88 +2090,781 @@
   
 
 
-<h1 id="gundi-data-model">Gundi data model<a class="headerlink" href="#gundi-data-model" title="Permanent link">&para;</a></h1>
-<p>Gundi sits between <strong>data providers</strong> (devices, third-party APIs, telemetry
-sources) and <strong>destinations</strong> (EarthRanger sites, SMART deployments, etc.).
-Five resource types make up the platform:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Integration ──► Connection ──► Route ──► Integration (destination)
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                                    └──► Integration (destination)
+<h1 id="gundidatasenderclient">GundiDataSenderClient<a class="headerlink" href="#gundidatasenderclient" title="Permanent link">&para;</a></h1>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="gundi_client_v2.client.GundiDataSenderClient" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">gundi_client_v2.client.GundiDataSenderClient</span>
+
+
+<a href="#gundi_client_v2.client.GundiDataSenderClient" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gundi_client_v2.client.GundiDataSenderClient.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+<a href="#gundi_client_v2.client.GundiDataSenderClient.__init__" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__init__</span><span class="p">(</span><span class="n">integration_api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span>
 </code></pre></div>
-<h2 id="integration">Integration<a class="headerlink" href="#integration" title="Permanent link">&para;</a></h2>
-<p>A registered third-party system that either <strong>provides</strong> data to Gundi or
-<strong>receives</strong> data from it. Defined by an <code>IntegrationType</code> (e.g.
-<code>er_traptagger</code>, <code>lotek</code>, <code>earthranger</code>) and an <code>IntegrationConfiguration</code>
-that holds the system-specific settings (base URL, API key, etc.).</p>
-<p><strong>You read these with:</strong> <a href="../../reading-data/integrations/"><code>get_integrations()</code></a>,
-<code>get_integration_details(integration_id)</code>.</p>
-<h2 id="connection">Connection<a class="headerlink" href="#connection" title="Permanent link">&para;</a></h2>
-<p>A pairing of a provider Integration with one or more destination
-Integrations. A "TrapTagger camera trap deployment at Park X" might be a
-Connection whose provider is the TrapTagger Integration and whose
-destinations are the EarthRanger site(s) receiving its events.</p>
-<p>A Connection's primary fields:</p>
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize the data-sender client for posting payloads to Gundi.</p>
+<p>Handles observations, events, messages, and event attachments. This
+client authenticates using an integration API key rather than OAuth
+and is intended for integrations that push data into Gundi via the
+sensors API. Obtain the key from
+<code>GundiClient.get_integration_api_key(integration_id)</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>integration_api_key</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The per-integration API key used as the
+<code>apikey</code> HTTP header on every request. May be left
+<code>None</code> at construction time (e.g. to be set later),
+but every method that issues a request will raise
+<code>ValueError</code> if the key is still missing when called.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional keyword overrides.</p>
 <ul>
-<li><code>provider</code> — the Integration that produces data</li>
-<li><code>destinations</code> — list of Integrations that receive routed data</li>
-<li><code>status</code> — <code>healthy</code>, <code>unhealthy</code>, <code>disabled</code></li>
-<li><code>routing_rules</code> — references to the Routes that direct the data</li>
-<li><code>default_route</code> — the Route used when no other rule matches (optional)</li>
+<li><code>sensors_api_base_url</code> (str): Override the sensors API
+  base URL. Falls back to the <code>SENSORS_API_BASE_URL</code>
+  environment variable.</li>
 </ul>
-<p><strong>You read these with:</strong> <a href="../../reading-data/connections/"><code>get_connections()</code></a>,
-<code>get_connection_details(integration_id)</code>.</p>
-<h2 id="route">Route<a class="headerlink" href="#route" title="Permanent link">&para;</a></h2>
-<p>A rule that maps <strong>provider</strong> Integrations to <strong>destination</strong> Integrations,
-with optional field-level transforms (often a JQ filter). Routes belong to an
-<strong>owner</strong> Organization. A Connection's <code>routing_rules</code> are the Route IDs that
-apply to it.</p>
-<p><strong>You read these with:</strong> <code>get_routes()</code>, <code>get_route_details(route_id)</code>,
-<code>get_routes_for_connection(connection_id)</code>.
-<strong>You manage these with:</strong> <code>create_route()</code>, <code>update_route()</code>, <code>delete_route()</code>.</p>
-<h2 id="observation-event-message">Observation, Event, Message<a class="headerlink" href="#observation-event-message" title="Permanent link">&para;</a></h2>
-<p>The three payload types Gundi forwards:</p>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>What it is</th>
-<th>Sent with</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Observation</strong></td>
-<td>A geolocated point (lat, lon, time, optional attributes)</td>
-<td><code>GundiDataSenderClient.post_observations</code></td>
-</tr>
-<tr>
-<td><strong>Event</strong></td>
-<td>A discrete incident or record (type, time, location, attributes)</td>
-<td><code>GundiDataSenderClient.post_events</code></td>
-</tr>
-<tr>
-<td><strong>Message</strong></td>
-<td>A text message (often paired with an Event or Observation)</td>
-<td><code>GundiDataSenderClient.post_messages</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="trace">Trace<a class="headerlink" href="#trace" title="Permanent link">&para;</a></h2>
-<p>A record of one payload's journey through Gundi: the source observation/event,
-which Connection routed it, which destination(s) received it, and the
-delivery outcome. Useful for diagnostics.</p>
-<p><strong>You read these with:</strong> <code>get_traces(params={...})</code>.</p>
-<h2 id="how-they-fit-together">How they fit together<a class="headerlink" href="#how-they-fit-together" title="Permanent link">&para;</a></h2>
-<p>A typical "provider → destination" flow:</p>
-<ol>
-<li>A device pushes an Observation to Gundi via a provider Integration's
-   webhook endpoint.</li>
-<li>Gundi looks up the Connections containing that provider Integration.</li>
-<li>For each matching Connection, Gundi consults its Routes to determine
-   which destination Integrations should receive the data.</li>
-<li>Gundi transforms the payload per the Route's <code>transformation_rules</code> if
-   any, then forwards it to each destination.</li>
-<li>A Trace is recorded for each provider → destination edge in the flow.</li>
-</ol>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gundi_client_v2.client.GundiDataSenderClient.post_observations" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">post_observations</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#gundi_client_v2.client.GundiDataSenderClient.post_observations" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">post_observations</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Post a batch of observation records to Gundi.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="typing.List">List</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of observation dicts. Each dict should conform to the
+Gundi observation schema. Non-serialisable values (e.g.
+<code>datetime</code> objects) are automatically coerced to strings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw JSON response from the sensors API. Typically a list of</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>envelopes, one per posted record.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no <code>integration_api_key</code> was provided.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="GundiAPIError (gundi_client_v2.errors.GundiAPIError)" href="../errors/#gundi_client_v2.errors.GundiAPIError">GundiAPIError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns a 4xx/5xx response.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gundi_client_v2.client.GundiDataSenderClient.post_events" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">post_events</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#gundi_client_v2.client.GundiDataSenderClient.post_events" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">post_events</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Post a batch of event records to Gundi.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="typing.List">List</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of event dicts. Each dict should conform to the
+Gundi event schema. Non-serialisable values are automatically
+coerced to strings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw JSON response from the sensors API. Typically a list of</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>envelopes, one per posted record.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no <code>integration_api_key</code> was provided.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="GundiAPIError (gundi_client_v2.errors.GundiAPIError)" href="../errors/#gundi_client_v2.errors.GundiAPIError">GundiAPIError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns a 4xx/5xx response.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gundi_client_v2.client.GundiDataSenderClient.post_messages" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">post_messages</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#gundi_client_v2.client.GundiDataSenderClient.post_messages" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">post_messages</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Post a batch of message records to Gundi.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="typing.List">List</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of message dicts. Each dict should conform to the
+Gundi message schema. Non-serialisable values are
+automatically coerced to strings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw JSON response from the sensors API. Typically a list of</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>envelopes, one per posted record.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no <code>integration_api_key</code> was provided.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="GundiAPIError (gundi_client_v2.errors.GundiAPIError)" href="../errors/#gundi_client_v2.errors.GundiAPIError">GundiAPIError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns a 4xx/5xx response.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gundi_client_v2.client.GundiDataSenderClient.update_event" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">update_event</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#gundi_client_v2.client.GundiDataSenderClient.update_event" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">update_event</span><span class="p">(</span><span class="n">event_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Partially update an existing event via HTTP PATCH.</p>
+<p>Only the fields present in <code>data</code> are modified; omitted fields
+retain their current values on the server (standard PATCH semantics).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>event_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID (or string ID) of the event to update.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dict of fields to update. Non-serialisable values are
+automatically coerced to strings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw JSON response body returned by the sensors API,</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>representing the updated event.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no <code>integration_api_key</code> was provided.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="GundiAPIError (gundi_client_v2.errors.GundiAPIError)" href="../errors/#gundi_client_v2.errors.GundiAPIError">GundiAPIError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns a 4xx/5xx response.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gundi_client_v2.client.GundiDataSenderClient.post_event_attachments" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">post_event_attachments</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#gundi_client_v2.client.GundiDataSenderClient.post_event_attachments" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">post_event_attachments</span><span class="p">(</span><span class="n">event_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">attachments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Upload file attachments for an existing event via multipart POST.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>event_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID (or string ID) of the event to attach files to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>attachments</code>
+            </td>
+            <td>
+                  <code><span title="typing.List">List</span>[<span title="tuple">tuple</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of <code>(filename, file_binary)</code> tuples where
+<code>filename</code> is a string (e.g. <code>"photo.jpg"</code>) and
+<code>file_binary</code> is the raw bytes of the file.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw JSON response from the sensors API. Typically a list of</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>envelopes, one per posted record.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no <code>integration_api_key</code> was provided.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="GundiAPIError (gundi_client_v2.errors.GundiAPIError)" href="../errors/#gundi_client_v2.errors.GundiAPIError">GundiAPIError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns a 4xx/5xx response.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
 
 
 

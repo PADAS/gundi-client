@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://padas.github.io/gundi-client/troubleshooting/">
+        <link rel="canonical" href="https://padas.github.io/gundi-client/recipes/pagination/">
       
       
-        <link rel="prev" href="../migration/">
+        <link rel="prev" href="../../sending-data/messages-attachments/">
       
       
-        <link rel="next" href="../changelog/">
+        <link rel="next" href="../filtering/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Troubleshooting - gundi-client-v2 (Python)</title>
+        <title>Pagination - gundi-client-v2 (Python)</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#troubleshooting" class="md-skip">
+        <a href="#pagination" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="gundi-client-v2 (Python)" class="md-header__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
+    <a href="../.." title="gundi-client-v2 (Python)" class="md-header__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Troubleshooting
+              Pagination
             
           </span>
         </div>
@@ -227,7 +227,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -248,7 +248,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../getting-started/install/" class="md-tabs__link">
+        <a href="../../getting-started/install/" class="md-tabs__link">
           
   
   
@@ -268,7 +268,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../concepts/data-model/" class="md-tabs__link">
+        <a href="../../concepts/data-model/" class="md-tabs__link">
           
   
   
@@ -288,7 +288,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../authentication/overview/" class="md-tabs__link">
+        <a href="../../authentication/overview/" class="md-tabs__link">
           
   
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../reading-data/connections/" class="md-tabs__link">
+        <a href="../../reading-data/connections/" class="md-tabs__link">
           
   
   
@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../sending-data/observations/" class="md-tabs__link">
+        <a href="../../sending-data/observations/" class="md-tabs__link">
           
   
   
@@ -344,11 +344,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../recipes/pagination/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -368,7 +370,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-reference/" class="md-tabs__link">
+        <a href="../../api-reference/" class="md-tabs__link">
           
   
   
@@ -386,7 +388,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../migration/" class="md-tabs__link">
+      <a href="../../migration/" class="md-tabs__link">
         
   
   
@@ -403,11 +405,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../../troubleshooting/" class="md-tabs__link">
         
   
   
@@ -426,7 +426,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../changelog/" class="md-tabs__link">
+      <a href="../../changelog/" class="md-tabs__link">
         
   
   
@@ -461,7 +461,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="gundi-client-v2 (Python)" class="md-nav__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
+    <a href="../.." title="gundi-client-v2 (Python)" class="md-nav__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -491,7 +491,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -572,7 +572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/install/" class="md-nav__link">
+      <a href="../../getting-started/install/" class="md-nav__link">
         
   
   
@@ -600,7 +600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/auth-setup/" class="md-nav__link">
+      <a href="../../getting-started/auth-setup/" class="md-nav__link">
         
   
   
@@ -628,7 +628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/first-request/" class="md-nav__link">
+      <a href="../../getting-started/first-request/" class="md-nav__link">
         
   
   
@@ -717,7 +717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/data-model/" class="md-nav__link">
+      <a href="../../concepts/data-model/" class="md-nav__link">
         
   
   
@@ -745,7 +745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/payload-types/" class="md-nav__link">
+      <a href="../../concepts/payload-types/" class="md-nav__link">
         
   
   
@@ -773,7 +773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/tracing-lifecycle/" class="md-nav__link">
+      <a href="../../concepts/tracing-lifecycle/" class="md-nav__link">
         
   
   
@@ -862,7 +862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/overview/" class="md-nav__link">
+      <a href="../../authentication/overview/" class="md-nav__link">
         
   
   
@@ -890,7 +890,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/client-credentials/" class="md-nav__link">
+      <a href="../../authentication/client-credentials/" class="md-nav__link">
         
   
   
@@ -918,7 +918,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/password-grant/" class="md-nav__link">
+      <a href="../../authentication/password-grant/" class="md-nav__link">
         
   
   
@@ -946,7 +946,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/oidc-discovery/" class="md-nav__link">
+      <a href="../../authentication/oidc-discovery/" class="md-nav__link">
         
   
   
@@ -974,7 +974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/refresh-and-errors/" class="md-nav__link">
+      <a href="../../authentication/refresh-and-errors/" class="md-nav__link">
         
   
   
@@ -1063,7 +1063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/connections/" class="md-nav__link">
+      <a href="../../reading-data/connections/" class="md-nav__link">
         
   
   
@@ -1091,7 +1091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/integrations/" class="md-nav__link">
+      <a href="../../reading-data/integrations/" class="md-nav__link">
         
   
   
@@ -1119,7 +1119,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/routes/" class="md-nav__link">
+      <a href="../../reading-data/routes/" class="md-nav__link">
         
   
   
@@ -1147,7 +1147,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/traces/" class="md-nav__link">
+      <a href="../../reading-data/traces/" class="md-nav__link">
         
   
   
@@ -1236,7 +1236,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sending-data/observations/" class="md-nav__link">
+      <a href="../../sending-data/observations/" class="md-nav__link">
         
   
   
@@ -1264,7 +1264,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sending-data/events/" class="md-nav__link">
+      <a href="../../sending-data/events/" class="md-nav__link">
         
   
   
@@ -1292,7 +1292,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sending-data/messages-attachments/" class="md-nav__link">
+      <a href="../../sending-data/messages-attachments/" class="md-nav__link">
         
   
   
@@ -1324,28 +1324,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
-        
-          
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
             
   
   
@@ -1363,7 +1366,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1378,10 +1381,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../recipes/pagination/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pagination
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1397,6 +1427,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#get_integrations-automatic-cursor-walking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_integrations() — automatic cursor walking
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get_connections-and-get_routes-first-page-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_connections() and get_routes() — first page only
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related pages
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1409,7 +1503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recipes/filtering/" class="md-nav__link">
+      <a href="../filtering/" class="md-nav__link">
         
   
   
@@ -1437,7 +1531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recipes/custom-httpx/" class="md-nav__link">
+      <a href="../custom-httpx/" class="md-nav__link">
         
   
   
@@ -1465,7 +1559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recipes/error-handling/" class="md-nav__link">
+      <a href="../error-handling/" class="md-nav__link">
         
   
   
@@ -1554,7 +1648,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/" class="md-nav__link">
+      <a href="../../api-reference/" class="md-nav__link">
         
   
   
@@ -1582,7 +1676,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/gundi-client/" class="md-nav__link">
+      <a href="../../api-reference/gundi-client/" class="md-nav__link">
         
   
   
@@ -1610,7 +1704,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/data-sender-client/" class="md-nav__link">
+      <a href="../../api-reference/data-sender-client/" class="md-nav__link">
         
   
   
@@ -1638,7 +1732,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/auth/" class="md-nav__link">
+      <a href="../../api-reference/auth/" class="md-nav__link">
         
   
   
@@ -1666,7 +1760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/errors/" class="md-nav__link">
+      <a href="../../api-reference/errors/" class="md-nav__link">
         
   
   
@@ -1701,7 +1795,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../migration/" class="md-nav__link">
+      <a href="../../migration/" class="md-nav__link">
         
   
   
@@ -1725,37 +1819,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Troubleshooting
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
         
   
   
@@ -1771,114 +1838,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-errors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication errors
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#httpxconnecterror-errno-2-name-or-service-not-known" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        httpx.ConnectError: [Errno -2] Name or service not known
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#httpxconnecttimeout-or-httpxreadtimeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        httpx.ConnectTimeout or httpx.ReadTimeout
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typeerror-client__init__-got-an-unexpected-keyword-argument-app" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TypeError: Client.__init__() got an unexpected keyword argument 'app'
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validationerror-from-pydantic-when-parsing-a-response" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ValidationError from Pydantic when parsing a response
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-403" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 403
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-404" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 404
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stuck" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stuck?
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1890,7 +1849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../changelog/" class="md-nav__link">
+      <a href="../../changelog/" class="md-nav__link">
         
   
   
@@ -1937,10 +1896,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#authentication-errors" class="md-nav__link">
+  <a href="#get_integrations-automatic-cursor-walking" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication errors
+        get_integrations() — automatic cursor walking
       
     </span>
   </a>
@@ -1948,10 +1907,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#httpxconnecterror-errno-2-name-or-service-not-known" class="md-nav__link">
+  <a href="#get_connections-and-get_routes-first-page-only" class="md-nav__link">
     <span class="md-ellipsis">
       
-        httpx.ConnectError: [Errno -2] Name or service not known
+        get_connections() and get_routes() — first page only
       
     </span>
   </a>
@@ -1959,10 +1918,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#httpxconnecttimeout-or-httpxreadtimeout" class="md-nav__link">
+  <a href="#trade-offs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        httpx.ConnectTimeout or httpx.ReadTimeout
+        Trade-offs
       
     </span>
   </a>
@@ -1970,54 +1929,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#typeerror-client__init__-got-an-unexpected-keyword-argument-app" class="md-nav__link">
+  <a href="#related-pages" class="md-nav__link">
     <span class="md-ellipsis">
       
-        TypeError: Client.__init__() got an unexpected keyword argument 'app'
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validationerror-from-pydantic-when-parsing-a-response" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ValidationError from Pydantic when parsing a response
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-403" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 403
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-404" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 404
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stuck" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stuck?
+        Related pages
       
     </span>
   </a>
@@ -2042,6 +1957,46 @@
   
 
 
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Recipes
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
               
               <article class="md-content__inner md-typeset">
                 
@@ -2049,7 +2004,7 @@
 
 
   
-    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/troubleshooting.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/recipes/pagination.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2057,71 +2012,93 @@
   
 
 
-<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
-<p>Common errors when using <code>gundi-client-v2</code>, with their causes and fixes.</p>
-<h2 id="authentication-errors">Authentication errors<a class="headerlink" href="#authentication-errors" title="Permanent link">&para;</a></h2>
-<p>See <a href="../authentication/refresh-and-errors/">Authentication → Refresh and errors</a>
-for the full catalog with explanations.</p>
-<h2 id="httpxconnecterror-errno-2-name-or-service-not-known"><code>httpx.ConnectError: [Errno -2] Name or service not known</code><a class="headerlink" href="#httpxconnecterror-errno-2-name-or-service-not-known" title="Permanent link">&para;</a></h2>
-<p>The hostname in <code>GUNDI_API_BASE_URL</code> or <code>OAUTH_ISSUER</code> doesn't resolve.</p>
-<p><strong>Fix:</strong> Verify the URLs are correct and reachable from the host running
-your code. Common gotchas:</p>
-<ul>
-<li>Typos in the host (<code>gundiservice.org</code> vs <code>gundiserice.org</code>)</li>
-<li>Missing <code>https://</code> scheme</li>
-<li>Internal hostnames that don't resolve outside a VPN</li>
-</ul>
-<h2 id="httpxconnecttimeout-or-httpxreadtimeout"><code>httpx.ConnectTimeout</code> or <code>httpx.ReadTimeout</code><a class="headerlink" href="#httpxconnecttimeout-or-httpxreadtimeout" title="Permanent link">&para;</a></h2>
-<p>The server isn't responding within the configured timeout. The defaults are
-3.1 seconds for <code>connect</code> and 20 seconds for <code>data</code> (read).</p>
-<p><strong>Fix:</strong> Increase timeouts at construction time using the
-<code>connect_timeout</code> and <code>data_timeout</code> kwargs:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiClient</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">client</span> <span class="o">=</span> <span class="n">GundiClient</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">connect_timeout</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span>  <span class="c1"># seconds to establish the connection</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">data_timeout</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span>     <span class="c1"># seconds to read the response body</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+<h1 id="pagination">Pagination<a class="headerlink" href="#pagination" title="Permanent link">&para;</a></h1>
+<p>The Gundi client handles pagination differently depending on the method
+you're calling. <code>get_integrations()</code> walks all pages automatically;
+<code>get_connections()</code> and <code>get_routes()</code> return only the first page.</p>
+<h2 id="get_integrations-automatic-cursor-walking"><code>get_integrations()</code> — automatic cursor walking<a class="headerlink" href="#get_integrations-automatic-cursor-walking" title="Permanent link">&para;</a></h2>
+<p><code>get_integrations()</code> is an <strong>async generator</strong> that transparently follows
+the Gundi API's <code>next</code> cursor. You iterate with <code>async for</code> and the client
+fetches subsequent pages on demand.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiClient</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="k">async</span> <span class="k">with</span> <span class="n">GundiClient</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        <span class="k">async</span> <span class="k">for</span> <span class="n">integration</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">get_integrations</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;search&quot;</span><span class="p">:</span> <span class="s2">&quot;lotek&quot;</span><span class="p">}):</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>            <span class="nb">print</span><span class="p">(</span><span class="n">integration</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">integration</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </code></pre></div>
-<h2 id="typeerror-client__init__-got-an-unexpected-keyword-argument-app"><code>TypeError: Client.__init__() got an unexpected keyword argument 'app'</code><a class="headerlink" href="#typeerror-client__init__-got-an-unexpected-keyword-argument-app" title="Permanent link">&para;</a></h2>
-<p>You're on <code>httpx&gt;=0.28</code> but <code>starlette&lt;0.37</code>. This usually surfaces in
-FastAPI test code (<code>TestClient(app)</code>).</p>
-<p><strong>Fix:</strong> See <a href="../migration/#troubleshooting">Migration → Troubleshooting</a>.
-Short version: bump <code>fastapi</code> to <code>&gt;=0.110.3</code> (which allows
-<code>starlette&gt;=0.37</code>).</p>
-<h2 id="validationerror-from-pydantic-when-parsing-a-response"><code>ValidationError</code> from Pydantic when parsing a response<a class="headerlink" href="#validationerror-from-pydantic-when-parsing-a-response" title="Permanent link">&para;</a></h2>
-<p>The API returned a payload that doesn't match the expected <code>gundi-core</code>
-schema. This typically happens during version skew (your client and the
-server are out of sync) or for newly-introduced fields.</p>
-<p><strong>Fix:</strong></p>
+<p>You can also materialize all results at once:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">async</span> <span class="k">with</span> <span class="n">GundiClient</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">integrations</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">async</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">get_integrations</span><span class="p">()]</span>
+</code></pre></div>
+<p>Note that materializing large result sets into a list consumes memory
+proportional to the total count. For large deployments, prefer streaming
+with <code>async for</code>.</p>
+<h2 id="get_connections-and-get_routes-first-page-only"><code>get_connections()</code> and <code>get_routes()</code> — first page only<a class="headerlink" href="#get_connections-and-get_routes-first-page-only" title="Permanent link">&para;</a></h2>
+<p><code>get_connections()</code> and <code>get_routes()</code> parse and return only the items
+from the first page of results.</p>
+<p>For these two methods, you'll need to handle pagination yourself. The
+Gundi API uses cursor-based pagination — the response includes a <code>next</code>
+URL when more pages exist — but <code>get_connections()</code> and <code>get_routes()</code>
+parse and return only the items from the first page. If you need to
+walk multiple pages, two options:</p>
+<ol>
+<li>
+<p><strong>Increase the page size via a query parameter</strong> (the exact parameter
+   name varies by deployment — typically <code>limit</code> or <code>page_size</code>). This
+   is the simplest fix when your dataset is small to medium.</p>
+</li>
+<li>
+<p><strong>Drop down to the raw HTTPX session</strong> on the client (<code>client._session</code>)
+   to call the endpoint directly, then walk the <code>next</code> URL yourself.
+   This bypasses the convenience method but lets you stream results.</p>
+</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title"><code>_session</code> is private API</p>
+<p>The <code>_session</code> attribute is an internal implementation detail and may
+change between releases without notice. Treat this as a last-resort
+workaround until the library exposes a public pagination helper.</p>
+</div>
+<p>See also <a href="../filtering/">Filtering</a> for ways to narrow the result set
+before it reaches the pagination layer.</p>
+<h2 id="trade-offs">Trade-offs<a class="headerlink" href="#trade-offs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Pro</th>
+<th>Con</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>async for</code> generator</td>
+<td>Low memory; streams results</td>
+<td>Cannot <code>len()</code> without materializing</td>
+</tr>
+<tr>
+<td>List comprehension (<code>[i async for i in ...]</code>)</td>
+<td>Random access, slicing</td>
+<td>Holds all results in RAM</td>
+</tr>
+<tr>
+<td>Manual <code>_session</code> walk</td>
+<td>Full control over cursor</td>
+<td>Bypasses type parsing; more code</td>
+</tr>
+</tbody>
+</table>
+<h2 id="related-pages">Related pages<a class="headerlink" href="#related-pages" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Confirm the deployed Gundi version matches your client major version.</li>
-<li>If the field is benign, you may need to upgrade <code>gundi-core</code> to a release
-  that knows about it.</li>
-<li>If you suspect a server bug, capture the raw response by intercepting
-  the HTTPX transport and report it to your Gundi administrator.</li>
-</ul>
-<h2 id="gundiapierror-http-403"><code>GundiAPIError: HTTP 403</code><a class="headerlink" href="#gundiapierror-http-403" title="Permanent link">&para;</a></h2>
-<p>The authenticated principal doesn't have permission to access the
-requested resource.</p>
-<p><strong>Fix:</strong> Check that your client/user has the necessary roles in the IdP
-realm. For per-Integration resources, your principal must own or be
-granted access to that Integration's Organization.</p>
-<h2 id="gundiapierror-http-404"><code>GundiAPIError: HTTP 404</code><a class="headerlink" href="#gundiapierror-http-404" title="Permanent link">&para;</a></h2>
-<p>The resource doesn't exist or you don't have permission to see it (some
-APIs return 404 instead of 403 to avoid leaking resource existence).</p>
-<p><strong>Fix:</strong> Verify the ID is correct. If you have an <code>integration_id</code> from
-elsewhere, confirm it actually exists with
-<code>client.get_integration_details(integration_id)</code>.</p>
-<h2 id="stuck">Stuck?<a class="headerlink" href="#stuck" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Need patterns for catching exceptions and logging? See
-  <a href="../recipes/error-handling/">Recipes → Error handling</a>.</li>
-<li>Check the <a href="../authentication/overview/">Authentication overview</a> for
-  grant-selection issues.</li>
-<li>Check the <a href="../migration/">Migration guide</a> if you recently upgraded.</li>
-<li>Open an issue at
-  <a href="https://github.com/PADAS/gundi-client/issues">github.com/PADAS/gundi-client/issues</a>.</li>
+<li><a href="../../reading-data/connections/">Reading Connections</a></li>
+<li><a href="../../reading-data/integrations/">Reading Integrations</a></li>
+<li><a href="../../reading-data/routes/">Reading Routes</a></li>
 </ul>
 
 
@@ -2178,10 +2155,10 @@ elsewhere, confirm it actually exists with
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://padas.github.io/gundi-client/troubleshooting/">
+        <link rel="canonical" href="https://padas.github.io/gundi-client/recipes/error-handling/">
       
       
-        <link rel="prev" href="../migration/">
+        <link rel="prev" href="../custom-httpx/">
       
       
-        <link rel="next" href="../changelog/">
+        <link rel="next" href="../../api-reference/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Troubleshooting - gundi-client-v2 (Python)</title>
+        <title>Error handling - gundi-client-v2 (Python)</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#troubleshooting" class="md-skip">
+        <a href="#error-handling" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="gundi-client-v2 (Python)" class="md-header__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
+    <a href="../.." title="gundi-client-v2 (Python)" class="md-header__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Troubleshooting
+              Error handling
             
           </span>
         </div>
@@ -227,7 +227,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -248,7 +248,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../getting-started/install/" class="md-tabs__link">
+        <a href="../../getting-started/install/" class="md-tabs__link">
           
   
   
@@ -268,7 +268,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../concepts/data-model/" class="md-tabs__link">
+        <a href="../../concepts/data-model/" class="md-tabs__link">
           
   
   
@@ -288,7 +288,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../authentication/overview/" class="md-tabs__link">
+        <a href="../../authentication/overview/" class="md-tabs__link">
           
   
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../reading-data/connections/" class="md-tabs__link">
+        <a href="../../reading-data/connections/" class="md-tabs__link">
           
   
   
@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../sending-data/observations/" class="md-tabs__link">
+        <a href="../../sending-data/observations/" class="md-tabs__link">
           
   
   
@@ -344,11 +344,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../recipes/pagination/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../pagination/" class="md-tabs__link">
           
   
   
@@ -368,7 +370,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-reference/" class="md-tabs__link">
+        <a href="../../api-reference/" class="md-tabs__link">
           
   
   
@@ -386,7 +388,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../migration/" class="md-tabs__link">
+      <a href="../../migration/" class="md-tabs__link">
         
   
   
@@ -403,11 +405,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../../troubleshooting/" class="md-tabs__link">
         
   
   
@@ -426,7 +426,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../changelog/" class="md-tabs__link">
+      <a href="../../changelog/" class="md-tabs__link">
         
   
   
@@ -461,7 +461,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="gundi-client-v2 (Python)" class="md-nav__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
+    <a href="../.." title="gundi-client-v2 (Python)" class="md-nav__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -491,7 +491,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -572,7 +572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/install/" class="md-nav__link">
+      <a href="../../getting-started/install/" class="md-nav__link">
         
   
   
@@ -600,7 +600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/auth-setup/" class="md-nav__link">
+      <a href="../../getting-started/auth-setup/" class="md-nav__link">
         
   
   
@@ -628,7 +628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/first-request/" class="md-nav__link">
+      <a href="../../getting-started/first-request/" class="md-nav__link">
         
   
   
@@ -717,7 +717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/data-model/" class="md-nav__link">
+      <a href="../../concepts/data-model/" class="md-nav__link">
         
   
   
@@ -745,7 +745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/payload-types/" class="md-nav__link">
+      <a href="../../concepts/payload-types/" class="md-nav__link">
         
   
   
@@ -773,7 +773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/tracing-lifecycle/" class="md-nav__link">
+      <a href="../../concepts/tracing-lifecycle/" class="md-nav__link">
         
   
   
@@ -862,7 +862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/overview/" class="md-nav__link">
+      <a href="../../authentication/overview/" class="md-nav__link">
         
   
   
@@ -890,7 +890,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/client-credentials/" class="md-nav__link">
+      <a href="../../authentication/client-credentials/" class="md-nav__link">
         
   
   
@@ -918,7 +918,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/password-grant/" class="md-nav__link">
+      <a href="../../authentication/password-grant/" class="md-nav__link">
         
   
   
@@ -946,7 +946,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/oidc-discovery/" class="md-nav__link">
+      <a href="../../authentication/oidc-discovery/" class="md-nav__link">
         
   
   
@@ -974,7 +974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/refresh-and-errors/" class="md-nav__link">
+      <a href="../../authentication/refresh-and-errors/" class="md-nav__link">
         
   
   
@@ -1063,7 +1063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/connections/" class="md-nav__link">
+      <a href="../../reading-data/connections/" class="md-nav__link">
         
   
   
@@ -1091,7 +1091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/integrations/" class="md-nav__link">
+      <a href="../../reading-data/integrations/" class="md-nav__link">
         
   
   
@@ -1119,7 +1119,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/routes/" class="md-nav__link">
+      <a href="../../reading-data/routes/" class="md-nav__link">
         
   
   
@@ -1147,7 +1147,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/traces/" class="md-nav__link">
+      <a href="../../reading-data/traces/" class="md-nav__link">
         
   
   
@@ -1236,7 +1236,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sending-data/observations/" class="md-nav__link">
+      <a href="../../sending-data/observations/" class="md-nav__link">
         
   
   
@@ -1264,7 +1264,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sending-data/events/" class="md-nav__link">
+      <a href="../../sending-data/events/" class="md-nav__link">
         
   
   
@@ -1292,7 +1292,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sending-data/messages-attachments/" class="md-nav__link">
+      <a href="../../sending-data/messages-attachments/" class="md-nav__link">
         
   
   
@@ -1324,28 +1324,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
-        
-          
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
             
   
   
@@ -1363,7 +1366,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1381,7 +1384,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recipes/pagination/" class="md-nav__link">
+      <a href="../pagination/" class="md-nav__link">
         
   
   
@@ -1409,7 +1412,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recipes/filtering/" class="md-nav__link">
+      <a href="../filtering/" class="md-nav__link">
         
   
   
@@ -1437,7 +1440,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recipes/custom-httpx/" class="md-nav__link">
+      <a href="../custom-httpx/" class="md-nav__link">
         
   
   
@@ -1462,10 +1465,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../recipes/error-handling/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error handling
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1481,6 +1511,92 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-exception-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The exception hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#catching-by-category" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Catching by category
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-specific-status-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handling specific status codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging-useful-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging useful context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retry-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retry strategies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related pages
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1554,7 +1670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/" class="md-nav__link">
+      <a href="../../api-reference/" class="md-nav__link">
         
   
   
@@ -1582,7 +1698,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/gundi-client/" class="md-nav__link">
+      <a href="../../api-reference/gundi-client/" class="md-nav__link">
         
   
   
@@ -1610,7 +1726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/data-sender-client/" class="md-nav__link">
+      <a href="../../api-reference/data-sender-client/" class="md-nav__link">
         
   
   
@@ -1638,7 +1754,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/auth/" class="md-nav__link">
+      <a href="../../api-reference/auth/" class="md-nav__link">
         
   
   
@@ -1666,7 +1782,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/errors/" class="md-nav__link">
+      <a href="../../api-reference/errors/" class="md-nav__link">
         
   
   
@@ -1701,7 +1817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../migration/" class="md-nav__link">
+      <a href="../../migration/" class="md-nav__link">
         
   
   
@@ -1725,37 +1841,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Troubleshooting
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
         
   
   
@@ -1771,114 +1860,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-errors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication errors
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#httpxconnecterror-errno-2-name-or-service-not-known" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        httpx.ConnectError: [Errno -2] Name or service not known
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#httpxconnecttimeout-or-httpxreadtimeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        httpx.ConnectTimeout or httpx.ReadTimeout
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typeerror-client__init__-got-an-unexpected-keyword-argument-app" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TypeError: Client.__init__() got an unexpected keyword argument 'app'
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validationerror-from-pydantic-when-parsing-a-response" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ValidationError from Pydantic when parsing a response
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-403" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 403
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-404" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 404
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stuck" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stuck?
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1890,7 +1871,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../changelog/" class="md-nav__link">
+      <a href="../../changelog/" class="md-nav__link">
         
   
   
@@ -1937,10 +1918,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#authentication-errors" class="md-nav__link">
+  <a href="#the-exception-hierarchy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication errors
+        The exception hierarchy
       
     </span>
   </a>
@@ -1948,10 +1929,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#httpxconnecterror-errno-2-name-or-service-not-known" class="md-nav__link">
+  <a href="#catching-by-category" class="md-nav__link">
     <span class="md-ellipsis">
       
-        httpx.ConnectError: [Errno -2] Name or service not known
+        Catching by category
       
     </span>
   </a>
@@ -1959,10 +1940,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#httpxconnecttimeout-or-httpxreadtimeout" class="md-nav__link">
+  <a href="#handling-specific-status-codes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        httpx.ConnectTimeout or httpx.ReadTimeout
+        Handling specific status codes
       
     </span>
   </a>
@@ -1970,10 +1951,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#typeerror-client__init__-got-an-unexpected-keyword-argument-app" class="md-nav__link">
+  <a href="#logging-useful-context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        TypeError: Client.__init__() got an unexpected keyword argument 'app'
+        Logging useful context
       
     </span>
   </a>
@@ -1981,10 +1962,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#validationerror-from-pydantic-when-parsing-a-response" class="md-nav__link">
+  <a href="#retry-strategies" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ValidationError from Pydantic when parsing a response
+        Retry strategies
       
     </span>
   </a>
@@ -1992,32 +1973,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#gundiapierror-http-403" class="md-nav__link">
+  <a href="#related-pages" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GundiAPIError: HTTP 403
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gundiapierror-http-404" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GundiAPIError: HTTP 404
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stuck" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stuck?
+        Related pages
       
     </span>
   </a>
@@ -2042,6 +2001,46 @@
   
 
 
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../pagination/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Recipes
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
               
               <article class="md-content__inner md-typeset">
                 
@@ -2049,7 +2048,7 @@
 
 
   
-    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/troubleshooting.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/recipes/error-handling.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2057,71 +2056,126 @@
   
 
 
-<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
-<p>Common errors when using <code>gundi-client-v2</code>, with their causes and fixes.</p>
-<h2 id="authentication-errors">Authentication errors<a class="headerlink" href="#authentication-errors" title="Permanent link">&para;</a></h2>
-<p>See <a href="../authentication/refresh-and-errors/">Authentication → Refresh and errors</a>
-for the full catalog with explanations.</p>
-<h2 id="httpxconnecterror-errno-2-name-or-service-not-known"><code>httpx.ConnectError: [Errno -2] Name or service not known</code><a class="headerlink" href="#httpxconnecterror-errno-2-name-or-service-not-known" title="Permanent link">&para;</a></h2>
-<p>The hostname in <code>GUNDI_API_BASE_URL</code> or <code>OAUTH_ISSUER</code> doesn't resolve.</p>
-<p><strong>Fix:</strong> Verify the URLs are correct and reachable from the host running
-your code. Common gotchas:</p>
-<ul>
-<li>Typos in the host (<code>gundiservice.org</code> vs <code>gundiserice.org</code>)</li>
-<li>Missing <code>https://</code> scheme</li>
-<li>Internal hostnames that don't resolve outside a VPN</li>
-</ul>
-<h2 id="httpxconnecttimeout-or-httpxreadtimeout"><code>httpx.ConnectTimeout</code> or <code>httpx.ReadTimeout</code><a class="headerlink" href="#httpxconnecttimeout-or-httpxreadtimeout" title="Permanent link">&para;</a></h2>
-<p>The server isn't responding within the configured timeout. The defaults are
-3.1 seconds for <code>connect</code> and 20 seconds for <code>data</code> (read).</p>
-<p><strong>Fix:</strong> Increase timeouts at construction time using the
-<code>connect_timeout</code> and <code>data_timeout</code> kwargs:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiClient</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">client</span> <span class="o">=</span> <span class="n">GundiClient</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">connect_timeout</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span>  <span class="c1"># seconds to establish the connection</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">data_timeout</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span>     <span class="c1"># seconds to read the response body</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+<h1 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h1>
+<p><code>gundi_client_v2</code> raises a small, consistent exception hierarchy. Every
+error the library surfaces is a subclass of <code>GundiClientError</code>.</p>
+<h2 id="the-exception-hierarchy">The exception hierarchy<a class="headerlink" href="#the-exception-hierarchy" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GundiClientError
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  ├── AuthenticationError       # OAuth/token failures
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  └── GundiAPIError             # 4xx/5xx HTTP responses
 </code></pre></div>
-<h2 id="typeerror-client__init__-got-an-unexpected-keyword-argument-app"><code>TypeError: Client.__init__() got an unexpected keyword argument 'app'</code><a class="headerlink" href="#typeerror-client__init__-got-an-unexpected-keyword-argument-app" title="Permanent link">&para;</a></h2>
-<p>You're on <code>httpx&gt;=0.28</code> but <code>starlette&lt;0.37</code>. This usually surfaces in
-FastAPI test code (<code>TestClient(app)</code>).</p>
-<p><strong>Fix:</strong> See <a href="../migration/#troubleshooting">Migration → Troubleshooting</a>.
-Short version: bump <code>fastapi</code> to <code>&gt;=0.110.3</code> (which allows
-<code>starlette&gt;=0.37</code>).</p>
-<h2 id="validationerror-from-pydantic-when-parsing-a-response"><code>ValidationError</code> from Pydantic when parsing a response<a class="headerlink" href="#validationerror-from-pydantic-when-parsing-a-response" title="Permanent link">&para;</a></h2>
-<p>The API returned a payload that doesn't match the expected <code>gundi-core</code>
-schema. This typically happens during version skew (your client and the
-server are out of sync) or for newly-introduced fields.</p>
-<p><strong>Fix:</strong></p>
 <ul>
-<li>Confirm the deployed Gundi version matches your client major version.</li>
-<li>If the field is benign, you may need to upgrade <code>gundi-core</code> to a release
-  that knows about it.</li>
-<li>If you suspect a server bug, capture the raw response by intercepting
-  the HTTPX transport and report it to your Gundi administrator.</li>
+<li><code>AuthenticationError</code> — raised when the OAuth token request fails (bad
+  credentials, unreachable IdP, misconfigured issuer URL, etc.).</li>
+<li><code>GundiAPIError</code> — raised when the Gundi API returns a 4xx or 5xx
+  response. Exposes <code>.status_code: int</code> and <code>.detail: str</code>.</li>
 </ul>
-<h2 id="gundiapierror-http-403"><code>GundiAPIError: HTTP 403</code><a class="headerlink" href="#gundiapierror-http-403" title="Permanent link">&para;</a></h2>
-<p>The authenticated principal doesn't have permission to access the
-requested resource.</p>
-<p><strong>Fix:</strong> Check that your client/user has the necessary roles in the IdP
-realm. For per-Integration resources, your principal must own or be
-granted access to that Integration's Organization.</p>
-<h2 id="gundiapierror-http-404"><code>GundiAPIError: HTTP 404</code><a class="headerlink" href="#gundiapierror-http-404" title="Permanent link">&para;</a></h2>
-<p>The resource doesn't exist or you don't have permission to see it (some
-APIs return 404 instead of 403 to avoid leaking resource existence).</p>
-<p><strong>Fix:</strong> Verify the ID is correct. If you have an <code>integration_id</code> from
-elsewhere, confirm it actually exists with
-<code>client.get_integration_details(integration_id)</code>.</p>
-<h2 id="stuck">Stuck?<a class="headerlink" href="#stuck" title="Permanent link">&para;</a></h2>
+<h2 id="catching-by-category">Catching by category<a class="headerlink" href="#catching-by-category" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiClient</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2.errors</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">AuthenticationError</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">GundiAPIError</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">GundiClientError</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="k">async</span> <span class="k">with</span> <span class="n">GundiClient</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>            <span class="n">connections</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_connections</span><span class="p">()</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="k">except</span> <span class="n">AuthenticationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>        <span class="c1"># Token request failed; check credentials or client configuration</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Auth error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="k">except</span> <span class="n">GundiAPIError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>        <span class="c1"># 4xx/5xx from the Gundi API</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Status </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">, detail: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">detail</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="k">except</span> <span class="n">GundiClientError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="c1"># Anything else from the library (rare)</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Client error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+<p>Catch the most specific exception first (<code>AuthenticationError</code>,
+<code>GundiAPIError</code>), then <code>GundiClientError</code> as a catch-all for anything
+unexpected from the library.</p>
+<h2 id="handling-specific-status-codes">Handling specific status codes<a class="headerlink" href="#handling-specific-status-codes" title="Permanent link">&para;</a></h2>
+<p><code>GundiAPIError.status_code</code> lets you branch on the HTTP status:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">except</span> <span class="n">GundiAPIError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>        <span class="c1"># Resource doesn&#39;t exist (or you don&#39;t have access)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="o">...</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">403</span><span class="p">:</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="c1"># Permission denied</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="o">...</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&gt;=</span> <span class="mi">500</span><span class="p">:</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="c1"># Server-side issue; consider retrying</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="o">...</span>
+</code></pre></div>
+<p><code>GundiAPIError.detail</code> contains the body text returned by the API,
+which typically has a human-readable description of the problem.</p>
+<h2 id="logging-useful-context">Logging useful context<a class="headerlink" href="#logging-useful-context" title="Permanent link">&para;</a></h2>
+<p>Log <code>status_code</code> and <code>detail</code> alongside the operation that failed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch_integration</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">integration_id</span><span class="p">):</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        <span class="k">return</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_integration_details</span><span class="p">(</span><span class="n">integration_id</span><span class="p">)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="k">except</span> <span class="n">GundiAPIError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>            <span class="s2">&quot;Failed to fetch integration&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>                <span class="s2">&quot;integration_id&quot;</span><span class="p">:</span> <span class="n">integration_id</span><span class="p">,</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>                <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>                <span class="s2">&quot;detail&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">detail</span><span class="p">,</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>            <span class="p">},</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>        <span class="p">)</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>        <span class="k">raise</span>
+</code></pre></div>
+<p>Re-raising preserves the original traceback for upstream handlers or
+monitoring tools.</p>
+<h2 id="retry-strategies">Retry strategies<a class="headerlink" href="#retry-strategies" title="Permanent link">&para;</a></h2>
+<p>For transient errors (5xx responses, network blips), retry only on
+those — not on 4xx errors that won't resolve on a second attempt. The
+<a href="https://pypi.org/project/stamina/"><code>stamina</code></a> library provides
+exponential back-off with jitter and accepts a <strong>predicate</strong> for the
+<code>on=</code> parameter to filter which exceptions trigger a retry:</p>
+<p>First install stamina (<code>pip install stamina</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">stamina</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiClient</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiAPIError</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_transient</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Retry only on 5xx server errors.&quot;&quot;&quot;</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">GundiAPIError</span><span class="p">)</span> <span class="ow">and</span> <span class="n">exc</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&gt;=</span> <span class="mi">500</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="nd">@stamina</span><span class="o">.</span><span class="n">retry</span><span class="p">(</span><span class="n">on</span><span class="o">=</span><span class="n">_is_transient</span><span class="p">,</span> <span class="n">attempts</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">list_connections</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">GundiClient</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_connections</span><span class="p">()</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="k">async</span> <span class="k">with</span> <span class="n">GundiClient</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>        <span class="n">connections</span> <span class="o">=</span> <span class="k">await</span> <span class="n">list_connections</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+</code></pre></div>
+<p>Be selective about what you retry:</p>
 <ul>
-<li>Need patterns for catching exceptions and logging? See
-  <a href="../recipes/error-handling/">Recipes → Error handling</a>.</li>
-<li>Check the <a href="../authentication/overview/">Authentication overview</a> for
-  grant-selection issues.</li>
-<li>Check the <a href="../migration/">Migration guide</a> if you recently upgraded.</li>
-<li>Open an issue at
-  <a href="https://github.com/PADAS/gundi-client/issues">github.com/PADAS/gundi-client/issues</a>.</li>
+<li><strong>Do retry:</strong> 5xx server errors — they indicate a transient server-side
+  problem that may resolve on the next attempt.</li>
+<li><strong>Do not retry:</strong> 4xx errors — they indicate a client-side problem
+  (bad request, wrong ID, missing permission) that won't resolve by
+  retrying. The predicate above ignores them.</li>
+</ul>
+<h2 id="related-pages">Related pages<a class="headerlink" href="#related-pages" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../authentication/refresh-and-errors/">Authentication: Refresh and errors</a></li>
+<li><a href="../../troubleshooting/">Troubleshooting</a></li>
 </ul>
 
 
@@ -2178,10 +2232,10 @@ elsewhere, confirm it actually exists with
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

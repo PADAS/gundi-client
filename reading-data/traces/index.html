@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://padas.github.io/gundi-client/concepts/data-model/">
+        <link rel="canonical" href="https://padas.github.io/gundi-client/reading-data/traces/">
       
       
-        <link rel="prev" href="../../getting-started/first-request/">
+        <link rel="prev" href="../routes/">
       
       
-        <link rel="next" href="../payload-types/">
+        <link rel="next" href="../../sending-data/observations/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Gundi data model - gundi-client-v2 (Python)</title>
+        <title>Traces - gundi-client-v2 (Python)</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gundi-data-model" class="md-skip">
+        <a href="#reading-traces" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Gundi data model
+              Traces
             
           </span>
         </div>
@@ -264,13 +264,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../concepts/data-model/" class="md-tabs__link">
           
   
   
@@ -306,11 +304,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../reading-data/connections/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../connections/" class="md-tabs__link">
           
   
   
@@ -660,31 +660,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
             
   
   
@@ -702,7 +699,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -717,37 +714,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gundi data model
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../concepts/data-model/" class="md-nav__link">
         
   
   
@@ -763,92 +733,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#connection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Connection
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#route" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Route
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#observation-event-message" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Observation, Event, Message
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#trace" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trace
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-they-fit-together" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How they fit together
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -861,7 +745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../payload-types/" class="md-nav__link">
+      <a href="../../concepts/payload-types/" class="md-nav__link">
         
   
   
@@ -889,7 +773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tracing-lifecycle/" class="md-nav__link">
+      <a href="../../concepts/tracing-lifecycle/" class="md-nav__link">
         
   
   
@@ -1122,28 +1006,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
             
   
   
@@ -1161,7 +1048,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1179,7 +1066,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reading-data/connections/" class="md-nav__link">
+      <a href="../connections/" class="md-nav__link">
         
   
   
@@ -1207,7 +1094,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reading-data/integrations/" class="md-nav__link">
+      <a href="../integrations/" class="md-nav__link">
         
   
   
@@ -1235,7 +1122,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reading-data/routes/" class="md-nav__link">
+      <a href="../routes/" class="md-nav__link">
         
   
   
@@ -1260,10 +1147,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../reading-data/traces/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Traces
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1279,6 +1193,131 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#listing-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listing traces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common filters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-gunditrace-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The GundiTrace model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Use cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#confirm-a-specific-observation-was-delivered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Confirm a specific observation was delivered
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-all-errors-for-a-destination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find all errors for a destination
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#look-up-the-destinations-external-id-for-a-gundi-observation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Look up the destination's external ID for a Gundi observation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-as-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output as JSON
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1918,10 +1957,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#integration" class="md-nav__link">
+  <a href="#listing-traces" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration
+        Listing traces
       
     </span>
   </a>
@@ -1929,10 +1968,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#connection" class="md-nav__link">
+  <a href="#common-filters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Connection
+        Common filters
       
     </span>
   </a>
@@ -1940,10 +1979,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#route" class="md-nav__link">
+  <a href="#the-gunditrace-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Route
+        The GundiTrace model
       
     </span>
   </a>
@@ -1951,10 +1990,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#observation-event-message" class="md-nav__link">
+  <a href="#use-cases" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Observation, Event, Message
+        Use cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Use cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#confirm-a-specific-observation-was-delivered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Confirm a specific observation was delivered
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-all-errors-for-a-destination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find all errors for a destination
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#look-up-the-destinations-external-id-for-a-gundi-observation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Look up the destination's external ID for a Gundi observation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-as-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output as JSON
       
     </span>
   </a>
@@ -1962,21 +2051,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#trace" class="md-nav__link">
+  <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Trace
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-they-fit-together" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How they fit together
+        See also
       
     </span>
   </a>
@@ -2026,10 +2104,10 @@
     
     
       <li class="md-path__item">
-        <a href="./" class="md-path__link">
+        <a href="../connections/" class="md-path__link">
           
   <span class="md-ellipsis">
-    Concepts
+    Reading data
   </span>
 
         </a>
@@ -2048,7 +2126,7 @@
 
 
   
-    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/concepts/data-model.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/reading-data/traces.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2056,88 +2134,194 @@
   
 
 
-<h1 id="gundi-data-model">Gundi data model<a class="headerlink" href="#gundi-data-model" title="Permanent link">&para;</a></h1>
-<p>Gundi sits between <strong>data providers</strong> (devices, third-party APIs, telemetry
-sources) and <strong>destinations</strong> (EarthRanger sites, SMART deployments, etc.).
-Five resource types make up the platform:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Integration ──► Connection ──► Route ──► Integration (destination)
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                                    └──► Integration (destination)
-</code></pre></div>
-<h2 id="integration">Integration<a class="headerlink" href="#integration" title="Permanent link">&para;</a></h2>
-<p>A registered third-party system that either <strong>provides</strong> data to Gundi or
-<strong>receives</strong> data from it. Defined by an <code>IntegrationType</code> (e.g.
-<code>er_traptagger</code>, <code>lotek</code>, <code>earthranger</code>) and an <code>IntegrationConfiguration</code>
-that holds the system-specific settings (base URL, API key, etc.).</p>
-<p><strong>You read these with:</strong> <a href="../../reading-data/integrations/"><code>get_integrations()</code></a>,
-<code>get_integration_details(integration_id)</code>.</p>
-<h2 id="connection">Connection<a class="headerlink" href="#connection" title="Permanent link">&para;</a></h2>
-<p>A pairing of a provider Integration with one or more destination
-Integrations. A "TrapTagger camera trap deployment at Park X" might be a
-Connection whose provider is the TrapTagger Integration and whose
-destinations are the EarthRanger site(s) receiving its events.</p>
-<p>A Connection's primary fields:</p>
-<ul>
-<li><code>provider</code> — the Integration that produces data</li>
-<li><code>destinations</code> — list of Integrations that receive routed data</li>
-<li><code>status</code> — <code>healthy</code>, <code>unhealthy</code>, <code>disabled</code></li>
-<li><code>routing_rules</code> — references to the Routes that direct the data</li>
-<li><code>default_route</code> — the Route used when no other rule matches (optional)</li>
-</ul>
-<p><strong>You read these with:</strong> <a href="../../reading-data/connections/"><code>get_connections()</code></a>,
-<code>get_connection_details(integration_id)</code>.</p>
-<h2 id="route">Route<a class="headerlink" href="#route" title="Permanent link">&para;</a></h2>
-<p>A rule that maps <strong>provider</strong> Integrations to <strong>destination</strong> Integrations,
-with optional field-level transforms (often a JQ filter). Routes belong to an
-<strong>owner</strong> Organization. A Connection's <code>routing_rules</code> are the Route IDs that
-apply to it.</p>
-<p><strong>You read these with:</strong> <code>get_routes()</code>, <code>get_route_details(route_id)</code>,
-<code>get_routes_for_connection(connection_id)</code>.
-<strong>You manage these with:</strong> <code>create_route()</code>, <code>update_route()</code>, <code>delete_route()</code>.</p>
-<h2 id="observation-event-message">Observation, Event, Message<a class="headerlink" href="#observation-event-message" title="Permanent link">&para;</a></h2>
-<p>The three payload types Gundi forwards:</p>
+<h1 id="reading-traces">Reading Traces<a class="headerlink" href="#reading-traces" title="Permanent link">&para;</a></h1>
+<p>A <strong>Trace</strong> is the record Gundi writes each time a payload crosses a
+provider → destination edge. Traces let you confirm delivery, diagnose errors,
+and look up the ID the destination assigned to a forwarded observation or event.</p>
+<p>For the conceptual background — how payloads move through Gundi and why Traces
+exist — see <a href="../../concepts/tracing-lifecycle/">Tracing and lifecycle</a>. This
+page covers the API.</p>
 <table>
 <thead>
 <tr>
-<th>Type</th>
-<th>What it is</th>
-<th>Sent with</th>
+<th>Method</th>
+<th>Returns</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Observation</strong></td>
-<td>A geolocated point (lat, lon, time, optional attributes)</td>
-<td><code>GundiDataSenderClient.post_observations</code></td>
-</tr>
-<tr>
-<td><strong>Event</strong></td>
-<td>A discrete incident or record (type, time, location, attributes)</td>
-<td><code>GundiDataSenderClient.post_events</code></td>
-</tr>
-<tr>
-<td><strong>Message</strong></td>
-<td>A text message (often paired with an Event or Observation)</td>
-<td><code>GundiDataSenderClient.post_messages</code></td>
+<td><code>get_traces(params)</code></td>
+<td><code>List[GundiTrace]</code></td>
+<td>First page only.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trace">Trace<a class="headerlink" href="#trace" title="Permanent link">&para;</a></h2>
-<p>A record of one payload's journey through Gundi: the source observation/event,
-which Connection routed it, which destination(s) received it, and the
-delivery outcome. Useful for diagnostics.</p>
-<p><strong>You read these with:</strong> <code>get_traces(params={...})</code>.</p>
-<h2 id="how-they-fit-together">How they fit together<a class="headerlink" href="#how-they-fit-together" title="Permanent link">&para;</a></h2>
-<p>A typical "provider → destination" flow:</p>
-<ol>
-<li>A device pushes an Observation to Gundi via a provider Integration's
-   webhook endpoint.</li>
-<li>Gundi looks up the Connections containing that provider Integration.</li>
-<li>For each matching Connection, Gundi consults its Routes to determine
-   which destination Integrations should receive the data.</li>
-<li>Gundi transforms the payload per the Route's <code>transformation_rules</code> if
-   any, then forwards it to each destination.</li>
-<li>A Trace is recorded for each provider → destination edge in the flow.</li>
-</ol>
+<h2 id="listing-traces">Listing traces<a class="headerlink" href="#listing-traces" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiClient</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="k">async</span> <span class="k">with</span> <span class="n">GundiClient</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        <span class="n">traces</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_traces</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>            <span class="s2">&quot;object_id&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;gundi-observation-id&gt;&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="p">})</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">traces</span><span class="p">:</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>            <span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">object_id</span><span class="p">,</span> <span class="s2">&quot;→&quot;</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">delivered_at</span><span class="p">)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+<p><code>get_traces()</code> returns the first page of results only. The default page size
+is 20. Pass cursor parameters in <code>params</code> to walk additional pages if your
+query matches more results than fit in one page.</p>
+<h2 id="common-filters">Common filters<a class="headerlink" href="#common-filters" title="Permanent link">&para;</a></h2>
+<p><code>get_traces()</code> accepts a <code>params</code> dict that is passed through to the API as
+query-string parameters. Useful filters:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># All traces for a specific payload</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">traces</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_traces</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;object_id&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;gundi-object-id&gt;&quot;</span><span class="p">})</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Traces going to a specific destination Integration</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Note: the parameter name is deployment-dependent — try &quot;destination&quot; first;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># some API versions expose it as &quot;destination_id&quot;.</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">traces</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_traces</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;destination&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;destination-integration-id&gt;&quot;</span><span class="p">})</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># Traces from a specific provider Integration</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">traces</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_traces</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;data_provider&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;provider-integration-id&gt;&quot;</span><span class="p">})</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1"># Only traces that errored</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">traces</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_traces</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;has_error&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1"># Combine filters — the API treats multiple keys as AND</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="n">traces</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_traces</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="s2">&quot;destination&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;destination-integration-id&gt;&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="s2">&quot;has_error&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="p">})</span>
+</code></pre></div>
+<p>Time-range filters (e.g. <code>delivered_at__gte</code>) may be available depending on
+your Gundi deployment version. Consult your deployment's API documentation for
+the complete filter surface.</p>
+<h2 id="the-gunditrace-model">The <code>GundiTrace</code> model<a class="headerlink" href="#the-gunditrace-model" title="Permanent link">&para;</a></h2>
+<p>Defined in <code>gundi_core.schemas.v2.GundiTrace</code>. Fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object_id</code></td>
+<td><code>Union[UUID, str]</code></td>
+<td>Gundi-side ID of the source observation/event</td>
+</tr>
+<tr>
+<td><code>object_type</code></td>
+<td><code>str</code></td>
+<td>Payload type discriminator</td>
+</tr>
+<tr>
+<td><code>related_to</code></td>
+<td><code>Optional[Union[UUID, str]]</code></td>
+<td>Parent object ID</td>
+</tr>
+<tr>
+<td><code>data_provider</code></td>
+<td><code>Optional[Union[UUID, str]]</code></td>
+<td>Provider Integration ID</td>
+</tr>
+<tr>
+<td><code>destination</code></td>
+<td><code>Optional[Union[UUID, str]]</code></td>
+<td>Destination Integration ID</td>
+</tr>
+<tr>
+<td><code>delivered_at</code></td>
+<td><code>datetime</code></td>
+<td>When the payload reached the destination</td>
+</tr>
+<tr>
+<td><code>external_id</code></td>
+<td><code>Optional[Union[UUID, str]]</code></td>
+<td>The ID assigned by the destination</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>datetime</code></td>
+<td>When Gundi recorded the trace</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>datetime</code></td>
+<td>Last update to the trace</td>
+</tr>
+<tr>
+<td><code>last_update_delivered_at</code></td>
+<td><code>datetime</code></td>
+<td>Time of the most recent successful update</td>
+</tr>
+<tr>
+<td><code>is_duplicate</code></td>
+<td><code>bool</code></td>
+<td>True if Gundi suppressed as duplicate</td>
+</tr>
+<tr>
+<td><code>has_error</code></td>
+<td><code>bool</code></td>
+<td>True if delivery errored</td>
+</tr>
+</tbody>
+</table>
+<p>For the canonical field list, see the
+<a href="https://github.com/PADAS/gundi-core/blob/main/gundi_core/schemas/v2/gundi.py"><code>gundi-core</code> source</a>.</p>
+<h2 id="use-cases">Use cases<a class="headerlink" href="#use-cases" title="Permanent link">&para;</a></h2>
+<h3 id="confirm-a-specific-observation-was-delivered">Confirm a specific observation was delivered<a class="headerlink" href="#confirm-a-specific-observation-was-delivered" title="Permanent link">&para;</a></h3>
+<p>Filter by <code>object_id</code> and inspect each trace's status flags:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">traces</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_traces</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;object_id&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;gundi-object-id&gt;&quot;</span><span class="p">})</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">traces</span><span class="p">:</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">is_duplicate</span><span class="p">:</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Suppressed as duplicate at </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="k">elif</span> <span class="n">t</span><span class="o">.</span><span class="n">has_error</span><span class="p">:</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Delivery to </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2"> errored&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Delivered to </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">delivered_at</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="find-all-errors-for-a-destination">Find all errors for a destination<a class="headerlink" href="#find-all-errors-for-a-destination" title="Permanent link">&para;</a></h3>
+<p>Combine <code>destination</code> and <code>has_error</code> to pull the error queue for a single
+destination Integration:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">error_traces</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_traces</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="s2">&quot;destination&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;destination-integration-id&gt;&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="s2">&quot;has_error&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">})</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">error_traces</span><span class="p">:</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">object_id</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">object_type</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="look-up-the-destinations-external-id-for-a-gundi-observation">Look up the destination's external ID for a Gundi observation<a class="headerlink" href="#look-up-the-destinations-external-id-for-a-gundi-observation" title="Permanent link">&para;</a></h3>
+<p>After Gundi delivers a payload, the destination assigns its own ID (for
+example an EarthRanger event UUID). Retrieve it via <code>external_id</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">traces</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_traces</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;object_id&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;gundi-object-id&gt;&quot;</span><span class="p">})</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">traces</span><span class="p">:</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">external_id</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">t</span><span class="o">.</span><span class="n">has_error</span><span class="p">:</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Destination </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">destination</span><span class="si">}</span><span class="s2"> assigned ID: </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">external_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Use <code>external_id</code> to correlate Gundi-side <code>object_id</code> values with
+destination-side records without querying the destination directly.</p>
+<h2 id="output-as-json">Output as JSON<a class="headerlink" href="#output-as-json" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">traces</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_traces</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;object_id&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;gundi-object-id&gt;&quot;</span><span class="p">})</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">traces</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</code></pre></div>
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../concepts/tracing-lifecycle/">Tracing and lifecycle</a> — how payloads
+  move through Gundi and why Traces are recorded</li>
+</ul>
 
 
 

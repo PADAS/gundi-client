@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://padas.github.io/gundi-client/concepts/data-model/">
+        <link rel="canonical" href="https://padas.github.io/gundi-client/sending-data/messages-attachments/">
       
       
-        <link rel="prev" href="../../getting-started/first-request/">
+        <link rel="prev" href="../events/">
       
       
-        <link rel="next" href="../payload-types/">
+        <link rel="next" href="../../recipes/pagination/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Gundi data model - gundi-client-v2 (Python)</title>
+        <title>Messages and attachments - gundi-client-v2 (Python)</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gundi-data-model" class="md-skip">
+        <a href="#sending-messages-and-attachments" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Gundi data model
+              Messages and attachments
             
           </span>
         </div>
@@ -264,13 +264,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../concepts/data-model/" class="md-tabs__link">
           
   
   
@@ -326,11 +324,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../sending-data/observations/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../observations/" class="md-tabs__link">
           
   
   
@@ -660,31 +660,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
             
   
   
@@ -702,7 +699,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -717,37 +714,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gundi data model
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../concepts/data-model/" class="md-nav__link">
         
   
   
@@ -763,92 +733,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#connection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Connection
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#route" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Route
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#observation-event-message" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Observation, Event, Message
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#trace" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trace
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-they-fit-together" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How they fit together
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -861,7 +745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../payload-types/" class="md-nav__link">
+      <a href="../../concepts/payload-types/" class="md-nav__link">
         
   
   
@@ -889,7 +773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tracing-lifecycle/" class="md-nav__link">
+      <a href="../../concepts/tracing-lifecycle/" class="md-nav__link">
         
   
   
@@ -1295,28 +1179,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
             
   
   
@@ -1334,7 +1221,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1352,7 +1239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../sending-data/observations/" class="md-nav__link">
+      <a href="../observations/" class="md-nav__link">
         
   
   
@@ -1380,7 +1267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../sending-data/events/" class="md-nav__link">
+      <a href="../events/" class="md-nav__link">
         
   
   
@@ -1405,10 +1292,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../sending-data/messages-attachments/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Messages and attachments
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1424,6 +1338,109 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sending-a-message" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sending a message
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sending a message">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#message-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sending-an-attachment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sending an attachment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1918,10 +1935,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#integration" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration
+        Prerequisites
       
     </span>
   </a>
@@ -1929,10 +1946,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#connection" class="md-nav__link">
+  <a href="#sending-a-message" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Connection
+        Sending a message
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sending a message">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#message-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sending-an-attachment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sending an attachment
       
     </span>
   </a>
@@ -1940,10 +1985,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#route" class="md-nav__link">
+  <a href="#limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Route
+        Limits
       
     </span>
   </a>
@@ -1951,10 +1996,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#observation-event-message" class="md-nav__link">
+  <a href="#error-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Observation, Event, Message
+        Error handling
       
     </span>
   </a>
@@ -1962,21 +2007,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#trace" class="md-nav__link">
+  <a href="#related" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Trace
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-they-fit-together" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How they fit together
+        Related
       
     </span>
   </a>
@@ -2026,10 +2060,10 @@
     
     
       <li class="md-path__item">
-        <a href="./" class="md-path__link">
+        <a href="../observations/" class="md-path__link">
           
   <span class="md-ellipsis">
-    Concepts
+    Sending data
   </span>
 
         </a>
@@ -2048,7 +2082,7 @@
 
 
   
-    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/concepts/data-model.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/sending-data/messages-attachments.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2056,88 +2090,165 @@
   
 
 
-<h1 id="gundi-data-model">Gundi data model<a class="headerlink" href="#gundi-data-model" title="Permanent link">&para;</a></h1>
-<p>Gundi sits between <strong>data providers</strong> (devices, third-party APIs, telemetry
-sources) and <strong>destinations</strong> (EarthRanger sites, SMART deployments, etc.).
-Five resource types make up the platform:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Integration ──► Connection ──► Route ──► Integration (destination)
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                                    └──► Integration (destination)
-</code></pre></div>
-<h2 id="integration">Integration<a class="headerlink" href="#integration" title="Permanent link">&para;</a></h2>
-<p>A registered third-party system that either <strong>provides</strong> data to Gundi or
-<strong>receives</strong> data from it. Defined by an <code>IntegrationType</code> (e.g.
-<code>er_traptagger</code>, <code>lotek</code>, <code>earthranger</code>) and an <code>IntegrationConfiguration</code>
-that holds the system-specific settings (base URL, API key, etc.).</p>
-<p><strong>You read these with:</strong> <a href="../../reading-data/integrations/"><code>get_integrations()</code></a>,
-<code>get_integration_details(integration_id)</code>.</p>
-<h2 id="connection">Connection<a class="headerlink" href="#connection" title="Permanent link">&para;</a></h2>
-<p>A pairing of a provider Integration with one or more destination
-Integrations. A "TrapTagger camera trap deployment at Park X" might be a
-Connection whose provider is the TrapTagger Integration and whose
-destinations are the EarthRanger site(s) receiving its events.</p>
-<p>A Connection's primary fields:</p>
+<h1 id="sending-messages-and-attachments">Sending Messages and Attachments<a class="headerlink" href="#sending-messages-and-attachments" title="Permanent link">&para;</a></h1>
+<p>Gundi supports two distinct operations for sending supplemental data alongside observations and events:</p>
 <ul>
-<li><code>provider</code> — the Integration that produces data</li>
-<li><code>destinations</code> — list of Integrations that receive routed data</li>
-<li><code>status</code> — <code>healthy</code>, <code>unhealthy</code>, <code>disabled</code></li>
-<li><code>routing_rules</code> — references to the Routes that direct the data</li>
-<li><code>default_route</code> — the Route used when no other rule matches (optional)</li>
+<li><strong>Messages</strong> — text messages sent via <code>post_messages()</code>, with optional location and timestamp</li>
+<li><strong>Attachments</strong> — binary files (images, documents) attached to an existing event via <code>post_event_attachments()</code></li>
 </ul>
-<p><strong>You read these with:</strong> <a href="../../reading-data/connections/"><code>get_connections()</code></a>,
-<code>get_connection_details(integration_id)</code>.</p>
-<h2 id="route">Route<a class="headerlink" href="#route" title="Permanent link">&para;</a></h2>
-<p>A rule that maps <strong>provider</strong> Integrations to <strong>destination</strong> Integrations,
-with optional field-level transforms (often a JQ filter). Routes belong to an
-<strong>owner</strong> Organization. A Connection's <code>routing_rules</code> are the Route IDs that
-apply to it.</p>
-<p><strong>You read these with:</strong> <code>get_routes()</code>, <code>get_route_details(route_id)</code>,
-<code>get_routes_for_connection(connection_id)</code>.
-<strong>You manage these with:</strong> <code>create_route()</code>, <code>update_route()</code>, <code>delete_route()</code>.</p>
-<h2 id="observation-event-message">Observation, Event, Message<a class="headerlink" href="#observation-event-message" title="Permanent link">&para;</a></h2>
-<p>The three payload types Gundi forwards:</p>
+<p>These use different methods and different payload shapes.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>You need a <strong>provider Integration API key</strong> to authenticate with the Sensors API. Retrieve it via <code>GundiClient.get_integration_api_key()</code>.</p>
+<p>See <a href="../../reading-data/integrations/">Reading — Integrations</a> for how to look up integration IDs.</p>
+<div class="admonition warning">
+<p class="admonition-title">API key may be <code>None</code></p>
+<p><code>get_integration_api_key</code> returns <code>None</code> when no API key has been configured for the integration. Always check before proceeding:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">api_key</span> <span class="o">=</span> <span class="k">await</span> <span class="n">portal</span><span class="o">.</span><span class="n">get_integration_api_key</span><span class="p">(</span><span class="n">integration_id</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">if</span> <span class="n">api_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No API key configured for this integration&quot;</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<h2 id="sending-a-message">Sending a message<a class="headerlink" href="#sending-a-message" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiClient</span><span class="p">,</span> <span class="n">GundiDataSenderClient</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">async</span> <span class="k">with</span> <span class="n">GundiClient</span><span class="p">()</span> <span class="k">as</span> <span class="n">portal</span><span class="p">:</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="n">api_key</span> <span class="o">=</span> <span class="k">await</span> <span class="n">portal</span><span class="o">.</span><span class="n">get_integration_api_key</span><span class="p">(</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>            <span class="n">integration_id</span><span class="o">=</span><span class="s2">&quot;&lt;your-provider-integration-id&gt;&quot;</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="p">)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="k">if</span> <span class="n">api_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No API key configured for this integration&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">sender</span> <span class="o">=</span> <span class="n">GundiDataSenderClient</span><span class="p">(</span><span class="n">integration_api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">sender</span><span class="o">.</span><span class="n">post_messages</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>        <span class="p">{</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>            <span class="s2">&quot;sender&quot;</span><span class="p">:</span> <span class="s2">&quot;ranger-1&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>            <span class="s2">&quot;recipients&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;ops-channel&quot;</span><span class="p">],</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>            <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;Camera trap triggered at site B.&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>            <span class="c1"># Optional:</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>            <span class="c1"># &quot;recorded_at&quot;: &quot;2026-06-01T12:34:56Z&quot;,</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>            <span class="c1"># &quot;location&quot;: {&quot;latitude&quot;: -1.234, &quot;longitude&quot;: 36.789},</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>            <span class="c1"># &quot;additional&quot;: {&quot;status&quot;: {&quot;lowBattery&quot;: 1}},</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>        <span class="p">},</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>    <span class="p">])</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Coordinate key naming</p>
+<p>Messages use <code>latitude</code>/<code>longitude</code> (long form), while Observations
+and Events use <code>lat</code>/<code>lon</code> (short form). This inconsistency is in the
+Gundi sensors API itself — pass the form shown in this page's
+examples to avoid malformed payloads.</p>
+</div>
+<h3 id="message-fields">Message fields<a class="headerlink" href="#message-fields" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Type</th>
-<th>What it is</th>
-<th>Sent with</th>
+<th>Field</th>
+<th>Required</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Observation</strong></td>
-<td>A geolocated point (lat, lon, time, optional attributes)</td>
-<td><code>GundiDataSenderClient.post_observations</code></td>
+<td><code>sender</code></td>
+<td>Yes</td>
+<td>Identifier for the message sender</td>
 </tr>
 <tr>
-<td><strong>Event</strong></td>
-<td>A discrete incident or record (type, time, location, attributes)</td>
-<td><code>GundiDataSenderClient.post_events</code></td>
+<td><code>recipients</code></td>
+<td>Yes</td>
+<td>List of recipient identifiers</td>
 </tr>
 <tr>
-<td><strong>Message</strong></td>
-<td>A text message (often paired with an Event or Observation)</td>
-<td><code>GundiDataSenderClient.post_messages</code></td>
+<td><code>text</code></td>
+<td>Yes</td>
+<td>The message body</td>
+</tr>
+<tr>
+<td><code>recorded_at</code></td>
+<td>Optional</td>
+<td>ISO-8601 timestamp; defaults to ingestion time if omitted</td>
+</tr>
+<tr>
+<td><code>location</code></td>
+<td>Optional</td>
+<td><code>{"latitude": float, "longitude": float}</code></td>
+</tr>
+<tr>
+<td><code>additional</code></td>
+<td>Optional</td>
+<td>Free-form dict of additional attributes</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trace">Trace<a class="headerlink" href="#trace" title="Permanent link">&para;</a></h2>
-<p>A record of one payload's journey through Gundi: the source observation/event,
-which Connection routed it, which destination(s) received it, and the
-delivery outcome. Useful for diagnostics.</p>
-<p><strong>You read these with:</strong> <code>get_traces(params={...})</code>.</p>
-<h2 id="how-they-fit-together">How they fit together<a class="headerlink" href="#how-they-fit-together" title="Permanent link">&para;</a></h2>
-<p>A typical "provider → destination" flow:</p>
-<ol>
-<li>A device pushes an Observation to Gundi via a provider Integration's
-   webhook endpoint.</li>
-<li>Gundi looks up the Connections containing that provider Integration.</li>
-<li>For each matching Connection, Gundi consults its Routes to determine
-   which destination Integrations should receive the data.</li>
-<li>Gundi transforms the payload per the Route's <code>transformation_rules</code> if
-   any, then forwards it to each destination.</li>
-<li>A Trace is recorded for each provider → destination edge in the flow.</li>
-</ol>
+<p>Note that <code>recipients</code> is a <strong>list</strong> — even when targeting a single channel or address, wrap it in a list.</p>
+<h2 id="sending-an-attachment">Sending an attachment<a class="headerlink" href="#sending-an-attachment" title="Permanent link">&para;</a></h2>
+<p>Attachments are binary files associated with a specific event. Use <code>post_event_attachments(event_id, attachments)</code> where each attachment is a <code>(filename, file_binary)</code> tuple:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiClient</span><span class="p">,</span> <span class="n">GundiDataSenderClient</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="k">async</span> <span class="k">with</span> <span class="n">GundiClient</span><span class="p">()</span> <span class="k">as</span> <span class="n">portal</span><span class="p">:</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="n">api_key</span> <span class="o">=</span> <span class="k">await</span> <span class="n">portal</span><span class="o">.</span><span class="n">get_integration_api_key</span><span class="p">(</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>            <span class="n">integration_id</span><span class="o">=</span><span class="s2">&quot;&lt;your-provider-integration-id&gt;&quot;</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="p">)</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="k">if</span> <span class="n">api_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No API key configured for this integration&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;photo.jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="n">binary</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="n">sender</span> <span class="o">=</span> <span class="n">GundiDataSenderClient</span><span class="p">(</span><span class="n">integration_api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">sender</span><span class="o">.</span><span class="n">post_event_attachments</span><span class="p">(</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        <span class="n">event_id</span><span class="o">=</span><span class="s2">&quot;&lt;gundi-event-object-id&gt;&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        <span class="n">attachments</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;photo.jpg&quot;</span><span class="p">,</span> <span class="n">binary</span><span class="p">)],</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    <span class="p">)</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+<p>To send multiple attachments in a single call, add more tuples to the list:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">sender</span><span class="o">.</span><span class="n">post_event_attachments</span><span class="p">(</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">event_id</span><span class="o">=</span><span class="s2">&quot;&lt;gundi-event-object-id&gt;&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">attachments</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="p">(</span><span class="s2">&quot;photo1.jpg&quot;</span><span class="p">,</span> <span class="n">binary1</span><span class="p">),</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="p">(</span><span class="s2">&quot;photo2.jpg&quot;</span><span class="p">,</span> <span class="n">binary2</span><span class="p">),</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="p">],</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">What gets sent on the wire</p>
+<p>Attachments are uploaded as a <strong>multipart form request</strong>. Each tuple becomes a <code>file</code> form field using the provided filename as the <code>Content-Disposition</code> filename.</p>
+</div>
+<h2 id="limits">Limits<a class="headerlink" href="#limits" title="Permanent link">&para;</a></h2>
+<p><code>GundiDataSenderClient</code> uses a fixed <strong>120-second</strong> HTTPX timeout. For large files:</p>
+<ul>
+<li>Split the upload across multiple calls (one attachment at a time)</li>
+<li>Upload the file to external storage and reference the URL from the event's <code>event_details</code> field</li>
+</ul>
+<h2 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiAPIError</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">sender</span><span class="o">.</span><span class="n">post_event_attachments</span><span class="p">(</span><span class="n">event_id</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">attachments</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">])</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">except</span> <span class="n">GundiAPIError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gundi API error </span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>See <a href="../../recipes/error-handling/">Error handling</a> for the full pattern and a list of exception types.</p>
+<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../concepts/payload-types/">Payload types</a> — overview of observations, events, and messages</li>
+<li><a href="../observations/">Sending Observations</a></li>
+<li><a href="../events/">Sending Events</a></li>
+</ul>
 
 
 

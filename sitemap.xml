@@ -17,6 +17,26 @@
          <lastmod>2026-06-01</lastmod>
     </url>
     <url>
+         <loc>https://padas.github.io/gundi-client/api-reference/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/api-reference/auth/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/api-reference/data-sender-client/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/api-reference/errors/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/api-reference/gundi-client/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
          <loc>https://padas.github.io/gundi-client/authentication/client-credentials/</loc>
          <lastmod>2026-06-01</lastmod>
     </url>
@@ -41,6 +61,14 @@
          <lastmod>2026-06-01</lastmod>
     </url>
     <url>
+         <loc>https://padas.github.io/gundi-client/concepts/payload-types/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/concepts/tracing-lifecycle/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
          <loc>https://padas.github.io/gundi-client/getting-started/auth-setup/</loc>
          <lastmod>2026-06-01</lastmod>
     </url>
@@ -58,6 +86,42 @@
     </url>
     <url>
          <loc>https://padas.github.io/gundi-client/reading-data/integrations/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/reading-data/routes/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/reading-data/traces/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/recipes/custom-httpx/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/recipes/error-handling/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/recipes/filtering/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/recipes/pagination/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/sending-data/events/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/sending-data/messages-attachments/</loc>
+         <lastmod>2026-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://padas.github.io/gundi-client/sending-data/observations/</loc>
          <lastmod>2026-06-01</lastmod>
     </url>
 </urlset>
