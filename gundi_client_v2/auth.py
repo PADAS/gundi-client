@@ -61,7 +61,7 @@ async def get_access_token_password_grant(session, oauth_token_url, client_id, u
         scope: Space-separated OAuth2 scopes to request. Defaults to ``"openid"``.
 
     Returns:
-        An :class:`~gundi_core.schemas.OAuthToken` containing the access token
+        An ``OAuthToken`` containing the access token
         and related metadata.
 
     Raises:
@@ -96,7 +96,7 @@ async def refresh_access_token(
         oauth_token_url: The token endpoint URL of the authorization server.
         client_id: The OAuth2 client identifier registered with the IdP.
         refresh_token: The refresh token obtained from a previous token response.
-        fallback: The previous :class:`~gundi_core.schemas.OAuthToken` used to
+        fallback: The previous ``OAuthToken`` used to
             backfill ``refresh_token`` and ``refresh_expires_in`` if the IdP
             response omits them (RFC 6749 §6 makes the new refresh token OPTIONAL).
         client_secret: Optional client secret for confidential clients.
@@ -104,7 +104,7 @@ async def refresh_access_token(
 
     Returns:
         A tuple ``(token, refresh_rotated)`` where ``token`` is a new
-        :class:`~gundi_core.schemas.OAuthToken` and ``refresh_rotated`` is
+        ``OAuthToken`` and ``refresh_rotated`` is
         ``True`` when the IdP issued a new refresh token in the response,
         ``False`` when it omitted one (the fallback refresh metadata is reused).
 
@@ -155,7 +155,7 @@ async def get_access_token_client_credentials(
         scope: Space-separated OAuth2 scopes to request. Defaults to ``"openid"``.
 
     Returns:
-        An :class:`~gundi_core.schemas.OAuthToken` containing the access token
+        An ``OAuthToken`` containing the access token
         and related metadata. ``refresh_token`` is ``""`` and
         ``refresh_expires_in`` is ``0`` when the IdP did not issue a refresh token.
 
@@ -192,7 +192,7 @@ async def discover_token_endpoint(session, issuer: str) -> str:
 
     Fetches ``{issuer}/.well-known/openid-configuration`` and extracts
     ``token_endpoint``. Results are cached per-issuer for the process
-    lifetime; call :func:`clear_discovery_cache` to invalidate.
+    lifetime; call ``clear_discovery_cache()`` to invalidate.
 
     The cache key is ``issuer.rstrip('/')`` so values differing only by a
     trailing slash share one cache entry. The same normalization is applied
@@ -200,7 +200,7 @@ async def discover_token_endpoint(session, issuer: str) -> str:
 
     Per OIDC Discovery 1.0 §4.3, the ``issuer`` field in the discovery
     document MUST match the URL used to fetch it; a mismatch raises
-    :exc:`AuthenticationError` to prevent credential redirection to a
+    ``AuthenticationError`` to prevent credential redirection to a
     foreign token endpoint.
 
     Args:
