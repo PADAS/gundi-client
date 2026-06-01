@@ -78,6 +78,8 @@ elsewhere, confirm it actually exists with
 
 ## Stuck?
 
+- Need patterns for catching exceptions and logging? See
+  [Recipes → Error handling](recipes/error-handling.md).
 - Check the [Authentication overview](authentication/overview.md) for
   grant-selection issues.
 - Check the [Migration guide](migration.md) if you recently upgraded.

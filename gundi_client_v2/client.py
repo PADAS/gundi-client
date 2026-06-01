@@ -9,7 +9,8 @@ from httpx import (
     Timeout,
 )
 from pydantic import parse_obj_as
-from typing import AsyncGenerator, List
+from typing import Any, AsyncGenerator, List, Optional
+from uuid import UUID
 from gundi_core.schemas import (
     OAuthToken,
 )
@@ -22,35 +23,152 @@ logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
 
 
+def _redact(secret: Optional[str]) -> str:
+    """Mask a credential for logging.
+
+    For secrets longer than 4 characters, returns ``****`` followed by the
+    last 4 characters (preserves limited traceability across log lines).
+    For secrets of 4 characters or fewer (or empty/None), returns ``****``
+    with no tail — never leak short secrets in their entirety.
+    """
+    if not secret or len(secret) <= 4:
+        return "****"
+    return f"****{secret[-4:]}"
+
+
 class GundiDataSenderClient:
-    def __init__(self, integration_api_key: str = None, **kwargs):
+    def __init__(self, integration_api_key: Optional[str] = None, **kwargs: Any):
+        """Initialize the data-sender client for posting payloads to Gundi.
+
+        Handles observations, events, messages, and event attachments. This
+        client authenticates using an integration API key rather than OAuth
+        and is intended for integrations that push data into Gundi via the
+        sensors API. Obtain the key from
+        ``GundiClient.get_integration_api_key(integration_id)``.
+
+        Args:
+            integration_api_key: The per-integration API key used as the
+                ``apikey`` HTTP header on every request. May be left
+                ``None`` at construction time (e.g. to be set later),
+                but every method that issues a request will raise
+                ``ValueError`` if the key is still missing when called.
+            **kwargs: Optional keyword overrides.
+
+                * ``sensors_api_base_url`` (str): Override the sensors API
+                  base URL. Falls back to the ``SENSORS_API_BASE_URL``
+                  environment variable.
+        """
         self.gundi_version = "v2"
         self.sensors_api_endpoint = (
             f"{kwargs.get('sensors_api_base_url', settings.SENSORS_API_BASE_URL)}/{self.gundi_version}"
         )
         self._api_key = integration_api_key
 
-    async def post_observations(self, data: List[dict]) -> dict:
+    async def post_observations(self, data: List[dict]) -> Any:
+        """Post a batch of observation records to Gundi.
+
+        Args:
+            data: List of observation dicts. Each dict should conform to the
+                Gundi observation schema. Non-serialisable values (e.g.
+                ``datetime`` objects) are automatically coerced to strings.
+
+        Returns:
+            The raw JSON response from the sensors API. Typically a list of
+            envelopes, one per posted record.
+
+        Raises:
+            ValueError: If no ``integration_api_key`` was provided.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
         return await self._post_data(data=data, endpoint="observations")
 
-    async def post_events(self, data: List[dict]) -> dict:
+    async def post_events(self, data: List[dict]) -> Any:
+        """Post a batch of event records to Gundi.
+
+        Args:
+            data: List of event dicts. Each dict should conform to the
+                Gundi event schema. Non-serialisable values are automatically
+                coerced to strings.
+
+        Returns:
+            The raw JSON response from the sensors API. Typically a list of
+            envelopes, one per posted record.
+
+        Raises:
+            ValueError: If no ``integration_api_key`` was provided.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
         return await self._post_data(data=data, endpoint="events")
 
-    async def post_messages(self, data: List[dict]) -> dict:
+    async def post_messages(self, data: List[dict]) -> Any:
+        """Post a batch of message records to Gundi.
+
+        Args:
+            data: List of message dicts. Each dict should conform to the
+                Gundi message schema. Non-serialisable values are
+                automatically coerced to strings.
+
+        Returns:
+            The raw JSON response from the sensors API. Typically a list of
+            envelopes, one per posted record.
+
+        Raises:
+            ValueError: If no ``integration_api_key`` was provided.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
         return await self._post_data(data=data, endpoint="messages")
 
     async def update_event(self, event_id: str, data: dict) -> dict:
+        """Partially update an existing event via HTTP PATCH.
+
+        Only the fields present in ``data`` are modified; omitted fields
+        retain their current values on the server (standard PATCH semantics).
+
+        Args:
+            event_id: The UUID (or string ID) of the event to update.
+            data: Dict of fields to update. Non-serialisable values are
+                automatically coerced to strings.
+
+        Returns:
+            The raw JSON response body returned by the sensors API,
+            representing the updated event.
+
+        Raises:
+            ValueError: If no ``integration_api_key`` was provided.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
         return await self._update_data(data=data, endpoint=f"events/{event_id}")
 
-    async def post_event_attachments(self, event_id: str, attachments: List[tuple]) -> dict:
+    async def post_event_attachments(self, event_id: str, attachments: List[tuple]) -> Any:
+        """Upload file attachments for an existing event via multipart POST.
+
+        Args:
+            event_id: The UUID (or string ID) of the event to attach files to.
+            attachments: List of ``(filename, file_binary)`` tuples where
+                ``filename`` is a string (e.g. ``"photo.jpg"``) and
+                ``file_binary`` is the raw bytes of the file.
+
+        Returns:
+            The raw JSON response from the sensors API. Typically a list of
+            envelopes, one per posted record.
+
+        Raises:
+            ValueError: If no ``integration_api_key`` was provided.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
         return await self._post_data(attachments=attachments, endpoint=f"events/{event_id}/attachments")
 
     async def _post_data(self, data: List[dict] = None, endpoint: str = None, attachments: List[tuple] = None) -> dict:
         apikey = self._api_key
+        if apikey is None:
+            raise ValueError(
+                "GundiDataSenderClient requires an integration_api_key. "
+                "Obtain one via GundiClient.get_integration_api_key(integration_id)."
+            )
 
         logger.info(
             f' -- Posting to routing services --',
-            extra={"integration_api_key": apikey}
+            extra={"integration_api_key": _redact(apikey)}
         )
 
         url = f"{self.sensors_api_endpoint}/{endpoint}/"
@@ -72,7 +190,7 @@ class GundiDataSenderClient:
         logger.debug(
             f" -- sending {endpoint}. --",
             extra={
-                "length": len(data or attachments),
+                "length": len(data if data is not None else (attachments or [])),
                 "api": url,
             },
         )
@@ -86,10 +204,15 @@ class GundiDataSenderClient:
 
     async def _update_data(self, data: dict = None, endpoint: str = None) -> dict:
         apikey = self._api_key
+        if apikey is None:
+            raise ValueError(
+                "GundiDataSenderClient requires an integration_api_key. "
+                "Obtain one via GundiClient.get_integration_api_key(integration_id)."
+            )
 
         logger.info(
             f' -- Updating data... --',
-            extra={"integration_api_key": apikey}
+            extra={"integration_api_key": _redact(apikey)}
         )
 
         url = f"{self.sensors_api_endpoint}/{endpoint}/"
@@ -123,7 +246,62 @@ class GundiClient:
     DEFAULT_DATA_TIMEOUT_SECONDS = 20
     DEFAULT_CONNECTION_RETRIES = 5
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
+        """Initialize the Gundi API client.
+
+        All parameters are optional and fall back to the corresponding
+        environment variable when not supplied.
+
+        Args:
+            **kwargs: Keyword overrides for client behaviour.
+
+                **API settings**
+
+                * ``base_url`` (str): Gundi API base URL. Env:
+                  ``GUNDI_API_BASE_URL``.
+                * ``use_ssl`` (bool): Whether to verify TLS certificates.
+                  Env: ``GUNDI_API_SSL_VERIFY`` (default ``True``).
+
+                **Authentication settings**
+
+                The preferred kwarg names use the ``oauth_`` prefix.
+                The legacy ``keycloak_`` prefix is still accepted for
+                backward compatibility and is silently mapped to the same
+                setting.
+
+                * ``oauth_client_id`` / ``keycloak_client_id`` (str):
+                  OAuth client ID. Env: ``OAUTH_CLIENT_ID`` /
+                  ``KEYCLOAK_CLIENT_ID``.
+                * ``oauth_client_secret`` / ``keycloak_client_secret``
+                  (str): OAuth client secret (confidential clients). Env:
+                  ``OAUTH_CLIENT_SECRET`` / ``KEYCLOAK_CLIENT_SECRET``.
+                * ``username`` (str): Resource-owner username (password
+                  grant). Env: ``GUNDI_USERNAME``.
+                * ``password`` (str): Resource-owner password (password
+                  grant). Env: ``GUNDI_PASSWORD``.
+                * ``oauth_token_url`` (str): Direct token endpoint URL.
+                  Takes precedence over ``oauth_issuer``. Env:
+                  ``OAUTH_TOKEN_URL``.
+                * ``oauth_issuer`` (str): OIDC issuer URL. Used for
+                  automatic token-endpoint discovery when
+                  ``oauth_token_url`` is not set. Env: ``OAUTH_ISSUER`` /
+                  ``KEYCLOAK_ISSUER``.
+                * ``oauth_audience`` / ``keycloak_audience`` (str): OAuth
+                  audience claim. Required by Auth0; optional for
+                  Keycloak. Env: ``OAUTH_AUDIENCE`` /
+                  ``KEYCLOAK_AUDIENCE``.
+                * ``oauth_scope`` (str): Space-separated OAuth scopes.
+                  Env: ``OAUTH_SCOPE`` (default ``"openid"``).
+
+                **Retry / timeout settings**
+
+                * ``max_http_retries`` (int): Number of automatic HTTP
+                  retries on transport errors (default ``5``).
+                * ``connect_timeout`` (float): TCP connect timeout in
+                  seconds (default ``3.1``).
+                * ``data_timeout`` (float): Read/write timeout in seconds
+                  (default ``20``).
+        """
         # API settings
         self.gundi_version = "v2"
         self.base_url = kwargs.get("base_url", settings.GUNDI_API_BASE_URL)
@@ -164,15 +342,23 @@ class GundiClient:
         self._session = AsyncClient(transport=transport, timeout=timeout)
 
     async def close(self):
+        """Close the underlying HTTPX async session.
+
+        Call this when you are finished with the client and are not using
+        it as an async context manager. After calling ``close()``, the
+        client should not be used again.
+        """
         await self._session.aclose()
 
     # Support using this client as an async context manager.
     async def __aenter__(self):
+        """Enter the async context manager, returning this client instance."""
         await self._session.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        await self._session.__aexit__()
+        """Exit the async context manager, closing the underlying session."""
+        return await self._session.__aexit__(exc_type, exc_value, traceback)
 
     async def _get(self, url, params=None, headers=None, **kwargs):
         headers = headers or {}
@@ -361,12 +547,52 @@ class GundiClient:
         # token is not treated as already expired (which would re-authenticate on every call).
         return max(lifetime_seconds - buffer_seconds, lifetime_seconds // 2)
 
-    async def get_access_token(self, force_refresh_token=False) -> OAuthToken:
+    async def get_access_token(self, force_refresh_token: bool = False) -> OAuthToken:
+        """Return a valid OAuth access token, refreshing it when necessary.
+
+        The token is cached in memory. On each call the expiry time is
+        checked (with a 15-second clock-skew buffer). If the token has
+        expired — or ``force_refresh_token`` is ``True`` — a new token is
+        fetched from the IdP using the refresh-token grant (when a live
+        refresh token is available) or a fresh full authentication.
+
+        Args:
+            force_refresh_token: When ``True``, bypass the cache and
+                always fetch a fresh token from the IdP, even if the
+                cached token has not yet expired.
+
+        Returns:
+            A valid ``OAuthToken`` object containing ``access_token``,
+            ``token_type``, ``expires_in``, and related fields.
+
+        Raises:
+            AuthenticationError: If token retrieval fails (bad
+                credentials, unreachable IdP, or missing configuration).
+        """
         if force_refresh_token or not self.cached_token or self.cached_token_expires_at < datetime.now(tz=timezone.utc):
             return await self._refresh_token()
         return self.cached_token
 
-    async def get_auth_header(self, force_refresh_token=False) -> dict:
+    async def get_auth_header(self, force_refresh_token: bool = False) -> dict:
+        """Return the ``Authorization`` header dict for the current access token.
+
+        Convenience wrapper around ``get_access_token()`` that formats the
+        token as a ready-to-merge header dict.
+
+        Args:
+            force_refresh_token: Passed through to ``get_access_token()``.
+                When ``True``, a fresh token is fetched from the IdP
+                before building the header.
+
+        Returns:
+            A dict with a single key ``"authorization"`` whose value is
+            ``"<token_type> <access_token>"`` (e.g.
+            ``"Bearer eyJ..."``) suitable for merging into an
+            ``httpx`` request's ``headers``.
+
+        Raises:
+            AuthenticationError: If token retrieval fails.
+        """
         token_object = await self.get_access_token(force_refresh_token=force_refresh_token)
         return {
             "authorization": f"{token_object.token_type} {token_object.access_token}"
@@ -385,12 +611,44 @@ class GundiClient:
         return [model.parse_obj(data)]
 
     async def get_connections(self, params: dict = None) -> List[Connection]:
+        """List Connections accessible to the authenticated principal.
+
+        Returns the first page of results only (the Gundi API default
+        page size is 20). For paginated walking, see the Pagination recipe
+        in the docs.
+
+        Args:
+            params: Optional dict of query parameters passed through to
+                the API. Common keys: ``status`` (``healthy``,
+                ``unhealthy``, ``disabled``), ``owner`` (organization ID),
+                ``search`` (substring match).
+
+        Returns:
+            List of ``Connection`` objects.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
         url = f"{self.connections_endpoint}/"
         response = await self._get(url, params=params)
         self._raise_for_status(response)
         return self._parse_list_response(response.json(), Connection)
 
-    async def get_connection_details(self, integration_id):
+    async def get_connection_details(self, integration_id: str | UUID) -> Connection:
+        """Retrieve full details for a single Connection.
+
+        Args:
+            integration_id: UUID of the Connection (integration) to look up.
+
+        Returns:
+            A ``Connection`` object with all fields populated.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response (e.g. 404
+                if the connection does not exist or is not accessible).
+        """
         url = f"{self.connections_endpoint}/{integration_id}/"
         response = await self._get(url)
         self._raise_for_status(response)
@@ -398,22 +656,68 @@ class GundiClient:
         return Connection.parse_obj(data)
 
     async def get_routes(self, params: dict = None) -> List[Route]:
+        """List Routes accessible to the authenticated principal.
+
+        Returns the first page of results only (Gundi API default page
+        size is 20). To filter by provider connection, prefer the
+        convenience method ``get_routes_for_connection()``.
+
+        Args:
+            params: Optional dict of query parameters. Common keys:
+                ``provider`` (Connection UUID), ``destination``
+                (Connection UUID), ``owner`` (organization ID),
+                ``search`` (substring match).
+
+        Returns:
+            List of ``Route`` objects.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
         url = f"{self.routes_endpoint}/"
         response = await self._get(url, params=params)
         self._raise_for_status(response)
         return self._parse_list_response(response.json(), Route)
 
-    async def get_routes_for_connection(self, connection_id) -> List[Route]:
-        """List routes where the given connection appears as a data provider.
+    async def get_routes_for_connection(self, connection_id: str | UUID) -> List[Route]:
+        """List Routes where the given Connection appears as a data provider.
 
-        This is a convenience wrapper around ``get_routes(params={"provider": ...})``.
+        Convenience wrapper around ``get_routes(params={"provider": ...})``.
         To combine the provider filter with other server-side filters (e.g.
-        ``owner``, ``destination``), call ``get_routes`` directly with a merged
-        params dict.
+        ``owner``, ``destination``), call ``get_routes()`` directly with a
+        merged params dict.
+
+        Like ``get_routes``, this returns only the first page of results.
+        For paginated walking see the Pagination recipe in the docs.
+
+        Args:
+            connection_id: UUID (or stringifiable ID) of the Connection to
+                filter by.
+
+        Returns:
+            List of ``Route`` objects where ``connection_id`` is a provider.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response.
         """
         return await self.get_routes(params={"provider": str(connection_id)})
 
-    async def get_route_details(self, route_id):
+    async def get_route_details(self, route_id: str | UUID) -> Route:
+        """Retrieve full details for a single Route.
+
+        Args:
+            route_id: UUID of the Route to look up.
+
+        Returns:
+            A ``Route`` object with all fields populated.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response (e.g. 404
+                if the route does not exist or is not accessible).
+        """
         url = f"{self.routes_endpoint}/{route_id}/"
         response = await self._get(url)
         self._raise_for_status(response)
@@ -421,24 +725,108 @@ class GundiClient:
         return Route.parse_obj(data)
 
     async def create_route(self, data: dict) -> Route:
+        """Create a new Route via HTTP POST.
+
+        Args:
+            data: Dict describing the new route. Expected keys:
+
+                * ``name`` (str, required): Human-readable route name.
+                * ``owner`` (str, required): Organization UUID that owns
+                  the route.
+                * ``data_providers`` (list of str, required): UUIDs of
+                  Connection objects that act as data sources.
+                * ``destinations`` (list of str, required): UUIDs of
+                  Connection objects that receive the data.
+                * ``configuration`` (dict, optional): Route-level
+                  configuration overrides.
+
+        Returns:
+            The newly created ``Route`` object as returned by the API.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response (e.g.
+                400 for validation errors, 403 for insufficient
+                permissions).
+        """
         url = f"{self.routes_endpoint}/"
         response = await self._post(url, data=data)
         self._raise_for_status(response)
         return Route.parse_obj(response.json())
 
-    async def update_route(self, route_id, data: dict) -> Route:
+    async def update_route(self, route_id: str | UUID, data: dict) -> Route:
+        """Partially update a Route via HTTP PATCH.
+
+        Only the fields present in ``data`` are modified; omitted fields
+        retain their current values on the server (standard PATCH
+        semantics).
+
+        Args:
+            route_id: UUID of the Route to update.
+            data: Partial dict of fields to update. Any subset of the
+                keys accepted by ``create_route()`` is valid.
+
+        Returns:
+            The updated ``Route`` object as returned by the API.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
         url = f"{self.routes_endpoint}/{route_id}/"
         response = await self._patch(url, data=data)
         self._raise_for_status(response)
         return Route.parse_obj(response.json())
 
-    async def delete_route(self, route_id) -> None:
+    async def delete_route(self, route_id: str | UUID) -> None:
+        """Delete a Route via HTTP DELETE.
+
+        Args:
+            route_id: UUID of the Route to delete.
+
+        Returns:
+            ``None``. The Gundi API returns HTTP 204 No Content on
+            success.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response (e.g.
+                404 if the route does not exist, 403 for insufficient
+                permissions).
+        """
         url = f"{self.routes_endpoint}/{route_id}/"
         response = await self._delete(url)
         self._raise_for_status(response)
         # 204 No Content on success — no body to return.
 
     async def get_integrations(self, params: dict = None) -> AsyncGenerator[Integration, None]:
+        """Iterate over all Integrations, walking pagination automatically.
+
+        Unlike ``get_connections()`` and ``get_routes()`` which return the
+        first page only, this method is an async generator that follows the
+        ``next`` cursor returned by the API until all pages are exhausted.
+
+        Usage::
+
+            async for integration in client.get_integrations():
+                print(integration.id)
+
+        Args:
+            params: Optional dict of query parameters for the first
+                request. Common keys: ``type`` (integration type slug),
+                ``owner`` (organization ID), ``search`` (substring match).
+                Subsequent page requests use the cursor embedded in the
+                ``next`` URL and ignore this dict.
+
+        Yields:
+            ``Integration`` objects, one per integration, across all
+            pages.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response on any
+                page request.
+        """
         url = f"{self.integrations_endpoint}/"
         while url:
             response = await self._get(url, params=params)
@@ -452,28 +840,103 @@ class GundiClient:
             else:
                 return
 
-    async def get_integration_details(self, integration_id):
+    async def get_integration_details(self, integration_id: str | UUID) -> Integration:
+        """Retrieve full details for a single Integration.
+
+        Args:
+            integration_id: UUID of the Integration to look up.
+
+        Returns:
+            An ``Integration`` object with all fields populated.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response (e.g.
+                404 if the integration does not exist or is not
+                accessible).
+        """
         url = f"{self.integrations_endpoint}/{integration_id}/"
         response = await self._get(url)
         self._raise_for_status(response)
         data = response.json()
         return Integration.parse_obj(data)
 
-    async def get_integration_api_key(self, integration_id):
+    async def get_integration_api_key(self, integration_id: str | UUID) -> Optional[str]:
+        """Return the API key string for an Integration.
+
+        This is the key passed as ``integration_api_key`` to
+        ``GundiDataSenderClient``. Note: this method returns the **plain
+        string** value of the key, not a dict or object — a common point
+        of confusion.
+
+        Args:
+            integration_id: UUID of the Integration whose API key is
+                requested.
+
+        Returns:
+            The API key as a plain string, or ``None`` if the response did
+            not contain an ``api_key`` field. Callers should defensively
+            check for ``None`` before passing the value to
+            ``GundiDataSenderClient``.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response (e.g.
+                403 if the caller lacks permission to read the key).
+        """
         url = f"{self.integrations_endpoint}/{integration_id}/api-key/"
         response = await self._get(url)
         self._raise_for_status(response)
         data = response.json()
         return data.get("api_key")
 
-    async def get_traces(self, params: dict):
+    async def get_traces(self, params: dict) -> List[GundiTrace]:
+        """List Gundi data traces (first page only).
+
+        Traces record the routing history of individual data points through
+        the Gundi pipeline and are useful for debugging delivery issues.
+
+        Args:
+            params: Dict of query parameters. Common keys:
+                ``object_id`` (source record UUID), ``integration``
+                (integration UUID), ``created_at__gte`` /
+                ``created_at__lte`` (ISO-8601 datetime bounds).
+
+        Returns:
+            List of ``GundiTrace`` objects from the first result page.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
         url = f"{self.traces_endpoint}/"
         response = await self._get(url, params=params)
         self._raise_for_status(response)
         data = response.json()["results"]
         return parse_obj_as(List[GundiTrace], data)
 
-    async def register_integration_type(self, data: dict):
+    async def register_integration_type(self, data: dict) -> IntegrationType:
+        """Register or update an IntegrationType in the Gundi portal.
+
+        This is an administrative operation typically called by integration
+        services on startup (when ``REGISTER_ON_START=true``) to declare
+        their capabilities, configuration schema, and webhook endpoints to
+        Gundi.
+
+        Args:
+            data: Dict describing the integration type. Consult the Gundi
+                API documentation for the full schema; commonly includes
+                ``name``, ``description``, ``type_slug``,
+                ``service_url``, and ``actions``.
+
+        Returns:
+            The created or updated ``IntegrationType`` object as returned
+            by the API.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
         url = f"{self.integrations_endpoint}/types/"
         response = await self._post(
             url,

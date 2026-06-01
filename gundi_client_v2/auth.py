@@ -7,7 +7,7 @@ from .errors import AuthenticationError
 
 logger = logging.getLogger(__name__)
 
-def _extract_oauth_error(response):
+def _extract_oauth_error(response: httpx.Response) -> str:
     """Build a detail string from an RFC 6749 §5.2 token-error response."""
     status = response.status_code
     try:
@@ -26,7 +26,7 @@ def _extract_oauth_error(response):
     return f"Token request failed: HTTP {status} ({error})"
 
 
-async def _post_token(session, oauth_token_url, payload) -> dict:
+async def _post_token(session: httpx.AsyncClient, oauth_token_url: str, payload: dict) -> dict:
     """POST to the token endpoint; raise AuthenticationError on non-2xx."""
     response = await session.post(oauth_token_url, data=payload)
     try:
@@ -36,13 +36,45 @@ async def _post_token(session, oauth_token_url, payload) -> dict:
     return response.json()
 
 
-async def _token_request(session, oauth_token_url, payload) -> OAuthToken:
+async def _token_request(session: httpx.AsyncClient, oauth_token_url: str, payload: dict) -> OAuthToken:
+    """Thin wrapper around _post_token that coerces the response dict to OAuthToken."""
     return OAuthToken.parse_obj(await _post_token(session, oauth_token_url, payload))
 
 
 # NOTE: The Resource Owner Password Credentials (ROPC) grant is discouraged by OAuth 2.1
 # (RFC 9700). It is supported here intentionally, for public clients that require it.
-async def get_access_token_password_grant(session, oauth_token_url, client_id, username, password, audience=None, scope="openid"):
+async def get_access_token_password_grant(
+    session: httpx.AsyncClient,
+    oauth_token_url: str,
+    client_id: str,
+    username: str,
+    password: str,
+    audience: str | None = None,
+    scope: str = "openid",
+) -> OAuthToken:
+    """Obtain an access token via the OAuth2 Resource Owner Password Credentials grant.
+
+    This grant is deprecated in OAuth 2.1 (RFC 9700) and should be avoided for
+    new integrations. It is retained for backward compatibility with IdPs that
+    do not support client_credentials for the required scopes.
+
+    Args:
+        session: An ``httpx.AsyncClient`` (or compatible) used for the HTTP request.
+        oauth_token_url: The token endpoint URL of the authorization server.
+        client_id: The OAuth2 client identifier registered with the IdP.
+        username: The resource owner's username.
+        password: The resource owner's password.
+        audience: Optional audience string required by some IdPs (e.g. Auth0).
+            Omit for IdPs that do not accept this parameter (e.g. Keycloak).
+        scope: Space-separated OAuth2 scopes to request. Defaults to ``"openid"``.
+
+    Returns:
+        An ``OAuthToken`` containing the access token
+        and related metadata.
+
+    Raises:
+        AuthenticationError: If the token endpoint returns a non-2xx response.
+    """
     logger.debug(f"get_access_token (password grant) from {oauth_token_url} for user: {username}")
     payload = {
         "client_id": client_id,
@@ -57,22 +89,35 @@ async def get_access_token_password_grant(session, oauth_token_url, client_id, u
 
 
 async def refresh_access_token(
-    session,
-    oauth_token_url,
-    client_id,
-    refresh_token,
+    session: httpx.AsyncClient,
+    oauth_token_url: str,
+    client_id: str,
+    refresh_token: str,
     fallback: OAuthToken,
-    client_secret=None,
-    scope="openid",
-):
-    """Exchange a refresh_token for a new access token (RFC 6749 §6).
+    client_secret: str | None = None,
+    scope: str = "openid",
+) -> tuple[OAuthToken, bool]:
+    """Exchange a refresh token for a new access token (RFC 6749 §6).
 
-    Returns a tuple ``(token, refresh_rotated)``. ``refresh_rotated`` is True
-    when the IdP issued a new refresh_token in the response and False when it
-    omitted one (RFC 6749 §6 makes the new refresh_token OPTIONAL). When the
-    server omits it the cached refresh_token/refresh_expires_in from
-    ``fallback`` are reused so the caller can keep its existing refresh
-    metadata and the user's credentials are not re-transmitted.
+    Args:
+        session: An ``httpx.AsyncClient`` (or compatible) used for the HTTP request.
+        oauth_token_url: The token endpoint URL of the authorization server.
+        client_id: The OAuth2 client identifier registered with the IdP.
+        refresh_token: The refresh token obtained from a previous token response.
+        fallback: The previous ``OAuthToken`` used to
+            backfill ``refresh_token`` and ``refresh_expires_in`` if the IdP
+            response omits them (RFC 6749 §6 makes the new refresh token OPTIONAL).
+        client_secret: Optional client secret for confidential clients.
+        scope: Space-separated OAuth2 scopes to request. Defaults to ``"openid"``.
+
+    Returns:
+        A tuple ``(token, refresh_rotated)`` where ``token`` is a new
+        ``OAuthToken`` and ``refresh_rotated`` is
+        ``True`` when the IdP issued a new refresh token in the response,
+        ``False`` when it omitted one (the fallback refresh metadata is reused).
+
+    Raises:
+        AuthenticationError: If the token endpoint returns a non-2xx response.
     """
     logger.debug(f"refresh_access_token from {oauth_token_url} using client_id: {client_id}")
     payload = {
@@ -92,20 +137,38 @@ async def refresh_access_token(
 
 
 async def get_access_token_client_credentials(
-    session,
-    oauth_token_url,
-    client_id,
-    client_secret,
-    audience=None,
-    scope="openid",
-):
-    """Standard OAuth2 client_credentials grant (RFC 6749 §4.4) for confidential clients.
+    session: httpx.AsyncClient,
+    oauth_token_url: str,
+    client_id: str,
+    client_secret: str,
+    audience: str | None = None,
+    scope: str = "openid",
+) -> OAuthToken:
+    """Obtain an access token via the OAuth2 client_credentials grant (RFC 6749 §4.4).
 
-    Responses for client_credentials typically do NOT include a refresh_token
-    (RFC 6749 §4.4.3 says SHOULD NOT). We backfill empty values so the OAuthToken
-    schema (which requires both fields) still parses; the client orchestrator
-    treats the empty refresh_token + refresh_expires_in=0 as 'no refresh available'
-    and re-authenticates on each access-token expiry.
+    Intended for confidential clients (server-to-server). Responses for this
+    grant type typically do NOT include a refresh token (RFC 6749 §4.4.3 says
+    SHOULD NOT). Empty values are backfilled so the OAuthToken schema (which
+    requires both fields) still parses; the caller treats ``refresh_token=""``
+    and ``refresh_expires_in=0`` as "no refresh available" and re-authenticates
+    on each access-token expiry.
+
+    Args:
+        session: An ``httpx.AsyncClient`` (or compatible) used for the HTTP request.
+        oauth_token_url: The token endpoint URL of the authorization server.
+        client_id: The OAuth2 client identifier registered with the IdP.
+        client_secret: The client secret for authenticating the request.
+        audience: Optional audience string required by some IdPs (e.g. Auth0).
+            Omit for IdPs that do not accept this parameter (e.g. Keycloak).
+        scope: Space-separated OAuth2 scopes to request. Defaults to ``"openid"``.
+
+    Returns:
+        An ``OAuthToken`` containing the access token
+        and related metadata. ``refresh_token`` is ``""`` and
+        ``refresh_expires_in`` is ``0`` when the IdP did not issue a refresh token.
+
+    Raises:
+        AuthenticationError: If the token endpoint returns a non-2xx response.
     """
     logger.debug(f"get_access_token (client_credentials) from {oauth_token_url} using client_id: {client_id}")
     payload = {
@@ -132,19 +195,36 @@ def clear_discovery_cache() -> None:
     _DISCOVERY_CACHE.clear()
 
 
-async def discover_token_endpoint(session, issuer: str) -> str:
-    """Fetch the OIDC discovery document at ``{issuer}/.well-known/openid-configuration``
-    and return its ``token_endpoint``. Cached per-issuer for the process lifetime;
-    call :func:`clear_discovery_cache` to invalidate.
+async def discover_token_endpoint(session: httpx.AsyncClient, issuer: str) -> str:
+    """Fetch the OIDC discovery document and return the token endpoint URL.
 
-    The cache key is ``issuer.rstrip('/')`` so values differing only by a trailing
-    slash share one cache entry. The same normalization is applied when comparing
-    the returned ``issuer`` claim to the expected value.
+    Fetches ``{issuer}/.well-known/openid-configuration`` and extracts
+    ``token_endpoint``. Results are cached per-issuer for the process
+    lifetime; call ``clear_discovery_cache()`` to invalidate.
 
-    Per OIDC Discovery 1.0 §4.3 (Validation of Issuer Identifier), the ``issuer``
-    field in the discovery document MUST match the URL used to fetch it; otherwise
-    a misconfigured (or hostile) response could redirect credentials at a token
-    endpoint for a different IdP. A mismatch raises ``AuthenticationError``.
+    The cache key is ``issuer.rstrip('/')`` so values differing only by a
+    trailing slash share one cache entry. The same normalization is applied
+    when comparing the returned ``issuer`` claim to the expected value.
+
+    Per OIDC Discovery 1.0 §4.3, the ``issuer`` field in the discovery
+    document MUST match the URL used to fetch it; a mismatch raises
+    ``AuthenticationError`` to prevent credential redirection to a
+    foreign token endpoint.
+
+    Args:
+        session: An ``httpx.AsyncClient`` (or compatible) used for the HTTP request.
+        issuer: The base URL of the OpenID Provider (e.g.
+            ``https://auth.example.com/realms/my-realm``). A trailing slash
+            is accepted and normalized away.
+
+    Returns:
+        The ``token_endpoint`` URL string from the discovery document.
+
+    Raises:
+        AuthenticationError: If the discovery request fails, the response is
+            not valid JSON, the JSON is not an object, the ``issuer`` claim
+            does not match the expected value, or ``token_endpoint`` is
+            absent or not a string.
     """
     key = issuer.rstrip("/")
     if key in _DISCOVERY_CACHE:

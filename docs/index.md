@@ -44,8 +44,11 @@ If you're new to Gundi as a platform, start at
 | Section | What's there |
 |---|---|
 | **Getting started** | Install, set up credentials, make your first request |
-| **Concepts** | Background on Gundi's data model |
+| **Concepts** | Gundi's data model; payload types; how data flows |
 | **Authentication** | Detailed coverage of the three OAuth2 flows |
-| **Reading data** | How to fetch Connections and Integrations |
+| **Reading data** | Fetching Connections, Integrations, Routes, and Traces |
+| **Sending data** | Posting Observations, Events, Messages, and Attachments |
+| **Recipes** | Common patterns: pagination, filtering, retries, error handling |
+| **API reference** | Auto-generated from in-source docstrings |
 | **Migration** | 2.x → 3.0 upgrade guide |
 | **Troubleshooting** | Common errors and fixes |

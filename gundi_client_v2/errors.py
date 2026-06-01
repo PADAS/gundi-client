@@ -10,7 +10,13 @@ class AuthenticationError(GundiClientError):
 
 
 class GundiAPIError(GundiClientError):
-    """Raised when the Gundi API returns a client or server error (4xx/5xx) response."""
+    """Raised when the Gundi API returns a 4xx or 5xx HTTP response.
+
+    Attributes:
+        status_code: The HTTP status code from the response.
+        detail: The response body text (often the API's error description),
+            or an empty string when the response carried no body.
+    """
 
     def __init__(self, status_code: int, detail: str = ""):
         self.status_code = status_code
