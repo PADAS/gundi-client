@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
 
 
-def _redact(secret: str) -> str:
+def _redact(secret: Optional[str]) -> str:
     """Mask a credential for logging.
 
     For secrets longer than 4 characters, returns ``****`` followed by the
