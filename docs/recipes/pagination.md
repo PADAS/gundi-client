@@ -54,6 +54,11 @@ walk multiple pages, two options:
    to call the endpoint directly, then walk the `next` URL yourself.
    This bypasses the convenience method but lets you stream results.
 
+!!! warning "`_session` is private API"
+    The `_session` attribute is an internal implementation detail and may
+    change between releases without notice. Treat this as a last-resort
+    workaround until the library exposes a public pagination helper.
+
 See also [Filtering](filtering.md) for ways to narrow the result set
 before it reaches the pagination layer.
 

@@ -37,19 +37,19 @@ async def main():
         if api_key is None:
             raise RuntimeError("No API key configured for this integration")
 
-    async with GundiDataSenderClient(integration_api_key=api_key) as sender:
-        response = await sender.post_messages(data=[
-            {
-                "sender": "ranger-1",
-                "recipients": ["ops-channel"],
-                "text": "Camera trap triggered at site B.",
-                # Optional:
-                # "recorded_at": "2026-06-01T12:34:56Z",
-                # "location": {"latitude": -1.234, "longitude": 36.789},
-                # "additional": {"status": {"lowBattery": 1}},
-            },
-        ])
-        print(response)
+    sender = GundiDataSenderClient(integration_api_key=api_key)
+    response = await sender.post_messages(data=[
+        {
+            "sender": "ranger-1",
+            "recipients": ["ops-channel"],
+            "text": "Camera trap triggered at site B.",
+            # Optional:
+            # "recorded_at": "2026-06-01T12:34:56Z",
+            # "location": {"latitude": -1.234, "longitude": 36.789},
+            # "additional": {"status": {"lowBattery": 1}},
+        },
+    ])
+    print(response)
 
 
 asyncio.run(main())
@@ -73,14 +73,30 @@ Note that `recipients` is a **list** — even when targeting a single channel or
 Attachments are binary files associated with a specific event. Use `post_event_attachments(event_id, attachments)` where each attachment is a `(filename, file_binary)` tuple:
 
 ```python
-with open("photo.jpg", "rb") as f:
-    binary = f.read()
+import asyncio
+from gundi_client_v2 import GundiClient, GundiDataSenderClient
 
-async with GundiDataSenderClient(integration_api_key=api_key) as sender:
+
+async def main():
+    async with GundiClient() as portal:
+        api_key = await portal.get_integration_api_key(
+            integration_id="<your-provider-integration-id>"
+        )
+        if api_key is None:
+            raise RuntimeError("No API key configured for this integration")
+
+    with open("photo.jpg", "rb") as f:
+        binary = f.read()
+
+    sender = GundiDataSenderClient(integration_api_key=api_key)
     response = await sender.post_event_attachments(
         event_id="<gundi-event-object-id>",
         attachments=[("photo.jpg", binary)],
     )
+    print(response)
+
+
+asyncio.run(main())
 ```
 
 To send multiple attachments in a single call, add more tuples to the list:

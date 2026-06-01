@@ -32,20 +32,20 @@ async def main():
         if api_key is None:
             raise RuntimeError("No API key configured for this integration")
 
-    async with GundiDataSenderClient(integration_api_key=api_key) as sender:
-        response = await sender.post_events(data=[
-            {
-                "event_type": "wildlife_sighting",
-                "recorded_at": "2026-06-01T12:34:56Z",
-                "location": {"lat": -1.234, "lon": 36.789},
-                "title": "Elephant near camp",
-                "event_details": {
-                    "species": "African elephant",
-                    "count": 3,
-                },
+    sender = GundiDataSenderClient(integration_api_key=api_key)
+    response = await sender.post_events(data=[
+        {
+            "event_type": "wildlife_sighting",
+            "recorded_at": "2026-06-01T12:34:56Z",
+            "location": {"lat": -1.234, "lon": 36.789},
+            "title": "Elephant near camp",
+            "event_details": {
+                "species": "African elephant",
+                "count": 3,
             },
-        ])
-        print(response)
+        },
+    ])
+    print(response)
 
 
 asyncio.run(main())

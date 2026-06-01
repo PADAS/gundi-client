@@ -32,25 +32,25 @@ async def main():
         if api_key is None:
             raise RuntimeError("No API key configured for this integration")
 
-    async with GundiDataSenderClient(integration_api_key=api_key) as sender:
-        response = await sender.post_observations(data=[
-            {
-                "source": "device-001",
-                "type": "tracking-device",
-                "subject_type": "wildlife.elephant",
-                "recorded_at": "2026-06-01T12:34:56Z",
-                "location": {"lat": -1.234, "lon": 36.789},
-                "additional": {"battery_voltage": 3.9},
-            },
-        ])
-        print(response)
+    sender = GundiDataSenderClient(integration_api_key=api_key)
+    response = await sender.post_observations(data=[
+        {
+            "source": "device-001",
+            "type": "tracking-device",
+            "subject_type": "wildlife.elephant",
+            "recorded_at": "2026-06-01T12:34:56Z",
+            "location": {"lat": -1.234, "lon": 36.789},
+            "additional": {"battery_voltage": 3.9},
+        },
+    ])
+    print(response)
 
 
 asyncio.run(main())
 ```
 
 !!! note "Session lifetime"
-    `GundiDataSenderClient` does not hold a persistent session between calls — each `post_*` method opens and closes its own connection. The `async with` block is optional but ensures any resources are cleaned up promptly.
+    Unlike `GundiClient`, `GundiDataSenderClient` is **not** an async context manager — it doesn't hold a persistent session. Instantiate it directly and `await` its methods.
 
 ## Sending multiple observations
 

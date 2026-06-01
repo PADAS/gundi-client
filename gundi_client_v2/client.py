@@ -49,7 +49,7 @@ class GundiDataSenderClient:
         )
         self._api_key = integration_api_key
 
-    async def post_observations(self, data: List[dict]) -> dict:
+    async def post_observations(self, data: List[dict]) -> Any:
         """Post a batch of observation records to Gundi.
 
         Args:
@@ -58,14 +58,15 @@ class GundiDataSenderClient:
                 ``datetime`` objects) are automatically coerced to strings.
 
         Returns:
-            The raw JSON response body returned by the sensors API.
+            The raw JSON response from the sensors API. Typically a list of
+            envelopes, one per posted record.
 
         Raises:
             GundiAPIError: If the API returns a 4xx/5xx response.
         """
         return await self._post_data(data=data, endpoint="observations")
 
-    async def post_events(self, data: List[dict]) -> dict:
+    async def post_events(self, data: List[dict]) -> Any:
         """Post a batch of event records to Gundi.
 
         Args:
@@ -74,14 +75,15 @@ class GundiDataSenderClient:
                 coerced to strings.
 
         Returns:
-            The raw JSON response body returned by the sensors API.
+            The raw JSON response from the sensors API. Typically a list of
+            envelopes, one per posted record.
 
         Raises:
             GundiAPIError: If the API returns a 4xx/5xx response.
         """
         return await self._post_data(data=data, endpoint="events")
 
-    async def post_messages(self, data: List[dict]) -> dict:
+    async def post_messages(self, data: List[dict]) -> Any:
         """Post a batch of message records to Gundi.
 
         Args:
@@ -90,7 +92,8 @@ class GundiDataSenderClient:
                 automatically coerced to strings.
 
         Returns:
-            The raw JSON response body returned by the sensors API.
+            The raw JSON response from the sensors API. Typically a list of
+            envelopes, one per posted record.
 
         Raises:
             GundiAPIError: If the API returns a 4xx/5xx response.
@@ -117,7 +120,7 @@ class GundiDataSenderClient:
         """
         return await self._update_data(data=data, endpoint=f"events/{event_id}")
 
-    async def post_event_attachments(self, event_id: str, attachments: List[tuple]) -> dict:
+    async def post_event_attachments(self, event_id: str, attachments: List[tuple]) -> Any:
         """Upload file attachments for an existing event via multipart POST.
 
         Args:
@@ -127,7 +130,8 @@ class GundiDataSenderClient:
                 ``file_binary`` is the raw bytes of the file.
 
         Returns:
-            The raw JSON response body returned by the sensors API.
+            The raw JSON response from the sensors API. Typically a list of
+            envelopes, one per posted record.
 
         Raises:
             GundiAPIError: If the API returns a 4xx/5xx response.
@@ -324,7 +328,7 @@ class GundiClient:
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         """Exit the async context manager, closing the underlying session."""
-        await self._session.__aexit__()
+        await self._session.__aexit__(exc_type, exc_value, traceback)
 
     async def _get(self, url, params=None, headers=None, **kwargs):
         headers = headers or {}
