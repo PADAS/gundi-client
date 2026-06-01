@@ -5,9 +5,8 @@ sources) and **destinations** (EarthRanger sites, SMART deployments, etc.).
 Five resource types make up the platform:
 
 ```
-Integration ──┐
-              ├─► Connection ──► Route ──► Integration (destination)
-Integration ──┘
+Integration ──► Connection ──► Route ──► Integration (destination)
+                                    └──► Integration (destination)
 ```
 
 ## Integration
@@ -22,10 +21,10 @@ that holds the system-specific settings (base URL, API key, etc.).
 
 ## Connection
 
-A logical grouping of one or more provider Integrations that share a common
-destination. A "TrapTagger camera trap network at Park X" might be a single
-Connection containing several provider Integrations (each camera) routed to
-one EarthRanger destination.
+A pairing of a provider Integration with one or more destination
+Integrations. A "TrapTagger camera trap deployment at Park X" might be a
+Connection whose provider is the TrapTagger Integration and whose
+destinations are the EarthRanger site(s) receiving its events.
 
 A Connection's primary fields:
 
@@ -33,6 +32,7 @@ A Connection's primary fields:
 - `destinations` — list of Integrations that receive routed data
 - `status` — `healthy`, `unhealthy`, `disabled`
 - `routing_rules` — references to the Routes that direct the data
+- `default_route` — the Route used when no other rule matches (optional)
 
 **You read these with:** [`get_connections()`](../reading-data/connections.md),
 `get_connection_details(integration_id)`.

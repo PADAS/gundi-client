@@ -4,11 +4,12 @@ The `password` grant (Resource Owner Password Credentials, ROPC; RFC 6749
 §4.3) authenticates a user by sending their username and password directly
 to the IdP.
 
-!!! warning "ROPC is discouraged by OAuth 2.1"
-    OAuth 2.1 (RFC 9700) discourages ROPC in favor of authorization-code
-    flows with PKCE. `gundi-client-v2` supports it for legacy and CLI use
-    cases where redirect-based flows aren't practical, and for public
-    clients that don't have a secret.
+!!! warning "ROPC is discouraged by current OAuth best practice"
+    RFC 9700 ("OAuth 2.0 Security Best Current Practice", Dec 2024)
+    discourages ROPC in favor of authorization-code flows with PKCE; the
+    in-progress OAuth 2.1 draft removes it entirely. `gundi-client-v2`
+    still supports it for legacy and CLI use cases where redirect-based
+    flows aren't practical.
 
 ## When to use it
 
