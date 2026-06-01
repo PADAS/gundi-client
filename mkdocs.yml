@@ -43,7 +43,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [.]
+          paths: ["gundi_client_v2"]
           options:
             docstring_style: google
             show_source: false

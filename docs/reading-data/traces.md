@@ -53,12 +53,12 @@ traces = await client.get_traces(params={"destination": "<destination-integratio
 traces = await client.get_traces(params={"data_provider": "<provider-integration-id>"})
 
 # Only traces that errored
-traces = await client.get_traces(params={"has_error": "true"})
+traces = await client.get_traces(params={"has_error": True})
 
 # Combine filters — the API treats multiple keys as AND
 traces = await client.get_traces(params={
     "destination": "<destination-integration-id>",
-    "has_error": "true",
+    "has_error": True,
 })
 ```
 
@@ -99,7 +99,7 @@ and a non-null `delivered_at`:
 traces = await client.get_traces(params={"object_id": "<gundi-object-id>"})
 
 for t in traces:
-    if not t.has_error and t.delivered_at:
+    if not t.has_error:
         print(f"Delivered to {t.destination} at {t.delivered_at}")
     elif t.has_error:
         print(f"Delivery to {t.destination} errored")
@@ -115,7 +115,7 @@ destination Integration:
 ```python
 error_traces = await client.get_traces(params={
     "destination": "<destination-integration-id>",
-    "has_error": "true",
+    "has_error": True,
 })
 for t in error_traces:
     print(t.object_id, t.object_type)

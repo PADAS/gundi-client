@@ -55,6 +55,12 @@ async def main():
 asyncio.run(main())
 ```
 
+!!! warning "Coordinate key naming"
+    Messages use `latitude`/`longitude` (long form), while Observations
+    and Events use `lat`/`lon` (short form). This inconsistency is in the
+    Gundi sensors API itself — pass the form shown in this page's
+    examples to avoid malformed payloads.
+
 ### Message fields
 
 | Field | Required | Notes |
