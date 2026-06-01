@@ -20,7 +20,7 @@ detailed coverage of each grant type, see the
 | Use this | When |
 |---|---|
 | `client_credentials` | Server-to-server, no user identity involved. Your client is confidential (has a secret). |
-| `password` | Acting on behalf of a known user with their credentials. Your client is public (no secret). |
+| `password` | Acting on behalf of a known user with their username and password. `OAUTH_CLIENT_SECRET` is not used by this grant. |
 
 If unsure, ask your Gundi administrator which grant your client is configured
 for.
@@ -70,7 +70,8 @@ of `OAUTH_ISSUER`.
 
 ## Loading the `.env` file
 
-The library calls `environs.Env.read_env()` at import time. By default this
+The library calls `environs.Env.read_env()` the first time
+`gundi_client_v2.settings` is imported. By default this
 reads `./.env` from the current working directory. Run your script from the
 directory containing `.env`, or set `GUNDI_CLIENT_ENVFILE=/path/to/your.env`
 to point at a specific file.

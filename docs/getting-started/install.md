@@ -22,11 +22,13 @@ is on the [PyPI project page](https://pypi.org/project/gundi-client-v2/).
 
 ## Install from source
 
-For development or to pin to a specific commit:
+For development, or to follow the `v2` branch directly:
 
 ```bash
 pip install "gundi-client-v2 @ git+https://github.com/PADAS/gundi-client.git@v2"
 ```
+
+To pin to a specific commit or tag, replace `@v2` with `@<sha>` or `@v3.0.0`.
 
 ## Compatibility
 
@@ -38,8 +40,10 @@ pip install "gundi-client-v2 @ git+https://github.com/PADAS/gundi-client.git@v2"
 | `gundi-core` | `>=1.5.8,<3` |
 
 If your app uses **FastAPI**, you'll also need `fastapi>=0.110.3` and
-`starlette>=0.37` to coexist with `httpx>=0.28`. See the
-[Migration guide](../migration.md) for details on the upgrade triangle.
+`starlette>=0.37`. Older versions ship a `TestClient` that calls
+`httpx.Client(app=...)` — a constructor argument that `httpx>=0.28`
+removed. See the [Migration guide](../migration.md) for the full
+upgrade triangle.
 
 ## Verify
 
