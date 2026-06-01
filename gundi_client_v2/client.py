@@ -63,6 +63,7 @@ class GundiDataSenderClient:
             envelopes, one per posted record.
 
         Raises:
+            ValueError: If no ``integration_api_key`` was provided.
             GundiAPIError: If the API returns a 4xx/5xx response.
         """
         return await self._post_data(data=data, endpoint="observations")
@@ -80,6 +81,7 @@ class GundiDataSenderClient:
             envelopes, one per posted record.
 
         Raises:
+            ValueError: If no ``integration_api_key`` was provided.
             GundiAPIError: If the API returns a 4xx/5xx response.
         """
         return await self._post_data(data=data, endpoint="events")
@@ -97,6 +99,7 @@ class GundiDataSenderClient:
             envelopes, one per posted record.
 
         Raises:
+            ValueError: If no ``integration_api_key`` was provided.
             GundiAPIError: If the API returns a 4xx/5xx response.
         """
         return await self._post_data(data=data, endpoint="messages")
@@ -117,6 +120,7 @@ class GundiDataSenderClient:
             representing the updated event.
 
         Raises:
+            ValueError: If no ``integration_api_key`` was provided.
             GundiAPIError: If the API returns a 4xx/5xx response.
         """
         return await self._update_data(data=data, endpoint=f"events/{event_id}")
@@ -135,6 +139,7 @@ class GundiDataSenderClient:
             envelopes, one per posted record.
 
         Raises:
+            ValueError: If no ``integration_api_key`` was provided.
             GundiAPIError: If the API returns a 4xx/5xx response.
         """
         return await self._post_data(attachments=attachments, endpoint=f"events/{event_id}/attachments")
