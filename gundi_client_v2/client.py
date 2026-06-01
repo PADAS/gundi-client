@@ -24,7 +24,13 @@ logger.setLevel(settings.LOG_LEVEL)
 
 
 def _redact(secret: str) -> str:
-    """Mask a credential for logging — keep the last 4 chars for traceability."""
+    """Mask a credential for logging.
+
+    For secrets longer than 4 characters, returns ``****`` followed by the
+    last 4 characters (preserves limited traceability across log lines).
+    For secrets of 4 characters or fewer (or empty/None), returns ``****``
+    with no tail — never leak short secrets in their entirety.
+    """
     if not secret or len(secret) <= 4:
         return "****"
     return f"****{secret[-4:]}"
@@ -184,7 +190,7 @@ class GundiDataSenderClient:
         logger.debug(
             f" -- sending {endpoint}. --",
             extra={
-                "length": len(data or attachments),
+                "length": len(data if data is not None else (attachments or [])),
                 "api": url,
             },
         )
