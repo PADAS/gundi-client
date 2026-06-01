@@ -40,6 +40,20 @@ plugins:
   - exclude:
       glob:
         - "superpowers/**"
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            show_root_toc_entry: false
+            members_order: source
+            heading_level: 2
+            separate_signature: true
+            line_length: 80
+            show_signature_annotations: true
 
 markdown_extensions:
   - admonition
@@ -69,6 +83,8 @@ nav:
     - First request: getting-started/first-request.md
   - Concepts:
     - Gundi data model: concepts/data-model.md
+    - Payload types: concepts/payload-types.md
+    - Tracing and lifecycle: concepts/tracing-lifecycle.md
   - Authentication:
     - Overview: authentication/overview.md
     - Client credentials: authentication/client-credentials.md
@@ -78,6 +94,23 @@ nav:
   - Reading data:
     - Connections: reading-data/connections.md
     - Integrations: reading-data/integrations.md
+    - Routes: reading-data/routes.md
+    - Traces: reading-data/traces.md
+  - Sending data:
+    - Observations: sending-data/observations.md
+    - Events: sending-data/events.md
+    - Messages and attachments: sending-data/messages-attachments.md
+  - Recipes:
+    - Pagination: recipes/pagination.md
+    - Filtering: recipes/filtering.md
+    - Custom HTTPX client: recipes/custom-httpx.md
+    - Error handling: recipes/error-handling.md
+  - API reference:
+    - Overview: api-reference/index.md
+    - GundiClient: api-reference/gundi-client.md
+    - GundiDataSenderClient: api-reference/data-sender-client.md
+    - auth: api-reference/auth.md
+    - errors: api-reference/errors.md
   - Migration (2.x → 3.0): migration.md
   - Troubleshooting: troubleshooting.md
   - Changelog: changelog.md
