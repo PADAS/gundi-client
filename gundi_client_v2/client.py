@@ -9,7 +9,8 @@ from httpx import (
     Timeout,
 )
 from pydantic import parse_obj_as
-from typing import AsyncGenerator, List, Optional
+from typing import Any, AsyncGenerator, List, Optional
+from uuid import UUID
 from gundi_core.schemas import (
     OAuthToken,
 )
@@ -23,7 +24,7 @@ logger.setLevel(settings.LOG_LEVEL)
 
 
 class GundiDataSenderClient:
-    def __init__(self, integration_api_key: str = None, **kwargs):
+    def __init__(self, integration_api_key: str = None, **kwargs: Any):
         """Initialize the data-sender client for posting observations and events.
 
         This client authenticates using an integration API key rather than OAuth
@@ -211,7 +212,7 @@ class GundiClient:
     DEFAULT_DATA_TIMEOUT_SECONDS = 20
     DEFAULT_CONNECTION_RETRIES = 5
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         """Initialize the Gundi API client.
 
         All parameters are optional and fall back to the corresponding
@@ -600,7 +601,7 @@ class GundiClient:
         self._raise_for_status(response)
         return self._parse_list_response(response.json(), Connection)
 
-    async def get_connection_details(self, integration_id) -> Connection:
+    async def get_connection_details(self, integration_id: str | UUID) -> Connection:
         """Retrieve full details for a single Connection.
 
         Args:
@@ -645,7 +646,7 @@ class GundiClient:
         self._raise_for_status(response)
         return self._parse_list_response(response.json(), Route)
 
-    async def get_routes_for_connection(self, connection_id) -> List[Route]:
+    async def get_routes_for_connection(self, connection_id: str | UUID) -> List[Route]:
         """List Routes where the given Connection appears as a data provider.
 
         Convenience wrapper around ``get_routes(params={"provider": ...})``.
@@ -669,7 +670,7 @@ class GundiClient:
         """
         return await self.get_routes(params={"provider": str(connection_id)})
 
-    async def get_route_details(self, route_id) -> Route:
+    async def get_route_details(self, route_id: str | UUID) -> Route:
         """Retrieve full details for a single Route.
 
         Args:
@@ -719,7 +720,7 @@ class GundiClient:
         self._raise_for_status(response)
         return Route.parse_obj(response.json())
 
-    async def update_route(self, route_id, data: dict) -> Route:
+    async def update_route(self, route_id: str | UUID, data: dict) -> Route:
         """Partially update a Route via HTTP PATCH.
 
         Only the fields present in ``data`` are modified; omitted fields
@@ -743,7 +744,7 @@ class GundiClient:
         self._raise_for_status(response)
         return Route.parse_obj(response.json())
 
-    async def delete_route(self, route_id) -> None:
+    async def delete_route(self, route_id: str | UUID) -> None:
         """Delete a Route via HTTP DELETE.
 
         Args:
@@ -805,7 +806,7 @@ class GundiClient:
             else:
                 return
 
-    async def get_integration_details(self, integration_id) -> Integration:
+    async def get_integration_details(self, integration_id: str | UUID) -> Integration:
         """Retrieve full details for a single Integration.
 
         Args:
@@ -826,7 +827,7 @@ class GundiClient:
         data = response.json()
         return Integration.parse_obj(data)
 
-    async def get_integration_api_key(self, integration_id) -> Optional[str]:
+    async def get_integration_api_key(self, integration_id: str | UUID) -> Optional[str]:
         """Return the API key string for an Integration.
 
         This is the key passed as ``integration_api_key`` to
