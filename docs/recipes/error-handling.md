@@ -100,11 +100,13 @@ monitoring tools.
 
 ## Retry strategies
 
-For transient errors (5xx responses, network blips), retry only on 5xx
-status codes using an explicit loop. The `stamina` library provides
-exponential back-off with jitter via `stamina.retry_context`:
+For transient errors (5xx responses, network blips), retry only on
+those — not on 4xx errors that won't resolve on a second attempt. The
+[`stamina`](https://pypi.org/project/stamina/) library provides
+exponential back-off with jitter and accepts a **predicate** for the
+`on=` parameter to filter which exceptions trigger a retry:
 
-First install [stamina](https://pypi.org/project/stamina/) (`pip install stamina`):
+First install stamina (`pip install stamina`):
 
 ```python
 import stamina
@@ -112,16 +114,14 @@ from gundi_client_v2 import GundiClient
 from gundi_client_v2.errors import GundiAPIError
 
 
+def _is_transient(exc: BaseException) -> bool:
+    """Retry only on 5xx server errors."""
+    return isinstance(exc, GundiAPIError) and exc.status_code >= 500
+
+
+@stamina.retry(on=_is_transient, attempts=3)
 async def list_connections(client: GundiClient) -> list:
-    """Retry only 5xx server errors; let 4xx errors propagate immediately."""
-    async for attempt in stamina.retry_context(on=GundiAPIError, attempts=3):
-        with attempt:
-            try:
-                return await client.get_connections()
-            except GundiAPIError as exc:
-                if exc.status_code < 500:
-                    raise  # 4xx: client error, do not retry
-                raise    # 5xx: let stamina handle back-off and retry
+    return await client.get_connections()
 
 
 async def main():
@@ -135,7 +135,7 @@ Be selective about what you retry:
   problem that may resolve on the next attempt.
 - **Do not retry:** 4xx errors — they indicate a client-side problem
   (bad request, wrong ID, missing permission) that won't resolve by
-  retrying.
+  retrying. The predicate above ignores them.
 
 ## Related pages
 
