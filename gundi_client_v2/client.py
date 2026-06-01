@@ -9,7 +9,7 @@ from httpx import (
     Timeout,
 )
 from pydantic import parse_obj_as
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator, List, Optional
 from gundi_core.schemas import (
     OAuthToken,
 )
@@ -653,6 +653,9 @@ class GundiClient:
         ``owner``, ``destination``), call ``get_routes()`` directly with a
         merged params dict.
 
+        Like ``get_routes``, this returns only the first page of results.
+        For paginated walking see the Pagination recipe in the docs.
+
         Args:
             connection_id: UUID (or stringifiable ID) of the Connection to
                 filter by.
@@ -823,7 +826,7 @@ class GundiClient:
         data = response.json()
         return Integration.parse_obj(data)
 
-    async def get_integration_api_key(self, integration_id) -> str:
+    async def get_integration_api_key(self, integration_id) -> Optional[str]:
         """Return the API key string for an Integration.
 
         This is the key passed as ``integration_api_key`` to
@@ -836,7 +839,10 @@ class GundiClient:
                 requested.
 
         Returns:
-            The API key as a plain string (e.g. ``"abc123..."``).
+            The API key as a plain string, or ``None`` if the response did
+            not contain an ``api_key`` field. Callers should defensively
+            check for ``None`` before passing the value to
+            ``GundiDataSenderClient``.
 
         Raises:
             AuthenticationError: If the OAuth token request fails.
