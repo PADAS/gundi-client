@@ -23,11 +23,19 @@ logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
 
 
+def _redact(secret: str) -> str:
+    """Mask a credential for logging — keep the last 4 chars for traceability."""
+    if not secret or len(secret) <= 4:
+        return "****"
+    return f"****{secret[-4:]}"
+
+
 class GundiDataSenderClient:
     def __init__(self, integration_api_key: Optional[str] = None, **kwargs: Any):
-        """Initialize the data-sender client for posting observations and events.
+        """Initialize the data-sender client for posting payloads to Gundi.
 
-        This client authenticates using an integration API key rather than OAuth
+        Handles observations, events, messages, and event attachments. This
+        client authenticates using an integration API key rather than OAuth
         and is intended for integrations that push data into Gundi via the
         sensors API. Obtain the key from
         ``GundiClient.get_integration_api_key(integration_id)``.
@@ -154,7 +162,7 @@ class GundiDataSenderClient:
 
         logger.info(
             f' -- Posting to routing services --',
-            extra={"integration_api_key": apikey}
+            extra={"integration_api_key": _redact(apikey)}
         )
 
         url = f"{self.sensors_api_endpoint}/{endpoint}/"
@@ -198,7 +206,7 @@ class GundiDataSenderClient:
 
         logger.info(
             f' -- Updating data... --',
-            extra={"integration_api_key": apikey}
+            extra={"integration_api_key": _redact(apikey)}
         )
 
         url = f"{self.sensors_api_endpoint}/{endpoint}/"

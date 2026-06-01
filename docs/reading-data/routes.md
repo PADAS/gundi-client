@@ -33,9 +33,8 @@ asyncio.run(main())
 ```
 
 `get_routes()` returns the first page of results only. The Gundi API's default
-page size is 20. If you need to walk multiple pages, pass the cursor parameters
-your deployment exposes in `params`. For streaming over a large result set,
-prefer [`get_integrations()`](integrations.md), which is an async generator.
+page size is 20. If you need to walk multiple pages, see the
+[Pagination recipe](../recipes/pagination.md) for the cursor-walking approach.
 
 ## Filtering
 
