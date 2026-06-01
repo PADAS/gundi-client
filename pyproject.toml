@@ -18,6 +18,8 @@ dependencies = [
     "gundi-core>=1.5.8,<3",
 ]
 
+# [project.optional-dependencies] (not [dependency-groups]) so that
+# `pip install -e ".[docs]"` works in CI without requiring uv.
 [project.optional-dependencies]
 docs = [
     "mkdocs-material>=9.5",

@@ -26,7 +26,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # gh-deploy needs full history to commit to gh-pages.
+          # fetch-depth: 0 is required if we later add git-revision-date-localized
+          # or git-committers plugins, which need full commit history to show page
+          # dates. Harmless to keep at zero now.
           fetch-depth: 0
 
       - name: Set up Python
