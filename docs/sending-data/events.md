@@ -37,7 +37,7 @@ async def main():
             {
                 "event_type": "wildlife_sighting",
                 "recorded_at": "2026-06-01T12:34:56Z",
-                "location": {"latitude": -1.234, "longitude": 36.789},
+                "location": {"lat": -1.234, "lon": 36.789},
                 "title": "Elephant near camp",
                 "event_details": {
                     "species": "African elephant",
@@ -57,7 +57,7 @@ asyncio.run(main())
 |---|---|---|
 | `event_type` | Yes | Event-type slug defined by your Gundi deployment |
 | `recorded_at` | Yes | ISO-8601 timestamp |
-| `location` | Yes | `{"latitude": float, "longitude": float}` |
+| `location` | Yes | `{"lat": float, "lon": float}` |
 | `title` | Recommended | Human-readable summary |
 | `event_details` | Optional | Free-form dict matching the event-type schema |
 | `priority` | Optional | Numeric priority (0 = lowest) |
