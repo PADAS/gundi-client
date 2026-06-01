@@ -9,9 +9,9 @@ The client exposes three methods:
 
 | Method | Returns | Notes |
 |---|---|---|
-| `get_integrations(params=None)` | `AsyncGenerator[Integration]` | Streams all Integrations matching the filters |
+| `get_integrations(params=None)` | `AsyncGenerator[Integration, None]` | Streams all Integrations matching the filters |
 | `get_integration_details(integration_id)` | `Integration` | Fetches one Integration by ID |
-| `get_integration_api_key(integration_id)` | `dict` with `api_key` | Used to bootstrap a `GundiDataSenderClient` |
+| `get_integration_api_key(integration_id)` | `str` | The Integration's API key. Used to bootstrap a `GundiDataSenderClient`. |
 
 ## List integrations (async generator)
 
@@ -42,6 +42,11 @@ If you need a list anyway, materialize it:
 integrations = [i async for i in client.get_integrations()]
 ```
 
+!!! note "Don't `await` the generator itself"
+    `get_integrations()` returns an async generator, not a coroutine. Use
+    `async for` or an async list comprehension. `await client.get_integrations()`
+    will fail at runtime.
+
 ## Filtering
 
 ```python
@@ -71,10 +76,9 @@ Some workflows need the per-Integration API key to send observations or
 events directly through Gundi's data ingestion API. Fetch it with:
 
 ```python
-key_response = await client.get_integration_api_key(
+api_key = await client.get_integration_api_key(
     integration_id="338225f3-91f9-4fe1-b013-353a229ce504"
 )
-api_key = key_response["api_key"]
 ```
 
 Then pass it to `GundiDataSenderClient`:

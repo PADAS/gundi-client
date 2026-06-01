@@ -22,7 +22,7 @@ async def main():
     async with GundiClient() as client:
         connections = await client.get_connections()
         for c in connections:
-            print(c.id, c.name, c.status)
+            print(c.id, c.provider.name, c.status)
 
 
 asyncio.run(main())
@@ -50,13 +50,29 @@ list; pass anything documented there as a key in `params`.
 
 ## Pagination
 
-`get_connections()` handles pagination transparently — it walks the
-`next` cursor from the API's paginated response and returns the
-**accumulated list**.
+`get_connections()` does **not** paginate automatically — it returns the
+first page of results only. The Gundi API's default page size is currently
+20. If your deployment has more Connections than fit in one page and you
+need them all, paginate manually using the API's cursor parameters:
 
-For large result sets where you want streaming behavior, fall back to
-manual pagination by passing the cursor parameters explicitly through
-`params`.
+```python
+all_connections = []
+params = {}
+while True:
+    page = await client.get_connections(params=params)
+    all_connections.extend(page)
+    # The cursor parameter name depends on your Gundi API version
+    # (typically "cursor" or "page"). Check the next/previous links in
+    # the raw response if you need to script over multiple pages.
+    if len(page) < 20:
+        break
+    # ... advance cursor
+    break
+```
+
+For streaming-style iteration over a large result set, prefer
+[`get_integrations()`](integrations.md), which is an async generator and
+walks pagination cursors transparently.
 
 ## Fetch one connection
 
@@ -72,7 +88,7 @@ have it, list connections and pick the one you want by name or status:
 
 ```python
 connections = await client.get_connections(params={"status": "healthy"})
-target = next(c for c in connections if c.name == "TrapTagger PADAS")
+target = next(c for c in connections if c.provider.name == "TrapTagger PADAS")
 print(target.id)
 ```
 
@@ -83,12 +99,11 @@ Defined in `gundi_core.schemas.v2.Connection`. Key fields:
 | Field | Type | Description |
 |---|---|---|
 | `id` | `UUID` | Connection's unique identifier |
-| `name` | `str` | Human-readable name |
-| `status` | `str` | `healthy`, `unhealthy`, `disabled` |
-| `provider` | `Integration` | The provider Integration |
-| `destinations` | `List[Integration]` | One or more destination Integrations |
-| `routing_rules` | `List[UUID]` | Route IDs that apply to this Connection |
-| `default_route` | `Optional[UUID]` | The default Route ID, if any |
+| `status` | `str` | `healthy`, `unhealthy`, `disabled`, or `unknown` |
+| `provider` | `ConnectionIntegration` | Shallow view of the provider Integration (id, name, type, owner, base_url, status). For the full Integration record use `get_integration_details()`. |
+| `destinations` | `List[ConnectionIntegration]` | Shallow views of destination Integrations |
+| `routing_rules` | `List[ConnectionRoute]` | Lightweight references to Routes; each has `id` and `name` |
+| `default_route` | `Optional[ConnectionRoute]` | The Route used when no other rule matches |
 | `owner` | `Organization` | The owning Organization |
 
 For the canonical field list, see the
