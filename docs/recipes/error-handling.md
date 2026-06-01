@@ -103,6 +103,8 @@ monitoring tools.
 For transient errors (5xx responses, network blips), wrap with a
 backoff library such as `stamina`:
 
+First install [stamina](https://pypi.org/project/stamina/) (`pip install stamina`):
+
 ```python
 import stamina
 from gundi_client_v2 import GundiClient

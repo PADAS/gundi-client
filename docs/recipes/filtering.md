@@ -14,7 +14,7 @@ async with GundiClient() as client:
     broken = await client.get_connections(params={"status": "unhealthy"})
 ```
 
-Valid values for `status`: `healthy`, `unhealthy`, `disabled`, `unknown`.
+Valid values for `status`: `healthy`, `unhealthy`, `disabled`.
 
 ## Owner filters
 
