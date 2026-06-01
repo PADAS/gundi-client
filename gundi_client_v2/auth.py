@@ -7,7 +7,7 @@ from .errors import AuthenticationError
 
 logger = logging.getLogger(__name__)
 
-def _extract_oauth_error(response):
+def _extract_oauth_error(response: httpx.Response) -> str:
     """Build a detail string from an RFC 6749 §5.2 token-error response."""
     status = response.status_code
     try:
@@ -26,7 +26,7 @@ def _extract_oauth_error(response):
     return f"Token request failed: HTTP {status} ({error})"
 
 
-async def _post_token(session, oauth_token_url, payload) -> dict:
+async def _post_token(session: httpx.AsyncClient, oauth_token_url: str, payload: dict) -> dict:
     """POST to the token endpoint; raise AuthenticationError on non-2xx."""
     response = await session.post(oauth_token_url, data=payload)
     try:
@@ -36,14 +36,14 @@ async def _post_token(session, oauth_token_url, payload) -> dict:
     return response.json()
 
 
-async def _token_request(session, oauth_token_url, payload) -> OAuthToken:
+async def _token_request(session: httpx.AsyncClient, oauth_token_url: str, payload: dict) -> OAuthToken:
     """Thin wrapper around _post_token that coerces the response dict to OAuthToken."""
     return OAuthToken.parse_obj(await _post_token(session, oauth_token_url, payload))
 
 
 # NOTE: The Resource Owner Password Credentials (ROPC) grant is discouraged by OAuth 2.1
 # (RFC 9700). It is supported here intentionally, for public clients that require it.
-async def get_access_token_password_grant(session, oauth_token_url, client_id, username, password, audience=None, scope="openid"):
+async def get_access_token_password_grant(session: httpx.AsyncClient, oauth_token_url: str, client_id: str, username: str, password: str, audience: str | None = None, scope: str = "openid") -> OAuthToken:
     """Obtain an access token via the OAuth2 Resource Owner Password Credentials grant.
 
     This grant is deprecated in OAuth 2.1 (RFC 9700) and should be avoided for
@@ -81,14 +81,14 @@ async def get_access_token_password_grant(session, oauth_token_url, client_id, u
 
 
 async def refresh_access_token(
-    session,
-    oauth_token_url,
-    client_id,
-    refresh_token,
+    session: httpx.AsyncClient,
+    oauth_token_url: str,
+    client_id: str,
+    refresh_token: str,
     fallback: OAuthToken,
-    client_secret=None,
-    scope="openid",
-):
+    client_secret: str | None = None,
+    scope: str = "openid",
+) -> tuple[OAuthToken, bool]:
     """Exchange a refresh token for a new access token (RFC 6749 §6).
 
     Args:
@@ -129,13 +129,13 @@ async def refresh_access_token(
 
 
 async def get_access_token_client_credentials(
-    session,
-    oauth_token_url,
-    client_id,
-    client_secret,
-    audience=None,
-    scope="openid",
-):
+    session: httpx.AsyncClient,
+    oauth_token_url: str,
+    client_id: str,
+    client_secret: str,
+    audience: str | None = None,
+    scope: str = "openid",
+) -> OAuthToken:
     """Obtain an access token via the OAuth2 client_credentials grant (RFC 6749 §4.4).
 
     Intended for confidential clients (server-to-server). Responses for this
@@ -187,7 +187,7 @@ def clear_discovery_cache() -> None:
     _DISCOVERY_CACHE.clear()
 
 
-async def discover_token_endpoint(session, issuer: str) -> str:
+async def discover_token_endpoint(session: httpx.AsyncClient, issuer: str) -> str:
     """Fetch the OIDC discovery document and return the token endpoint URL.
 
     Fetches ``{issuer}/.well-known/openid-configuration`` and extracts
