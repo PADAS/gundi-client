@@ -1,4 +1,4 @@
-__version__ = "3.2.0"
+__version__ = "3.3.0"
 
 from .client import GundiClient, GundiDataSenderClient
 from .errors import GundiClientError, AuthenticationError, GundiAPIError

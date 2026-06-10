@@ -861,6 +861,75 @@ class GundiClient:
         data = response.json()
         return Integration.parse_obj(data)
 
+    async def update_integration(self, integration_id: str | UUID, data: dict) -> Integration:
+        """Partially update an Integration via HTTP PATCH.
+
+        Only the fields present in ``data`` are modified; omitted fields
+        retain their current values on the server (standard PATCH
+        semantics).
+
+        To update an action configuration, pass a ``configurations`` list
+        whose entries carry the configuration ``id`` and the new ``data``::
+
+            await client.update_integration(
+                integration_id,
+                {"configurations": [{"id": config_id, "data": {...}}]},
+            )
+
+        See ``update_integration_configuration()`` for a convenience wrapper
+        around that common case.
+
+        Args:
+            integration_id: UUID of the Integration to update.
+            data: Partial dict of fields to update.
+
+        Returns:
+            The updated ``Integration``, re-fetched via
+            ``get_integration_details``. (The PATCH response itself is
+            serialized with the write serializer, which renders ``type`` /
+            ``owner`` / action references as bare ids rather than the nested
+            objects the ``Integration`` schema requires — so we re-read the
+            canonical representation instead of parsing the PATCH body.)
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
+        url = f"{self.integrations_endpoint}/{integration_id}/"
+        response = await self._patch(url, data=data)
+        self._raise_for_status(response)
+        return await self.get_integration_details(integration_id)
+
+    async def update_integration_configuration(
+        self,
+        integration_id: str | UUID,
+        configuration_id: str | UUID,
+        data: dict,
+    ) -> Integration:
+        """Update a single action configuration's ``data`` on an Integration.
+
+        Convenience wrapper around ``update_integration()`` for the common
+        case of rewriting one action configuration's payload (e.g. updating
+        a destination's field/tag mappings). The configuration is matched by
+        its ``id``; its action binding is left unchanged.
+
+        Args:
+            integration_id: UUID of the Integration that owns the configuration.
+            configuration_id: UUID of the action configuration to update.
+            data: The new ``data`` payload for that configuration.
+
+        Returns:
+            The updated ``Integration`` object as returned by the API.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response.
+        """
+        return await self.update_integration(
+            integration_id,
+            {"configurations": [{"id": str(configuration_id), "data": data}]},
+        )
+
     async def get_integration_api_key(self, integration_id: str | UUID) -> Optional[str]:
         """Return the API key string for an Integration.
 

@@ -1,7 +1,11 @@
+import json
+
 import httpx
 import pytest
 import respx
 from gundi_core.schemas.v2 import Connection, Route, Integration
+
+from gundi_client_v2 import errors
 
 # ToDo: complete tests
 # test_data_provider_details
@@ -53,4 +57,105 @@ async def test_get_webhook_integration_details(
         )
         assert isinstance(integration, Integration)
         assert integration == Integration.parse_obj(webhook_integration_details)
+
+
+# cdip's write serializer renders type/owner/action as bare PK ids on the PATCH
+# response — NOT the nested objects the Integration schema needs. update_integration
+# must therefore re-read via GET (read serializer) rather than parse the PATCH body.
+# These tests mock both calls with their realistic, differing shapes.
+_WRITE_SERIALIZER_PATCH_RESPONSE = {
+    "id": "338225f3-91f9-4fe1-b013-353a229ce504",
+    "name": "Renamed Integration",
+    "base_url": "https://gundi-load-testing.pamdas.org",
+    "enabled": True,
+    "type": "45c66a61-71e4-4664-a7f2-30d465f87aa6",        # bare PK, not nested
+    "owner": "a1b2c3d4-0000-0000-0000-000000000000",       # bare PK, not nested
+    "configurations": [
+        {"id": "cfg-1", "integration": "338225f3-91f9-4fe1-b013-353a229ce504",
+         "action": "43ec4163-2f40-43fc-af62-bca1db77c06b", "data": {}},  # action bare PK
+    ],
+}
+
+
+@pytest.mark.asyncio
+async def test_update_integration_patches_then_refetches(
+    auth_token_response, destination_integration_details, gundi_client_v2
+):
+    integration_id = destination_integration_details["id"]
+    patch_payload = {"name": "Renamed Integration"}
+    async with respx.mock(assert_all_called=False) as mock:
+        mock.post(gundi_client_v2.oauth_token_url).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        url = f"{gundi_client_v2.integrations_endpoint}/{integration_id}/"
+        # PATCH returns the write-serializer shape (bare PK type/owner/action)...
+        patch_integration = mock.patch(url).respond(
+            status_code=httpx.codes.OK, json=_WRITE_SERIALIZER_PATCH_RESPONSE
+        )
+        # ...so the method re-reads the canonical (nested) representation via GET.
+        get_integration = mock.get(url).respond(
+            status_code=httpx.codes.OK, json=destination_integration_details
+        )
+
+        result = await gundi_client_v2.update_integration(integration_id, data=patch_payload)
+
+        # Parses cleanly only because we re-fetch — parsing the PATCH body would raise.
+        assert isinstance(result, Integration)
+        assert result == Integration.parse_obj(destination_integration_details)
+        assert patch_integration.call_count == 1
+        assert get_integration.call_count == 1
+        assert patch_integration.calls.last.request.method == "PATCH"
+        sent = json.loads(patch_integration.calls.last.request.content.decode())
+        assert sent == patch_payload
+
+
+@pytest.mark.asyncio
+async def test_update_integration_configuration_builds_configurations_payload(
+    auth_token_response, destination_integration_details, gundi_client_v2
+):
+    import uuid
+
+    integration_id = destination_integration_details["id"]
+    configuration_id = uuid.UUID("11111111-1111-1111-1111-111111111111")
+    new_data = {"event_type_to_tag": [{"event_type": "rhino_carcass", "tag_name": "Rhino Carcass"}]}
+    async with respx.mock(assert_all_called=False) as mock:
+        mock.post(gundi_client_v2.oauth_token_url).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        url = f"{gundi_client_v2.integrations_endpoint}/{integration_id}/"
+        patch_integration = mock.patch(url).respond(
+            status_code=httpx.codes.OK, json=_WRITE_SERIALIZER_PATCH_RESPONSE
+        )
+        mock.get(url).respond(status_code=httpx.codes.OK, json=destination_integration_details)
+
+        result = await gundi_client_v2.update_integration_configuration(
+            integration_id, configuration_id, data=new_data
+        )
+
+        assert isinstance(result, Integration)
+        assert patch_integration.calls.last.request.method == "PATCH"
+        sent = json.loads(patch_integration.calls.last.request.content.decode())
+        # The convenience wraps the single config update in the configurations list,
+        # stringifying the UUID configuration_id.
+        assert sent == {
+            "configurations": [{"id": str(configuration_id), "data": new_data}]
+        }
+
+
+@pytest.mark.asyncio
+async def test_update_integration_raises_gundi_api_error_on_400(
+    auth_token_response, gundi_client_v2
+):
+    integration_id = "bogus-id"
+    async with respx.mock(assert_all_called=False) as mock:
+        mock.post(gundi_client_v2.oauth_token_url).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        mock.patch(
+            f"{gundi_client_v2.integrations_endpoint}/{integration_id}/"
+        ).respond(status_code=400, json={"detail": "bad patch"})
+
+        with pytest.raises(errors.GundiAPIError) as exc:
+            await gundi_client_v2.update_integration(integration_id, data={"name": ""})
+        assert exc.value.status_code == 400
 
