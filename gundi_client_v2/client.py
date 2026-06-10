@@ -884,7 +884,12 @@ class GundiClient:
             data: Partial dict of fields to update.
 
         Returns:
-            The updated ``Integration`` object as returned by the API.
+            The updated ``Integration``, re-fetched via
+            ``get_integration_details``. (The PATCH response itself is
+            serialized with the write serializer, which renders ``type`` /
+            ``owner`` / action references as bare ids rather than the nested
+            objects the ``Integration`` schema requires — so we re-read the
+            canonical representation instead of parsing the PATCH body.)
 
         Raises:
             AuthenticationError: If the OAuth token request fails.
@@ -893,7 +898,7 @@ class GundiClient:
         url = f"{self.integrations_endpoint}/{integration_id}/"
         response = await self._patch(url, data=data)
         self._raise_for_status(response)
-        return Integration.parse_obj(response.json())
+        return await self.get_integration_details(integration_id)
 
     async def update_integration_configuration(
         self,
