@@ -363,6 +363,44 @@ Run `gundi --help` or `gundi integrations --help` for the full command list.
 **Exit codes:** `0` success · `1` API or authentication error (a clean
 `Error: …` message, no traceback) · `2` missing or invalid configuration.
 
+### Named environments
+
+Instead of exporting auth env vars each time, save named environments and switch
+between them. Config lives in `~/.config/gundi/config.json` (mode 0600);
+**secrets are never written** — only the OAuth tokens derived from them, cached
+per environment under `~/.config/gundi/tokens/`.
+
+```bash
+# Add environments (connection config only — no secrets)
+gundi env add prod --base-url https://api.gundi.example.com \
+  --client-id my-client --issuer https://auth.example.com/realms/prod
+gundi env add dev  --base-url https://api.dev.example.com \
+  --client-id my-client --issuer https://auth.example.com/realms/dev --username me@example.com
+
+gundi env use prod          # set the active environment
+gundi env list              # '*' marks the active one
+gundi env show prod
+
+# Authenticate once; the token is cached and reused by later commands.
+# The secret/password is read from env (OAUTH_CLIENT_SECRET / GUNDI_PASSWORD)
+# or prompted (hidden) — and never stored.
+gundi auth login
+gundi auth status
+gundi integrations list     # reuses the cached token; no re-auth
+
+# Override the active environment per command:
+gundi integrations list --profile dev
+gundi auth logout
+```
+
+**Environment selection precedence:** `--profile` flag → `GUNDI_PROFILE` env var
+→ stored active environment → raw `OAUTH_*` / `GUNDI_*` env vars (the original
+behavior, used when no environments are configured).
+
+**Token refresh:** password-grant environments refresh transparently using the
+cached refresh token. Client-credentials environments (no refresh token) require
+`gundi auth login` again once the access token expires.
+
 ## Error Handling
 
 The client raises specific exceptions for different failure modes:

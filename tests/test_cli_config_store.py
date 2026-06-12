@@ -22,8 +22,13 @@ def test_load_config_missing_returns_empty():
 
 
 def test_save_then_load_round_trips():
-    config_store.save_config({"active": "prod", "environments": {"prod": {"base_url": "u"}}})
-    assert config_store.load_config() == {"active": "prod", "environments": {"prod": {"base_url": "u"}}}
+    config_store.save_config(
+        {"active": "prod", "environments": {"prod": {"base_url": "u"}}}
+    )
+    assert config_store.load_config() == {
+        "active": "prod",
+        "environments": {"prod": {"base_url": "u"}},
+    }
 
 
 def test_save_config_sets_0600_and_dir_0700(tmp_path):

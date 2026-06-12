@@ -68,4 +68,6 @@ def apply_to_client(client, data: dict) -> None:
         refresh_expires_in=0,
     )
     client.cached_token_expires_at = datetime.fromisoformat(data["expires_at"])
-    client.cached_token_refresh_expires_at = datetime.fromisoformat(data["refresh_expires_at"])
+    client.cached_token_refresh_expires_at = datetime.fromisoformat(
+        data["refresh_expires_at"]
+    )
