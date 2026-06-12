@@ -324,6 +324,40 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+## Command-Line Interface
+
+An optional `gundi` command wraps `GundiClient` for common integration tasks. It
+ships in the `cli` extra (keeps Typer out of the core install):
+
+```bash
+pip install "gundi-client-v2[cli]"
+```
+
+Authentication reuses the same environment variables as the library (see
+[Configuration](#configuration)). The CLI needs `GUNDI_API_BASE_URL`,
+`OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, and a token endpoint — set
+`OAUTH_ISSUER` (preferred; resolved via OIDC discovery) or `OAUTH_TOKEN_URL`.
+`OAUTH_AUDIENCE` is forwarded when set. A `.env` file in the working directory
+is loaded automatically.
+
+```bash
+# List all integrations (table: ID, NAME, TYPE, ENABLED, STATUS)
+gundi integrations list
+
+# Filter by integration type, and emit JSON for piping to jq
+gundi integrations list --type earth_ranger
+gundi integrations list --json | jq '.[].name'
+
+# Enable / disable an integration by id
+gundi integrations enable  338225f3-91f9-4fe1-b013-353a229ce504
+gundi integrations disable 338225f3-91f9-4fe1-b013-353a229ce504
+```
+
+Run `gundi --help` or `gundi integrations --help` for the full command list.
+
+**Exit codes:** `0` success · `1` API or authentication error (a clean
+`Error: …` message, no traceback) · `2` missing or invalid configuration.
+
 ## Error Handling
 
 The client raises specific exceptions for different failure modes:
