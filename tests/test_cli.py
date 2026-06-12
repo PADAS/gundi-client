@@ -171,20 +171,80 @@ def test_list_json_emits_parseable_json(
     assert parsed[0]["id"] == destination_integration_details["id"]
 
 
-def test_list_forwards_type_filter(
-    cli_env, auth_token_response, destination_integration_details
+def test_list_filters_by_type_client_side(
+    cli_env,
+    auth_token_response,
+    destination_integration_details,
+    webhook_integration_details,
 ):
+    # The API filters `type` by UUID, not slug, so --type is applied client-side
+    # on integration.type.value and is NOT forwarded as a query param.
     with respx.mock(assert_all_called=False) as mock:
         _mock_auth(mock, auth_token_response)
         route = mock.get(INTEGRATIONS_URL).respond(
             status_code=httpx.codes.OK,
-            json={"results": [destination_integration_details], "next": None},
+            json={
+                "results": [
+                    destination_integration_details,
+                    webhook_integration_details,
+                ],
+                "next": None,
+            },
         )
 
         result = runner.invoke(app, ["integrations", "list", "--type", "earth_ranger"])
 
     assert result.exit_code == 0, result.output
-    assert route.calls.last.request.url.params["type"] == "earth_ranger"
+    # earth_ranger kept, the other type filtered out
+    assert destination_integration_details["id"] in result.output
+    assert webhook_integration_details["id"] not in result.output
+    # slug is not sent to the server (it would 400 as "not a valid UUID")
+    assert "type" not in route.calls.last.request.url.params
+
+
+def test_list_type_filter_is_case_insensitive(
+    cli_env, auth_token_response, destination_integration_details
+):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list", "--type", "Earth_Ranger"])
+
+    assert result.exit_code == 0, result.output
+    assert destination_integration_details["id"] in result.output
+
+
+def test_list_json_with_type_filter(
+    cli_env,
+    auth_token_response,
+    destination_integration_details,
+    webhook_integration_details,
+):
+    # --type also narrows JSON output.
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={
+                "results": [
+                    destination_integration_details,
+                    webhook_integration_details,
+                ],
+                "next": None,
+            },
+        )
+
+        result = runner.invoke(
+            app, ["integrations", "list", "--type", "earth_ranger", "--json"]
+        )
+
+    assert result.exit_code == 0, result.output
+    parsed = json.loads(result.output)
+    assert [i["id"] for i in parsed] == [destination_integration_details["id"]]
 
 
 def test_list_follows_pagination(
