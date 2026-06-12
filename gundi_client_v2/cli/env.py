@@ -53,7 +53,11 @@ def add_env(
 @env_app.command("list")
 def list_envs() -> None:
     """List environments; the active one is marked with `*`."""
-    config = config_store.load_config()
+    try:
+        config = config_store.load_config()
+    except config_store.ConfigError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2)
     environments = config.get("environments", {})
     if not environments:
         typer.echo("No environments configured.", err=True)

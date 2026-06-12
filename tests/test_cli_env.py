@@ -102,3 +102,12 @@ def test_env_remove_deletes():
     result = runner.invoke(app, ["env", "remove", "prod"])
     assert result.exit_code == 0
     assert "prod" not in config_store.list_environments()
+
+
+def test_env_list_corrupt_config_exits_2():
+    # A hand-corrupted config.json must fail cleanly (exit 2), not traceback.
+    config_store.config_dir().mkdir(parents=True, exist_ok=True)
+    config_store.config_file().write_text("{not json")
+    result = runner.invoke(app, ["env", "list"])
+    assert result.exit_code == 2, result.output
+    assert "Error" in result.output
