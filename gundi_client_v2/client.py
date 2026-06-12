@@ -14,10 +14,15 @@ from uuid import UUID
 from gundi_core.schemas import (
     OAuthToken,
 )
-from gundi_core.schemas.v2 import Connection, Route, Integration, GundiTrace, IntegrationType
+from gundi_core.schemas.v2 import (
+    Connection,
+    Route,
+    Integration,
+    GundiTrace,
+    IntegrationType,
+)
 from . import settings, errors
 from . import auth
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
@@ -59,9 +64,7 @@ class GundiDataSenderClient:
                   environment variable.
         """
         self.gundi_version = "v2"
-        self.sensors_api_endpoint = (
-            f"{kwargs.get('sensors_api_base_url', settings.SENSORS_API_BASE_URL)}/{self.gundi_version}"
-        )
+        self.sensors_api_endpoint = f"{kwargs.get('sensors_api_base_url', settings.SENSORS_API_BASE_URL)}/{self.gundi_version}"
         self._api_key = integration_api_key
 
     async def post_observations(self, data: List[dict]) -> Any:
@@ -139,7 +142,9 @@ class GundiDataSenderClient:
         """
         return await self._update_data(data=data, endpoint=f"events/{event_id}")
 
-    async def post_event_attachments(self, event_id: str, attachments: List[tuple]) -> Any:
+    async def post_event_attachments(
+        self, event_id: str, attachments: List[tuple]
+    ) -> Any:
         """Upload file attachments for an existing event via multipart POST.
 
         Args:
@@ -156,9 +161,16 @@ class GundiDataSenderClient:
             ValueError: If no ``integration_api_key`` was provided.
             GundiAPIError: If the API returns a 4xx/5xx response.
         """
-        return await self._post_data(attachments=attachments, endpoint=f"events/{event_id}/attachments")
+        return await self._post_data(
+            attachments=attachments, endpoint=f"events/{event_id}/attachments"
+        )
 
-    async def _post_data(self, data: List[dict] = None, endpoint: str = None, attachments: List[tuple] = None) -> dict:
+    async def _post_data(
+        self,
+        data: List[dict] = None,
+        endpoint: str = None,
+        attachments: List[tuple] = None,
+    ) -> dict:
         apikey = self._api_key
         if apikey is None:
             raise ValueError(
@@ -167,16 +179,13 @@ class GundiDataSenderClient:
             )
 
         logger.info(
-            f' -- Posting to routing services --',
-            extra={"integration_api_key": _redact(apikey)}
+            f" -- Posting to routing services --",
+            extra={"integration_api_key": _redact(apikey)},
         )
 
         url = f"{self.sensors_api_endpoint}/{endpoint}/"
 
-        request = dict(
-            url=url,
-            headers={"apikey": apikey}
-        )
+        request = dict(url=url, headers={"apikey": apikey})
 
         if data:
             clean_batch = [json.loads(json.dumps(r, default=str)) for r in data]
@@ -184,7 +193,8 @@ class GundiDataSenderClient:
 
         if attachments:
             request["files"] = [
-                ('file', (filename, image_binary)) for filename, image_binary in attachments
+                ("file", (filename, image_binary))
+                for filename, image_binary in attachments
             ]
 
         logger.debug(
@@ -211,16 +221,12 @@ class GundiDataSenderClient:
             )
 
         logger.info(
-            f' -- Updating data... --',
-            extra={"integration_api_key": _redact(apikey)}
+            f" -- Updating data... --", extra={"integration_api_key": _redact(apikey)}
         )
 
         url = f"{self.sensors_api_endpoint}/{endpoint}/"
 
-        request = dict(
-            url=url,
-            headers={"apikey": apikey}
-        )
+        request = dict(url=url, headers={"apikey": apikey})
 
         clean_batch = json.loads(json.dumps(data, default=str))
         request["json"] = clean_batch
@@ -316,26 +322,35 @@ class GundiClient:
         # Authentication settings
         # New oauth_* names preferred; keycloak_* still accepted for backward compatibility
         self.ssl_verify = kwargs.get("use_ssl", settings.GUNDI_API_SSL_VERIFY)
-        self.client_id = kwargs.get("oauth_client_id",
-                                    kwargs.get("keycloak_client_id", settings.OAUTH_CLIENT_ID))
-        self.client_secret = kwargs.get("oauth_client_secret",
-                                        kwargs.get("keycloak_client_secret", settings.OAUTH_CLIENT_SECRET))
+        self.client_id = kwargs.get(
+            "oauth_client_id",
+            kwargs.get("keycloak_client_id", settings.OAUTH_CLIENT_ID),
+        )
+        self.client_secret = kwargs.get(
+            "oauth_client_secret",
+            kwargs.get("keycloak_client_secret", settings.OAUTH_CLIENT_SECRET),
+        )
         self.username = kwargs.get("username", settings.GUNDI_USERNAME)
         self.password = kwargs.get("password", settings.GUNDI_PASSWORD)
         self.oauth_token_url = kwargs.get("oauth_token_url", settings.OAUTH_TOKEN_URL)
         self.oauth_issuer = kwargs.get("oauth_issuer", settings.OAUTH_ISSUER)
-        self.audience = kwargs.get("oauth_audience",
-                                   kwargs.get("keycloak_audience", settings.OAUTH_AUDIENCE))
+        self.audience = kwargs.get(
+            "oauth_audience", kwargs.get("keycloak_audience", settings.OAUTH_AUDIENCE)
+        )
         self.scope = kwargs.get("oauth_scope", settings.OAUTH_SCOPE)
         self.cached_token = None
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
         self.cached_token_refresh_expires_at = datetime.min.replace(tzinfo=timezone.utc)
 
         # Retries and timeouts settings
-        self.max_retries = kwargs.get('max_http_retries', self.DEFAULT_CONNECTION_RETRIES)
+        self.max_retries = kwargs.get(
+            "max_http_retries", self.DEFAULT_CONNECTION_RETRIES
+        )
         transport = AsyncHTTPTransport(retries=self.max_retries, verify=self.ssl_verify)
-        connect_timeout = kwargs.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT_SECONDS)
-        data_timeout = kwargs.get('data_timeout', self.DEFAULT_DATA_TIMEOUT_SECONDS)
+        connect_timeout = kwargs.get(
+            "connect_timeout", self.DEFAULT_CONNECT_TIMEOUT_SECONDS
+        )
+        data_timeout = kwargs.get("data_timeout", self.DEFAULT_DATA_TIMEOUT_SECONDS)
         timeout = Timeout(data_timeout, connect=connect_timeout, pool=connect_timeout)
 
         # Session
@@ -370,7 +385,9 @@ class GundiClient:
             **kwargs,
         )
         # Force refresh the token and retry if we get redirected to the login page
-        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+        if response.status_code == 302 and "auth/realms" in response.headers.get(
+            "location", ""
+        ):
             auth_headers = await self.get_auth_header(force_refresh_token=True)
             response = await self._session.get(
                 url,
@@ -391,7 +408,9 @@ class GundiClient:
             **kwargs,
         )
         # Force refresh the token and retry if we get redirected to the login page
-        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+        if response.status_code == 302 and "auth/realms" in response.headers.get(
+            "location", ""
+        ):
             auth_headers = await self.get_auth_header(force_refresh_token=True)
             response = await self._session.post(
                 url,
@@ -412,7 +431,9 @@ class GundiClient:
             headers={**auth_headers, **headers},
             **kwargs,
         )
-        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+        if response.status_code == 302 and "auth/realms" in response.headers.get(
+            "location", ""
+        ):
             auth_headers = await self.get_auth_header(force_refresh_token=True)
             response = await self._session.patch(
                 url,
@@ -432,7 +453,9 @@ class GundiClient:
             headers={**auth_headers, **headers},
             **kwargs,
         )
-        if response.status_code == 302 and "auth/realms" in response.headers.get("location", ""):
+        if response.status_code == 302 and "auth/realms" in response.headers.get(
+            "location", ""
+        ):
             auth_headers = await self.get_auth_header(force_refresh_token=True)
             response = await self._session.delete(
                 url,
@@ -474,14 +497,22 @@ class GundiClient:
                     refresh_token=self.cached_token.refresh_token,
                     fallback=self.cached_token,
                     # Public/password clients must not send a secret on refresh.
-                    client_secret=None if (self.username and self.password) else self.client_secret,
+                    client_secret=(
+                        None
+                        if (self.username and self.password)
+                        else self.client_secret
+                    ),
                     scope=self.scope,
                 )
                 self._store_token(token, refresh_rotated=refresh_rotated)
                 return token
             except errors.AuthenticationError:
-                logger.info("Refresh-token grant failed; falling back to full re-authentication.")
-                self.cached_token_refresh_expires_at = datetime.min.replace(tzinfo=timezone.utc)
+                logger.info(
+                    "Refresh-token grant failed; falling back to full re-authentication."
+                )
+                self.cached_token_refresh_expires_at = datetime.min.replace(
+                    tzinfo=timezone.utc
+                )
 
         # 2. Full authentication. Password grant wins when user credentials are present.
         # A client_id is required for every grant we support, so guard the password
@@ -539,7 +570,9 @@ class GundiClient:
             else:
                 # Refreshless grant — disable refresh tracking so the refresh-token
                 # branch in _refresh_token doesn't pick this up.
-                self.cached_token_refresh_expires_at = datetime.min.replace(tzinfo=timezone.utc)
+                self.cached_token_refresh_expires_at = datetime.min.replace(
+                    tzinfo=timezone.utc
+                )
 
     @staticmethod
     def _expiry_with_buffer(lifetime_seconds, buffer_seconds=15):
@@ -569,7 +602,11 @@ class GundiClient:
             AuthenticationError: If token retrieval fails (bad
                 credentials, unreachable IdP, or missing configuration).
         """
-        if force_refresh_token or not self.cached_token or self.cached_token_expires_at < datetime.now(tz=timezone.utc):
+        if (
+            force_refresh_token
+            or not self.cached_token
+            or self.cached_token_expires_at < datetime.now(tz=timezone.utc)
+        ):
             return await self._refresh_token()
         return self.cached_token
 
@@ -593,7 +630,9 @@ class GundiClient:
         Raises:
             AuthenticationError: If token retrieval fails.
         """
-        token_object = await self.get_access_token(force_refresh_token=force_refresh_token)
+        token_object = await self.get_access_token(
+            force_refresh_token=force_refresh_token
+        )
         return {
             "authorization": f"{token_object.token_type} {token_object.access_token}"
         }
@@ -799,7 +838,9 @@ class GundiClient:
         self._raise_for_status(response)
         # 204 No Content on success — no body to return.
 
-    async def get_integrations(self, params: dict = None) -> AsyncGenerator[Integration, None]:
+    async def get_integrations(
+        self, params: dict = None
+    ) -> AsyncGenerator[Integration, None]:
         """Iterate over all Integrations, walking pagination automatically.
 
         Unlike ``get_connections()`` and ``get_routes()`` which return the
@@ -813,7 +854,8 @@ class GundiClient:
 
         Args:
             params: Optional dict of query parameters for the first
-                request. Common keys: ``type`` (integration type slug),
+                request. Common keys: ``type`` (integration type **UUID**,
+                not the slug — resolve a slug via ``get_integration_types``),
                 ``owner`` (organization ID), ``search`` (substring match).
                 Subsequent page requests use the cursor embedded in the
                 ``next`` URL and ignore this dict.
@@ -834,6 +876,47 @@ class GundiClient:
             data = response.json()
             params = None  # the `next` URL already carries the query string
             for item in self._parse_list_response(data, Integration):
+                yield item
+            if isinstance(data, dict) and "results" in data:
+                url = data.get("next") or ""
+            else:
+                return
+
+    async def get_integration_types(
+        self, params: dict = None
+    ) -> AsyncGenerator[IntegrationType, None]:
+        """Iterate over all IntegrationTypes, walking pagination automatically.
+
+        Mirrors ``get_integrations``: an async generator that follows the
+        ``next`` cursor until all pages are exhausted. Useful for resolving an
+        integration type slug (``IntegrationType.value``) to its ``id`` for the
+        ``type`` filter on ``get_integrations``.
+
+        Usage::
+
+            async for itype in client.get_integration_types():
+                print(itype.value, itype.id)
+
+        Args:
+            params: Optional dict of query parameters for the first request.
+                Subsequent page requests use the cursor embedded in the
+                ``next`` URL and ignore this dict.
+
+        Yields:
+            ``IntegrationType`` objects across all pages.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response on any
+                page request.
+        """
+        url = f"{self.integrations_endpoint}/types/"
+        while url:
+            response = await self._get(url, params=params)
+            self._raise_for_status(response)
+            data = response.json()
+            params = None  # the `next` URL already carries the query string
+            for item in self._parse_list_response(data, IntegrationType):
                 yield item
             if isinstance(data, dict) and "results" in data:
                 url = data.get("next") or ""
@@ -861,7 +944,9 @@ class GundiClient:
         data = response.json()
         return Integration.parse_obj(data)
 
-    async def update_integration(self, integration_id: str | UUID, data: dict) -> Integration:
+    async def update_integration(
+        self, integration_id: str | UUID, data: dict
+    ) -> Integration:
         """Partially update an Integration via HTTP PATCH.
 
         Only the fields present in ``data`` are modified; omitted fields
@@ -930,7 +1015,9 @@ class GundiClient:
             {"configurations": [{"id": str(configuration_id), "data": data}]},
         )
 
-    async def get_integration_api_key(self, integration_id: str | UUID) -> Optional[str]:
+    async def get_integration_api_key(
+        self, integration_id: str | UUID
+    ) -> Optional[str]:
         """Return the API key string for an Integration.
 
         This is the key passed as ``integration_api_key`` to

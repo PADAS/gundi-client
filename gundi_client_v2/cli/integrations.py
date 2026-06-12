@@ -29,17 +29,25 @@ def list_integrations(
     """List integrations, optionally filtered by type."""
 
     async def _fetch(client):
-        return [i async for i in client.get_integrations()]
+        params = None
+        if integration_type:
+            # The API filters `type` by UUID, not slug, so resolve the slug
+            # (IntegrationType.value) to its id, then filter server-side.
+            wanted = integration_type.lower()
+            match = None
+            async for itype in client.get_integration_types():
+                if itype.value and itype.value.lower() == wanted:
+                    match = itype
+                    break
+            if match is None:
+                typer.echo(
+                    f"Error: unknown integration type '{integration_type}'.", err=True
+                )
+                raise typer.Exit(2)
+            params = {"type": str(match.id)}
+        return [i async for i in client.get_integrations(params=params)]
 
     integrations = run_command(profile, _fetch)
-
-    # The API's `type` filter matches the type UUID, not the slug, so filter by
-    # the type's slug (`type.value`) client-side, case-insensitively.
-    if integration_type:
-        wanted = integration_type.lower()
-        integrations = [
-            i for i in integrations if i.type and i.type.value.lower() == wanted
-        ]
 
     if json_output:
         typer.echo(json.dumps([i.dict() for i in integrations], default=str, indent=2))

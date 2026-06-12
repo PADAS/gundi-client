@@ -15,6 +15,7 @@ ISSUER = "https://fakeauth.com/auth/realms/dev"
 TOKEN_URL = f"{ISSUER}/protocol/openid-connect/token"
 DISCOVERY_URL = f"{ISSUER}/.well-known/openid-configuration"
 INTEGRATIONS_URL = f"{BASE_URL}/v2/integrations/"
+TYPES_URL = f"{BASE_URL}/v2/integrations/types/"
 
 
 @pytest.fixture(autouse=True)
@@ -171,43 +172,44 @@ def test_list_json_emits_parseable_json(
     assert parsed[0]["id"] == destination_integration_details["id"]
 
 
-def test_list_filters_by_type_client_side(
-    cli_env,
-    auth_token_response,
-    destination_integration_details,
-    webhook_integration_details,
+def test_list_resolves_type_slug_to_uuid(
+    cli_env, auth_token_response, destination_integration_details
 ):
-    # The API filters `type` by UUID, not slug, so --type is applied client-side
-    # on integration.type.value and is NOT forwarded as a query param.
+    # --type <slug> is resolved to the type's UUID via the types endpoint, then
+    # passed as the server-side `type` filter (the API rejects a raw slug).
+    type_payload = destination_integration_details["type"]
+    type_id = type_payload["id"]
     with respx.mock(assert_all_called=False) as mock:
         _mock_auth(mock, auth_token_response)
-        route = mock.get(INTEGRATIONS_URL).respond(
+        types_route = mock.get(TYPES_URL).respond(
             status_code=httpx.codes.OK,
-            json={
-                "results": [
-                    destination_integration_details,
-                    webhook_integration_details,
-                ],
-                "next": None,
-            },
+            json={"results": [type_payload], "next": None},
+        )
+        intg_route = mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
         )
 
         result = runner.invoke(app, ["integrations", "list", "--type", "earth_ranger"])
 
     assert result.exit_code == 0, result.output
-    # earth_ranger kept, the other type filtered out
+    assert types_route.called
     assert destination_integration_details["id"] in result.output
-    assert webhook_integration_details["id"] not in result.output
-    # slug is not sent to the server (it would 400 as "not a valid UUID")
-    assert "type" not in route.calls.last.request.url.params
+    assert intg_route.calls.last.request.url.params["type"] == type_id
 
 
-def test_list_type_filter_is_case_insensitive(
+def test_list_type_slug_is_case_insensitive(
     cli_env, auth_token_response, destination_integration_details
 ):
+    type_payload = destination_integration_details["type"]
+    type_id = type_payload["id"]
     with respx.mock(assert_all_called=False) as mock:
         _mock_auth(mock, auth_token_response)
-        mock.get(INTEGRATIONS_URL).respond(
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [type_payload], "next": None},
+        )
+        intg_route = mock.get(INTEGRATIONS_URL).respond(
             status_code=httpx.codes.OK,
             json={"results": [destination_integration_details], "next": None},
         )
@@ -215,27 +217,41 @@ def test_list_type_filter_is_case_insensitive(
         result = runner.invoke(app, ["integrations", "list", "--type", "Earth_Ranger"])
 
     assert result.exit_code == 0, result.output
-    assert destination_integration_details["id"] in result.output
+    assert intg_route.calls.last.request.url.params["type"] == type_id
+
+
+def test_list_unknown_type_exits_2(
+    cli_env, auth_token_response, destination_integration_details
+):
+    # A slug with no matching type → clean exit 2, no integrations request.
+    type_payload = destination_integration_details["type"]  # only 'earth_ranger'
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [type_payload], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list", "--type", "nonexistent"])
+
+    assert result.exit_code == 2, result.output
+    assert "unknown integration type" in result.output
 
 
 def test_list_json_with_type_filter(
-    cli_env,
-    auth_token_response,
-    destination_integration_details,
-    webhook_integration_details,
+    cli_env, auth_token_response, destination_integration_details
 ):
-    # --type also narrows JSON output.
+    # With server-side filtering the integrations endpoint returns only matches.
+    type_payload = destination_integration_details["type"]
     with respx.mock(assert_all_called=False) as mock:
         _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [type_payload], "next": None},
+        )
         mock.get(INTEGRATIONS_URL).respond(
             status_code=httpx.codes.OK,
-            json={
-                "results": [
-                    destination_integration_details,
-                    webhook_integration_details,
-                ],
-                "next": None,
-            },
+            json={"results": [destination_integration_details], "next": None},
         )
 
         result = runner.invoke(
