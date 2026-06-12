@@ -74,7 +74,8 @@ def show_env(
         target = name or config_store.get_active()
         if not target:
             typer.echo("Error: no environment specified or active.", err=True)
-            raise typer.Exit(2)
+            raise typer.Exit(2)  # typer.Exit is BaseException; not caught below
+
         env = config_store.get_environment(target)
     except config_store.ConfigError as exc:
         typer.echo(f"Error: {exc}", err=True)
