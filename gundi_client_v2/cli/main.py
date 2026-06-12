@@ -2,6 +2,7 @@
 
 import typer
 
+from .env import env_app
 from .integrations import integrations_app
 
 app = typer.Typer(
@@ -10,3 +11,4 @@ app = typer.Typer(
     add_completion=False,
 )
 app.add_typer(integrations_app, name="integrations")
+app.add_typer(env_app, name="env")
