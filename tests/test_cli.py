@@ -10,17 +10,31 @@ from gundi_client_v2.cli import app
 runner = CliRunner()
 
 BASE_URL = "https://api.fakeportal.com"
-TOKEN_URL = "https://fakeauth.com/auth/realms/dev/protocol/openid-connect/token"
+ISSUER = "https://fakeauth.com/auth/realms/dev"
+TOKEN_URL = f"{ISSUER}/protocol/openid-connect/token"
+DISCOVERY_URL = f"{ISSUER}/.well-known/openid-configuration"
 INTEGRATIONS_URL = f"{BASE_URL}/v2/integrations/"
 
 
 @pytest.fixture
 def cli_env(monkeypatch):
-    """Set the env vars build_client() requires, pointing at the mock URLs."""
+    """Explicit-token-URL auth: the env vars build_client() requires."""
     monkeypatch.setenv("GUNDI_API_BASE_URL", BASE_URL)
     monkeypatch.setenv("OAUTH_CLIENT_ID", "confidential-client")
     monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
     monkeypatch.setenv("OAUTH_TOKEN_URL", TOKEN_URL)
+    monkeypatch.delenv("OAUTH_ISSUER", raising=False)
+    monkeypatch.delenv("OAUTH_AUDIENCE", raising=False)
+
+
+@pytest.fixture
+def cli_env_issuer(monkeypatch):
+    """Discovery auth: OAUTH_ISSUER set, no explicit OAUTH_TOKEN_URL."""
+    monkeypatch.setenv("GUNDI_API_BASE_URL", BASE_URL)
+    monkeypatch.setenv("OAUTH_CLIENT_ID", "confidential-client")
+    monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
+    monkeypatch.setenv("OAUTH_ISSUER", ISSUER)
+    monkeypatch.delenv("OAUTH_TOKEN_URL", raising=False)
     monkeypatch.delenv("OAUTH_AUDIENCE", raising=False)
 
 
@@ -47,6 +61,29 @@ def test_list_renders_table(
     assert "ER Load Testing" in result.output
     assert "earth_ranger" in result.output
     assert "true" in result.output
+
+
+def test_list_with_issuer_uses_discovery(
+    cli_env_issuer, auth_token_response, destination_integration_details
+):
+    # With only OAUTH_ISSUER set, the client must resolve the token endpoint
+    # via the OIDC discovery document rather than a configured OAUTH_TOKEN_URL.
+    with respx.mock(assert_all_called=False) as mock:
+        discovery = mock.get(DISCOVERY_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"issuer": ISSUER, "token_endpoint": TOKEN_URL},
+        )
+        _mock_auth(mock, auth_token_response)
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 0, result.output
+    assert discovery.called
+    assert destination_integration_details["id"] in result.output
 
 
 def test_list_json_emits_parseable_json(
@@ -152,12 +189,13 @@ def test_disable_patches_enabled_false(
 
 
 def test_missing_env_var_exits_2(monkeypatch):
-    # No required env vars set.
+    # No auth env vars set at all.
     for var in (
         "GUNDI_API_BASE_URL",
         "OAUTH_CLIENT_ID",
         "OAUTH_CLIENT_SECRET",
         "OAUTH_TOKEN_URL",
+        "OAUTH_ISSUER",
     ):
         monkeypatch.delenv(var, raising=False)
 
@@ -165,6 +203,23 @@ def test_missing_env_var_exits_2(monkeypatch):
 
     assert result.exit_code == 2, result.output
     assert "GUNDI_API_BASE_URL" in result.output
+    # The token-endpoint requirement names the discovery-friendly option first.
+    assert "OAUTH_ISSUER" in result.output
+
+
+def test_missing_token_endpoint_exits_2(monkeypatch):
+    # Base creds present, but neither OAUTH_ISSUER nor OAUTH_TOKEN_URL is set.
+    monkeypatch.setenv("GUNDI_API_BASE_URL", BASE_URL)
+    monkeypatch.setenv("OAUTH_CLIENT_ID", "confidential-client")
+    monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
+    monkeypatch.delenv("OAUTH_TOKEN_URL", raising=False)
+    monkeypatch.delenv("OAUTH_ISSUER", raising=False)
+
+    result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 2, result.output
+    assert "OAUTH_ISSUER" in result.output
+    assert "GUNDI_API_BASE_URL" not in result.output  # base creds were fine
 
 
 def test_api_error_exits_1_without_traceback(cli_env, auth_token_response):

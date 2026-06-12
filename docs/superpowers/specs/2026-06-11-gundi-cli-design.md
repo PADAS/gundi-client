@@ -97,9 +97,11 @@ then exits non-zero.
 ## Auth / configuration
 
 - A single `build_client()` helper reads environment variables and constructs
-  `GundiClient(**kwargs)`, mirroring `examples/list_connections_client_credentials.py`:
-  - Required: `GUNDI_API_BASE_URL`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`,
-    `OAUTH_TOKEN_URL`.
+  `GundiClient(**kwargs)`, mirroring the `examples/` auth patterns:
+  - Required: `GUNDI_API_BASE_URL`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`.
+  - Token endpoint — at least one of: `OAUTH_ISSUER` (preferred; the client
+    resolves the token endpoint via OIDC discovery, IdP-agnostic) or
+    `OAUTH_TOKEN_URL` (explicit). When both are set, the explicit URL wins.
   - Optional: `OAUTH_AUDIENCE` (passed through when set; required by some IdPs).
 - `environs` (already a core dependency) loads a `.env` file from the working
   directory for local convenience.

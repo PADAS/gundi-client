@@ -17,20 +17,23 @@ from gundi_client_v2.errors import AuthenticationError, GundiAPIError
 
 T = TypeVar("T")
 
-# env var -> GundiClient kwarg. All four are required.
+# env var -> GundiClient kwarg. Always required.
 _REQUIRED_ENV = {
     "GUNDI_API_BASE_URL": "base_url",
     "OAUTH_CLIENT_ID": "oauth_client_id",
     "OAUTH_CLIENT_SECRET": "oauth_client_secret",
-    "OAUTH_TOKEN_URL": "oauth_token_url",
 }
 
 
 def build_client() -> GundiClient:
     """Construct a GundiClient from environment variables.
 
-    Exits with code 2 (listing the missing vars) when required configuration
-    is absent. ``OAUTH_AUDIENCE`` is forwarded when set (some IdPs require it).
+    The token endpoint is resolved from ``OAUTH_ISSUER`` via OIDC discovery
+    (preferred — IdP-agnostic), or set explicitly with ``OAUTH_TOKEN_URL``; at
+    least one is required. When both are set, the client uses the explicit URL.
+
+    Exits with code 2 (listing what's missing) when required configuration is
+    absent. ``OAUTH_AUDIENCE`` is forwarded when set (some IdPs require it).
     """
     kwargs = {}
     missing = []
@@ -39,6 +42,16 @@ def build_client() -> GundiClient:
             kwargs[kwarg] = value
         else:
             missing.append(env_name)
+
+    # Token endpoint: discovery via OAUTH_ISSUER preferred, OAUTH_TOKEN_URL is
+    # the explicit fallback. The client prefers oauth_token_url when both exist.
+    if issuer := os.environ.get("OAUTH_ISSUER"):
+        kwargs["oauth_issuer"] = issuer
+    if token_url := os.environ.get("OAUTH_TOKEN_URL"):
+        kwargs["oauth_token_url"] = token_url
+    if not issuer and not token_url:
+        missing.append("OAUTH_ISSUER (or OAUTH_TOKEN_URL)")
+
     if missing:
         typer.echo(f"Error: missing required env vars: {', '.join(missing)}", err=True)
         raise typer.Exit(2)
