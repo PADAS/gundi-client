@@ -124,7 +124,11 @@ def active_env_name(profile: Optional[str]) -> str:
             err=True,
         )
         raise typer.Exit(2)
-    config_store.get_environment(name)  # validate; raises ConfigError
+    try:
+        config_store.get_environment(name)  # validate it exists
+    except config_store.ConfigError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2)
     return name
 
 

@@ -74,3 +74,25 @@ def test_login_no_active_env_exits_2():
     result = runner.invoke(app, ["auth", "login"])
     assert result.exit_code == 2
     assert "no environment selected" in result.output.lower()
+
+
+def test_status_reports_valid_after_login(auth_token_response, monkeypatch):
+    _add_cc_env()
+    monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        runner.invoke(app, ["auth", "login"])
+    result = runner.invoke(app, ["auth", "status"])
+    assert result.exit_code == 0
+    assert "valid" in result.output.lower()
+
+
+def test_status_dangling_active_env_exits_2():
+    # The stored active environment points at a name with no config entry
+    # (e.g. a hand-edited/corrupted config). This must fail cleanly, not silently.
+    config_store.save_config({"active": "ghost", "environments": {}})
+    result = runner.invoke(app, ["auth", "status"])
+    assert result.exit_code == 2
+    assert "unknown environment" in result.output.lower()
