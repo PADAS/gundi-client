@@ -8,12 +8,16 @@ error messages with conventional exit codes.
 
 import asyncio
 import os
-from typing import Awaitable, Callable, TypeVar
+from typing import Awaitable, Callable, Optional, TypeVar
 
 import typer
 
+from gundi_core.schemas import OAuthToken
+
 from gundi_client_v2 import GundiClient
 from gundi_client_v2.errors import AuthenticationError, GundiAPIError
+
+from . import config_store, token_store
 
 T = TypeVar("T")
 
@@ -96,3 +100,130 @@ def run_with_client(async_fn: Callable[[GundiClient], Awaitable[T]]) -> T:
     except (AuthenticationError, GundiAPIError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
+
+
+def resolve_environment(profile: Optional[str]) -> Optional[str]:
+    """Resolve the active environment name, or None to use raw env vars.
+
+    Precedence: explicit ``profile`` > ``GUNDI_PROFILE`` > stored active > None.
+    Raises ConfigError if a named environment does not exist.
+    """
+    name = profile or os.environ.get("GUNDI_PROFILE") or config_store.get_active()
+    if name:
+        config_store.get_environment(name)  # validate; raises ConfigError
+    return name
+
+
+def active_env_name(profile: Optional[str]) -> str:
+    """Like resolve_environment, but for commands that require a profile.
+
+    Exits 2 with guidance when no environment is selected.
+    """
+    name = profile or os.environ.get("GUNDI_PROFILE") or config_store.get_active()
+    if not name:
+        typer.echo(
+            "Error: no environment selected. Run `gundi env use <name>` or pass --profile.",
+            err=True,
+        )
+        raise typer.Exit(2)
+    config_store.get_environment(name)  # validate; raises ConfigError
+    return name
+
+
+def _client_kwargs_from_env(env: dict) -> dict:
+    kwargs = {"base_url": env["base_url"], "oauth_client_id": env["client_id"]}
+    if v := env.get("issuer"):
+        kwargs["oauth_issuer"] = v
+    if v := env.get("token_url"):
+        kwargs["oauth_token_url"] = v
+    if v := env.get("audience"):
+        kwargs["oauth_audience"] = v
+    if v := env.get("username"):
+        kwargs["username"] = v
+    if v := env.get("scope"):
+        kwargs["oauth_scope"] = v
+    return kwargs
+
+
+def _build_profile_client(env: dict) -> GundiClient:
+    """Client from a profile's config, plus any secrets available in env vars.
+
+    Supplying env secrets (when present) lets the client authenticate implicitly
+    on a cache miss and refresh client-credentials tokens; they are optional.
+    """
+    kwargs = _client_kwargs_from_env(env)
+    if env.get("username") and (pw := os.environ.get("GUNDI_PASSWORD")):
+        kwargs["password"] = pw
+    if secret := os.environ.get("OAUTH_CLIENT_SECRET"):
+        kwargs["oauth_client_secret"] = secret
+    return GundiClient(**kwargs)
+
+
+def build_client_for_login(env_name: str) -> GundiClient:
+    """Client for `gundi auth login`: config + a secret from env or a hidden prompt.
+
+    Grant is chosen by the profile: a stored ``username`` means password grant
+    (prompt for password); otherwise client-credentials (prompt for secret).
+    """
+    env = config_store.get_environment(env_name)
+    kwargs = _client_kwargs_from_env(env)
+    if env.get("username"):
+        kwargs["password"] = os.environ.get("GUNDI_PASSWORD") or typer.prompt(
+            "Password", hide_input=True
+        )
+    else:
+        kwargs["oauth_client_secret"] = os.environ.get(
+            "OAUTH_CLIENT_SECRET"
+        ) or typer.prompt("Client secret", hide_input=True)
+    return GundiClient(**kwargs)
+
+
+def run_command(
+    profile: Optional[str], async_fn: Callable[[GundiClient], Awaitable[T]]
+) -> T:
+    """Resolve the environment, restore any cached token, run, persist, map errors."""
+    try:
+        env_name = resolve_environment(profile)
+    except config_store.ConfigError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2)
+
+    if env_name is None:
+        # Backward-compatible raw-env path (no profile configured).
+        return run_with_client(async_fn)
+
+    client = _build_profile_client(config_store.get_environment(env_name))
+    cached = token_store.load_token(env_name)
+    if cached:
+        token_store.apply_to_client(client, cached)
+    had_token = client.cached_token is not None
+    before = client.cached_token.access_token if client.cached_token else None
+
+    async def _runner() -> T:
+        async with client:
+            return await async_fn(client)
+
+    try:
+        result = asyncio.run(_runner())
+    except AuthenticationError:
+        suffix = f" --profile {env_name}" if profile else ""
+        typer.echo(
+            f"Error: not authenticated for '{env_name}'. Run `gundi auth login{suffix}`.",
+            err=True,
+        )
+        raise typer.Exit(1)
+    except GundiAPIError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+
+    # Persist a newly obtained or rotated token.
+    if client.cached_token and (
+        not had_token or client.cached_token.access_token != before
+    ):
+        token_store.save_token(
+            env_name,
+            client.cached_token,
+            client.cached_token_expires_at,
+            client.cached_token_refresh_expires_at,
+        )
+    return result

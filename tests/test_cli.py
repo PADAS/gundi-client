@@ -6,6 +6,7 @@ import respx
 from typer.testing import CliRunner
 
 from gundi_client_v2.cli import app
+from gundi_client_v2.cli import config_store, token_store
 
 runner = CliRunner()
 
@@ -302,3 +303,37 @@ def test_api_error_exits_1_without_traceback(cli_env, auth_token_response):
     assert result.exit_code == 1, result.output
     assert "Error:" in result.output
     assert "Traceback" not in result.output
+
+
+def test_resolve_environment_precedence(tmp_path, monkeypatch):
+    from gundi_client_v2.cli import _client
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    config_store.add_environment("dev", {"base_url": "u", "client_id": "c"})
+    config_store.add_environment("prod", {"base_url": "u", "client_id": "c"})
+    config_store.set_active("prod")
+
+    # stored active wins when nothing else given
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+    assert _client.resolve_environment(None) == "prod"
+    # GUNDI_PROFILE beats active
+    monkeypatch.setenv("GUNDI_PROFILE", "dev")
+    assert _client.resolve_environment(None) == "dev"
+    # explicit flag beats env var
+    assert _client.resolve_environment("prod") == "prod"
+
+
+def test_resolve_environment_none_without_config(tmp_path, monkeypatch):
+    from gundi_client_v2.cli import _client
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+    assert _client.resolve_environment(None) is None
+
+
+def test_resolve_environment_unknown_raises(tmp_path, monkeypatch):
+    from gundi_client_v2.cli import _client
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    with pytest.raises(config_store.ConfigError):
+        _client.resolve_environment("ghost")
