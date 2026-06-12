@@ -12,8 +12,6 @@ from typing import Awaitable, Callable, Optional, TypeVar
 
 import typer
 
-from gundi_core.schemas import OAuthToken
-
 from gundi_client_v2 import GundiClient
 from gundi_client_v2.errors import AuthenticationError, GundiAPIError
 
