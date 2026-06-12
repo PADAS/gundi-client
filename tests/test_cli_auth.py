@@ -15,7 +15,7 @@ TOKEN_URL = f"{ISSUER}/protocol/openid-connect/token"
 def isolated_config(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     monkeypatch.delenv("GUNDI_PROFILE", raising=False)
-    for var in ("OAUTH_CLIENT_SECRET", "GUNDI_PASSWORD"):
+    for var in ("OAUTH_CLIENT_SECRET", "GUNDI_PASSWORD", "GUNDI_USERNAME"):
         monkeypatch.delenv(var, raising=False)
     return tmp_path
 
@@ -37,6 +37,60 @@ def test_login_caches_token_from_env_secret(auth_token_response, monkeypatch):
         result = runner.invoke(app, ["auth", "login"])
     assert result.exit_code == 0, result.output
     assert token_store.load_token("prod") is not None
+
+
+def test_login_username_flag_uses_password_grant(auth_token_response, monkeypatch):
+    _add_cc_env()  # env has NO stored username
+    monkeypatch.setenv("GUNDI_PASSWORD", "hunter2")
+    with respx.mock(assert_all_called=False) as mock:
+        token_route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        result = runner.invoke(app, ["auth", "login", "--username", "me@example.com"])
+    assert result.exit_code == 0, result.output
+    assert token_store.load_token("prod") is not None
+    body = token_route.calls.last.request.content.decode()
+    assert "grant_type=password" in body
+    assert "username=me%40example.com" in body
+
+
+def test_login_username_env_var_uses_password_grant(auth_token_response, monkeypatch):
+    _add_cc_env()
+    monkeypatch.setenv("GUNDI_USERNAME", "me@example.com")
+    monkeypatch.setenv("GUNDI_PASSWORD", "hunter2")
+    with respx.mock(assert_all_called=False) as mock:
+        token_route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        result = runner.invoke(app, ["auth", "login"])
+    assert result.exit_code == 0, result.output
+    body = token_route.calls.last.request.content.decode()
+    assert "grant_type=password" in body
+
+
+def test_login_username_flag_persisted_to_env(auth_token_response, monkeypatch):
+    _add_cc_env()
+    monkeypatch.setenv("GUNDI_PASSWORD", "hunter2")
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        runner.invoke(app, ["auth", "login", "--username", "me@example.com"])
+    assert config_store.get_environment("prod").get("username") == "me@example.com"
+
+
+def test_login_prompts_for_password_when_username_given(auth_token_response):
+    _add_cc_env()  # no GUNDI_PASSWORD in env -> hidden prompt
+    with respx.mock(assert_all_called=False) as mock:
+        token_route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        result = runner.invoke(
+            app, ["auth", "login", "--username", "me@example.com"], input="s3cret\n"
+        )
+    assert result.exit_code == 0, result.output
+    body = token_route.calls.last.request.content.decode()
+    assert "grant_type=password" in body
 
 
 def test_login_without_secret_prompts(auth_token_response):

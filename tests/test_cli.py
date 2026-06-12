@@ -17,6 +17,19 @@ DISCOVERY_URL = f"{ISSUER}/.well-known/openid-configuration"
 INTEGRATIONS_URL = f"{BASE_URL}/v2/integrations/"
 
 
+@pytest.fixture(autouse=True)
+def _isolated_config(tmp_path, monkeypatch):
+    """Point XDG_CONFIG_HOME at a clean tmp dir for every test.
+
+    Without this, raw-env tests (which don't configure a profile) would pick up
+    a developer's real ~/.config/gundi/config.json and resolve its active
+    environment instead of the env vars under test. Profile-based tests below
+    set XDG_CONFIG_HOME to the same tmp_path and add their own environments.
+    """
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+
+
 def _clear_auth_env(monkeypatch):
     """Drop every auth env var so each fixture starts from a known-empty state.
 

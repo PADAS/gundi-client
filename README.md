@@ -384,7 +384,8 @@ gundi env show prod
 # Authenticate once; the token is cached and reused by later commands.
 # The secret/password is read from env (OAUTH_CLIENT_SECRET / GUNDI_PASSWORD)
 # or prompted (hidden) — and never stored.
-gundi auth login
+gundi auth login                              # grant chosen by the env's config
+gundi auth login --username me@example.com    # force the password grant
 gundi auth status
 gundi integrations list     # reuses the cached token; no re-auth
 

@@ -161,15 +161,22 @@ def _build_profile_client(env: dict) -> GundiClient:
     return GundiClient(**kwargs)
 
 
-def build_client_for_login(env_name: str) -> GundiClient:
+def build_client_for_login(
+    env_name: str, username: Optional[str] = None
+) -> GundiClient:
     """Client for `gundi auth login`: config + a secret from env or a hidden prompt.
 
-    Grant is chosen by the profile: a stored ``username`` means password grant
+    Grant is chosen by username availability: a username from the ``username``
+    argument, the stored profile, or ``GUNDI_USERNAME`` means password grant
     (prompt for password); otherwise client-credentials (prompt for secret).
     """
     env = config_store.get_environment(env_name)
     kwargs = _client_kwargs_from_env(env)
-    if env.get("username"):
+    resolved_username = (
+        username or env.get("username") or os.environ.get("GUNDI_USERNAME")
+    )
+    if resolved_username:
+        kwargs["username"] = resolved_username
         kwargs["password"] = os.environ.get("GUNDI_PASSWORD") or typer.prompt(
             "Password", hide_input=True
         )
