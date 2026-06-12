@@ -2,6 +2,7 @@
 
 import typer
 
+from .auth import auth_app
 from .env import env_app
 from .integrations import integrations_app
 
@@ -12,3 +13,4 @@ app = typer.Typer(
 )
 app.add_typer(integrations_app, name="integrations")
 app.add_typer(env_app, name="env")
+app.add_typer(auth_app, name="auth")
