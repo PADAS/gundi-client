@@ -21,19 +21,24 @@ T = TypeVar("T")
 _REQUIRED_ENV = {
     "GUNDI_API_BASE_URL": "base_url",
     "OAUTH_CLIENT_ID": "oauth_client_id",
-    "OAUTH_CLIENT_SECRET": "oauth_client_secret",
 }
 
 
 def build_client() -> GundiClient:
     """Construct a GundiClient from environment variables.
 
-    The token endpoint is resolved from ``OAUTH_ISSUER`` via OIDC discovery
-    (preferred — IdP-agnostic), or set explicitly with ``OAUTH_TOKEN_URL``; at
-    least one is required. When both are set, the client uses the explicit URL.
+    Mirrors the library's auth rules. A ``client_id`` is always required, plus:
 
-    Exits with code 2 (listing what's missing) when required configuration is
-    absent. ``OAUTH_AUDIENCE`` is forwarded when set (some IdPs require it).
+    - **Credentials** — either ``GUNDI_USERNAME`` + ``GUNDI_PASSWORD`` (password
+      grant, public client) or ``OAUTH_CLIENT_SECRET`` (client-credentials,
+      confidential client). When both are present the client uses the password
+      grant.
+    - **Token endpoint** — ``OAUTH_ISSUER`` (preferred; resolved via OIDC
+      discovery, IdP-agnostic) or an explicit ``OAUTH_TOKEN_URL``. When both are
+      set, the explicit URL wins.
+
+    ``OAUTH_AUDIENCE`` is forwarded when set (some IdPs require it). Exits with
+    code 2, listing what's missing, when required configuration is absent.
     """
     kwargs = {}
     missing = []
@@ -42,6 +47,20 @@ def build_client() -> GundiClient:
             kwargs[kwarg] = value
         else:
             missing.append(env_name)
+
+    # Credentials: password grant (username + password) or client-credentials
+    # (client_secret). At least one full set is required.
+    username = os.environ.get("GUNDI_USERNAME")
+    password = os.environ.get("GUNDI_PASSWORD")
+    client_secret = os.environ.get("OAUTH_CLIENT_SECRET")
+    if username:
+        kwargs["username"] = username
+    if password:
+        kwargs["password"] = password
+    if client_secret:
+        kwargs["oauth_client_secret"] = client_secret
+    if not (username and password) and not client_secret:
+        missing.append("OAUTH_CLIENT_SECRET (or GUNDI_USERNAME + GUNDI_PASSWORD)")
 
     # Token endpoint: discovery via OAUTH_ISSUER preferred, OAUTH_TOKEN_URL is
     # the explicit fallback. The client prefers oauth_token_url when both exist.

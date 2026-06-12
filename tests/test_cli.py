@@ -16,26 +16,52 @@ DISCOVERY_URL = f"{ISSUER}/.well-known/openid-configuration"
 INTEGRATIONS_URL = f"{BASE_URL}/v2/integrations/"
 
 
+def _clear_auth_env(monkeypatch):
+    """Drop every auth env var so each fixture starts from a known-empty state.
+
+    Without this, a developer's real .env (loaded by the client at import) could
+    leak username/password/issuer into a test and change the selected grant.
+    """
+    for var in (
+        "OAUTH_CLIENT_SECRET",
+        "OAUTH_TOKEN_URL",
+        "OAUTH_ISSUER",
+        "OAUTH_AUDIENCE",
+        "GUNDI_USERNAME",
+        "GUNDI_PASSWORD",
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+
 @pytest.fixture
 def cli_env(monkeypatch):
-    """Explicit-token-URL auth: the env vars build_client() requires."""
+    """Client-credentials + explicit token URL."""
+    _clear_auth_env(monkeypatch)
     monkeypatch.setenv("GUNDI_API_BASE_URL", BASE_URL)
     monkeypatch.setenv("OAUTH_CLIENT_ID", "confidential-client")
     monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
     monkeypatch.setenv("OAUTH_TOKEN_URL", TOKEN_URL)
-    monkeypatch.delenv("OAUTH_ISSUER", raising=False)
-    monkeypatch.delenv("OAUTH_AUDIENCE", raising=False)
 
 
 @pytest.fixture
 def cli_env_issuer(monkeypatch):
-    """Discovery auth: OAUTH_ISSUER set, no explicit OAUTH_TOKEN_URL."""
+    """Client-credentials + OIDC discovery (OAUTH_ISSUER, no explicit token URL)."""
+    _clear_auth_env(monkeypatch)
     monkeypatch.setenv("GUNDI_API_BASE_URL", BASE_URL)
     monkeypatch.setenv("OAUTH_CLIENT_ID", "confidential-client")
     monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
     monkeypatch.setenv("OAUTH_ISSUER", ISSUER)
-    monkeypatch.delenv("OAUTH_TOKEN_URL", raising=False)
-    monkeypatch.delenv("OAUTH_AUDIENCE", raising=False)
+
+
+@pytest.fixture
+def cli_env_password(monkeypatch):
+    """Password grant (public client): client id + username/password, NO secret."""
+    _clear_auth_env(monkeypatch)
+    monkeypatch.setenv("GUNDI_API_BASE_URL", BASE_URL)
+    monkeypatch.setenv("OAUTH_CLIENT_ID", "public-client")
+    monkeypatch.setenv("GUNDI_USERNAME", "dev@example.com")
+    monkeypatch.setenv("GUNDI_PASSWORD", "hunter2")
+    monkeypatch.setenv("OAUTH_ISSUER", ISSUER)
 
 
 def _mock_auth(mock, auth_token_response):
@@ -84,6 +110,33 @@ def test_list_with_issuer_uses_discovery(
     assert result.exit_code == 0, result.output
     assert discovery.called
     assert destination_integration_details["id"] in result.output
+
+
+def test_list_password_grant_without_secret(
+    cli_env_password, auth_token_response, destination_integration_details
+):
+    # Password grant (public client): client_id + username/password, no secret.
+    # build_client() must not require OAUTH_CLIENT_SECRET here.
+    with respx.mock(assert_all_called=False) as mock:
+        mock.get(DISCOVERY_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"issuer": ISSUER, "token_endpoint": TOKEN_URL},
+        )
+        token_route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 0, result.output
+    assert destination_integration_details["id"] in result.output
+    # Confirm the password grant was used (not client_credentials).
+    body = token_route.calls.last.request.content.decode()
+    assert "grant_type=password" in body
 
 
 def test_list_json_emits_parseable_json(
@@ -220,6 +273,21 @@ def test_missing_token_endpoint_exits_2(monkeypatch):
     assert result.exit_code == 2, result.output
     assert "OAUTH_ISSUER" in result.output
     assert "GUNDI_API_BASE_URL" not in result.output  # base creds were fine
+
+
+def test_missing_credentials_exits_2(monkeypatch):
+    # client_id + token endpoint present, but no secret AND no username/password.
+    _clear_auth_env(monkeypatch)
+    monkeypatch.setenv("GUNDI_API_BASE_URL", BASE_URL)
+    monkeypatch.setenv("OAUTH_CLIENT_ID", "some-client")
+    monkeypatch.setenv("OAUTH_ISSUER", ISSUER)
+
+    result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 2, result.output
+    # The message points at both credential options.
+    assert "OAUTH_CLIENT_SECRET" in result.output
+    assert "GUNDI_USERNAME" in result.output
 
 
 def test_api_error_exits_1_without_traceback(cli_env, auth_token_response):

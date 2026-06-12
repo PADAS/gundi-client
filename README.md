@@ -335,8 +335,13 @@ pip install "gundi-client-v2[cli]"
 
 Authentication reuses the same environment variables as the library (see
 [Configuration](#configuration)). The CLI needs `GUNDI_API_BASE_URL`,
-`OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, and a token endpoint — set
-`OAUTH_ISSUER` (preferred; resolved via OIDC discovery) or `OAUTH_TOKEN_URL`.
+`OAUTH_CLIENT_ID`, plus:
+
+- **Credentials** — either `GUNDI_USERNAME` + `GUNDI_PASSWORD` (password grant,
+  for developers) or `OAUTH_CLIENT_SECRET` (client-credentials, for services).
+- **Token endpoint** — `OAUTH_ISSUER` (preferred; resolved via OIDC discovery)
+  or an explicit `OAUTH_TOKEN_URL`.
+
 `OAUTH_AUDIENCE` is forwarded when set. A `.env` file in the working directory
 is loaded automatically.
 
