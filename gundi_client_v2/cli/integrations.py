@@ -19,6 +19,11 @@ def list_integrations(
     integration_type: Optional[str] = typer.Option(
         None, "--type", help="Filter by integration type slug (e.g. earth_ranger)."
     ),
+    enabled: Optional[bool] = typer.Option(
+        None,
+        "--enabled/--disabled",
+        help="Show only enabled (--enabled) or only disabled (--disabled). Default: all.",
+    ),
     json_output: bool = typer.Option(
         False, "--json", help="Emit JSON instead of a table (pipe to jq)."
     ),
@@ -26,10 +31,10 @@ def list_integrations(
         None, "--profile", help="Environment to use (overrides the active one)."
     ),
 ) -> None:
-    """List integrations, optionally filtered by type."""
+    """List integrations, optionally filtered by type and/or enabled state."""
 
     async def _fetch(client):
-        params = None
+        params = {}
         if integration_type:
             # The API filters `type` by UUID, not slug, so resolve the slug
             # (IntegrationType.value) to its id, then filter server-side.
@@ -44,8 +49,10 @@ def list_integrations(
                     f"Error: unknown integration type '{integration_type}'.", err=True
                 )
                 raise typer.Exit(2)
-            params = {"type": str(match.id)}
-        return [i async for i in client.get_integrations(params=params)]
+            params["type"] = str(match.id)
+        if enabled is not None:
+            params["enabled"] = "true" if enabled else "false"
+        return [i async for i in client.get_integrations(params=params or None)]
 
     integrations = run_command(profile, _fetch)
 

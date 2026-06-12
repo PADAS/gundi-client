@@ -583,3 +583,76 @@ def test_integrations_types_empty(cli_env, auth_token_response):
 
     assert result.exit_code == 0, result.output
     assert "No integration types found" in result.output
+
+
+def test_list_filter_enabled_true(
+    cli_env, auth_token_response, destination_integration_details
+):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        route = mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list", "--enabled"])
+
+    assert result.exit_code == 0, result.output
+    assert route.calls.last.request.url.params["enabled"] == "true"
+
+
+def test_list_filter_disabled(
+    cli_env, auth_token_response, destination_integration_details
+):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        route = mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list", "--disabled"])
+
+    assert result.exit_code == 0, result.output
+    assert route.calls.last.request.url.params["enabled"] == "false"
+
+
+def test_list_without_enabled_flag_omits_param(
+    cli_env, auth_token_response, destination_integration_details
+):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        route = mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 0, result.output
+    assert "enabled" not in route.calls.last.request.url.params
+
+
+def test_list_type_and_enabled_combined(
+    cli_env, auth_token_response, destination_integration_details
+):
+    type_payload = destination_integration_details["type"]
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [type_payload], "next": None},
+        )
+        intg_route = mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(
+            app, ["integrations", "list", "--type", "earth_ranger", "--enabled"]
+        )
+
+    assert result.exit_code == 0, result.output
+    params = intg_route.calls.last.request.url.params
+    assert params["type"] == type_payload["id"]
+    assert params["enabled"] == "true"

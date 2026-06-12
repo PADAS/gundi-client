@@ -349,8 +349,10 @@ is loaded automatically.
 # List all integrations (table: ID, NAME, TYPE, ENABLED, STATUS)
 gundi integrations list
 
-# Filter by integration type, and emit JSON for piping to jq
+# Filter by integration type, by enabled state, and emit JSON for piping to jq
 gundi integrations list --type earth_ranger
+gundi integrations list --enabled       # only enabled (--disabled for only disabled)
+gundi integrations list --type earth_ranger --enabled
 gundi integrations list --json | jq '.[].name'
 
 # List the available integration types (table: NAME, SLUG, ID)
