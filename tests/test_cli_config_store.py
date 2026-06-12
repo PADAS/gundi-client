@@ -38,3 +38,48 @@ def test_load_config_corrupt_raises_config_error():
     config_store.config_file().write_text("{not json")
     with pytest.raises(config_store.ConfigError):
         config_store.load_config()
+
+
+def test_add_get_environment():
+    config_store.add_environment("dev", {"base_url": "u", "client_id": "c"})
+    assert config_store.get_environment("dev") == {"base_url": "u", "client_id": "c"}
+
+
+def test_add_first_environment_does_not_auto_activate():
+    config_store.add_environment("dev", {"base_url": "u"})
+    assert config_store.get_active() is None
+
+
+def test_get_unknown_environment_raises():
+    with pytest.raises(config_store.ConfigError):
+        config_store.get_environment("nope")
+
+
+def test_set_active_requires_existing():
+    with pytest.raises(config_store.ConfigError):
+        config_store.set_active("ghost")
+
+
+def test_set_and_get_active():
+    config_store.add_environment("prod", {"base_url": "u"})
+    config_store.set_active("prod")
+    assert config_store.get_active() == "prod"
+
+
+def test_list_environments():
+    config_store.add_environment("a", {"base_url": "u"})
+    config_store.add_environment("b", {"base_url": "u"})
+    assert set(config_store.list_environments()) == {"a", "b"}
+
+
+def test_remove_environment_clears_active_when_removed():
+    config_store.add_environment("a", {"base_url": "u"})
+    config_store.set_active("a")
+    config_store.remove_environment("a")
+    assert "a" not in config_store.list_environments()
+    assert config_store.get_active() is None
+
+
+def test_remove_unknown_raises():
+    with pytest.raises(config_store.ConfigError):
+        config_store.remove_environment("nope")

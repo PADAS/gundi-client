@@ -7,6 +7,7 @@ written here (see token_store for cached tokens). All files are user-private.
 import json
 import os
 from pathlib import Path
+from typing import Optional
 
 
 class ConfigError(Exception):
@@ -47,3 +48,42 @@ def save_config(config: dict) -> None:
     path = config_file()
     path.write_text(json.dumps(config, indent=2))
     os.chmod(path, 0o600)
+
+
+def add_environment(name: str, env: dict) -> None:
+    config = load_config()
+    config.setdefault("environments", {})[name] = env
+    save_config(config)
+
+
+def get_environment(name: str) -> dict:
+    env = load_config().get("environments", {}).get(name)
+    if env is None:
+        raise ConfigError(f"unknown environment '{name}'")
+    return env
+
+
+def list_environments() -> dict:
+    return load_config().get("environments", {})
+
+
+def set_active(name: str) -> None:
+    config = load_config()
+    if name not in config.get("environments", {}):
+        raise ConfigError(f"unknown environment '{name}'")
+    config["active"] = name
+    save_config(config)
+
+
+def get_active() -> Optional[str]:
+    return load_config().get("active")
+
+
+def remove_environment(name: str) -> None:
+    config = load_config()
+    if name not in config.get("environments", {}):
+        raise ConfigError(f"unknown environment '{name}'")
+    del config["environments"][name]
+    if config.get("active") == name:
+        config["active"] = None
+    save_config(config)
