@@ -57,10 +57,10 @@ def add_environment(name: str, env: dict) -> None:
 
 
 def get_environment(name: str) -> dict:
-    env = load_config().get("environments", {}).get(name)
-    if env is None:
+    envs = load_config().get("environments", {})
+    if name not in envs:
         raise ConfigError(f"unknown environment '{name}'")
-    return env
+    return envs[name]
 
 
 def list_environments() -> dict:
