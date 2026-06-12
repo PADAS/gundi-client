@@ -337,3 +337,84 @@ def test_resolve_environment_unknown_raises(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     with pytest.raises(config_store.ConfigError):
         _client.resolve_environment("ghost")
+
+
+def test_list_uses_cached_token_no_token_post(
+    tmp_path, monkeypatch, destination_integration_details
+):
+    # A valid cached token must be reused: NO token POST should occur.
+    from datetime import datetime, timedelta, timezone
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+    config_store.add_environment(
+        "prod", {"base_url": BASE_URL, "client_id": "c", "token_url": TOKEN_URL}
+    )
+    config_store.set_active("prod")
+
+    class _Tok:
+        access_token = "CACHED"
+        refresh_token = "R"
+        token_type = "Bearer"
+
+    future = datetime.now(timezone.utc) + timedelta(hours=1)
+    token_store.save_token("prod", _Tok(), future, future)
+
+    with respx.mock(assert_all_called=False) as mock:
+        # NOTE: deliberately do NOT mock the token endpoint.
+        integrations_route = mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 0, result.output
+    assert destination_integration_details["id"] in result.output
+    assert integrations_route.called
+    # The Authorization header carried the cached token.
+    assert (
+        integrations_route.calls.last.request.headers["authorization"]
+        == "Bearer CACHED"
+    )
+
+
+def test_list_profile_flag_overrides_active(
+    tmp_path, monkeypatch, destination_integration_details
+):
+    from datetime import datetime, timedelta, timezone
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+    config_store.add_environment(
+        "prod", {"base_url": BASE_URL, "client_id": "c", "token_url": TOKEN_URL}
+    )
+    config_store.add_environment(
+        "dev", {"base_url": BASE_URL, "client_id": "c", "token_url": TOKEN_URL}
+    )
+    config_store.set_active("prod")
+
+    class _Tok:
+        access_token = "DEVTOK"
+        refresh_token = "R"
+        token_type = "Bearer"
+
+    future = datetime.now(timezone.utc) + timedelta(hours=1)
+    token_store.save_token("dev", _Tok(), future, future)
+
+    with respx.mock(assert_all_called=False) as mock:
+        route = mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+        result = runner.invoke(app, ["integrations", "list", "--profile", "dev"])
+
+    assert result.exit_code == 0, result.output
+    assert route.calls.last.request.headers["authorization"] == "Bearer DEVTOK"
+
+
+def test_list_unknown_profile_exits_2(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+    result = runner.invoke(app, ["integrations", "list", "--profile", "ghost"])
+    assert result.exit_code == 2, result.output
+    assert "unknown environment" in result.output

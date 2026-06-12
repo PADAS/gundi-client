@@ -7,7 +7,7 @@ import typer
 
 from gundi_core.schemas.v2 import Integration
 
-from ._client import run_with_client
+from ._client import run_command
 
 integrations_app = typer.Typer(
     help="List and manage Gundi integrations.", no_args_is_help=True
@@ -22,6 +22,9 @@ def list_integrations(
     json_output: bool = typer.Option(
         False, "--json", help="Emit JSON instead of a table (pipe to jq)."
     ),
+    profile: Optional[str] = typer.Option(
+        None, "--profile", help="Environment to use (overrides the active one)."
+    ),
 ) -> None:
     """List integrations, optionally filtered by type."""
     params = {"type": integration_type} if integration_type else None
@@ -29,7 +32,7 @@ def list_integrations(
     async def _fetch(client):
         return [i async for i in client.get_integrations(params=params)]
 
-    integrations = run_with_client(_fetch)
+    integrations = run_command(profile, _fetch)
 
     if json_output:
         typer.echo(json.dumps([i.dict() for i in integrations], default=str, indent=2))
@@ -45,9 +48,12 @@ def enable_integration(
     integration_id: str = typer.Argument(
         ..., help="UUID of the integration to enable."
     ),
+    profile: Optional[str] = typer.Option(
+        None, "--profile", help="Environment to use (overrides the active one)."
+    ),
 ) -> None:
     """Enable an integration."""
-    _set_enabled(integration_id, True)
+    _set_enabled(integration_id, True, profile)
 
 
 @integrations_app.command("disable")
@@ -55,16 +61,19 @@ def disable_integration(
     integration_id: str = typer.Argument(
         ..., help="UUID of the integration to disable."
     ),
+    profile: Optional[str] = typer.Option(
+        None, "--profile", help="Environment to use (overrides the active one)."
+    ),
 ) -> None:
     """Disable an integration."""
-    _set_enabled(integration_id, False)
+    _set_enabled(integration_id, False, profile)
 
 
-def _set_enabled(integration_id: str, enabled: bool) -> None:
+def _set_enabled(integration_id: str, enabled: bool, profile: Optional[str]) -> None:
     async def _update(client):
         return await client.update_integration(integration_id, {"enabled": enabled})
 
-    integration = run_with_client(_update)
+    integration = run_command(profile, _update)
     state = "enabled" if integration.enabled else "disabled"
     typer.echo(f"Integration {integration.id} ({integration.name}) is now {state}.")
 
