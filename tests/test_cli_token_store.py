@@ -46,6 +46,11 @@ def test_token_file_is_0600():
     assert stat.S_IMODE(token_store.token_file("prod").stat().st_mode) == 0o600
 
 
+def test_tokens_dir_is_0700():
+    token_store.save_token("prod", FakeToken("AT"), _future(60), _future(60))
+    assert stat.S_IMODE(token_store.config_store.tokens_dir().stat().st_mode) == 0o700
+
+
 def test_load_missing_returns_none():
     assert token_store.load_token("prod") is None
 

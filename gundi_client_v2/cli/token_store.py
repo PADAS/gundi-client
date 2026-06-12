@@ -20,7 +20,9 @@ def token_file(env_name: str) -> Path:
     return config_store.tokens_dir() / f"{env_name}.json"
 
 
-def save_token(env_name, token, expires_at: datetime, refresh_expires_at: datetime) -> None:
+def save_token(
+    env_name: str, token: OAuthToken, expires_at: datetime, refresh_expires_at: datetime
+) -> None:
     config_store.ensure_dir(config_store.tokens_dir())
     payload = {
         "access_token": token.access_token,
@@ -34,7 +36,7 @@ def save_token(env_name, token, expires_at: datetime, refresh_expires_at: dateti
     os.chmod(path, 0o600)
 
 
-def load_token(env_name) -> Optional[dict]:
+def load_token(env_name: str) -> Optional[dict]:
     path = token_file(env_name)
     if not path.exists():
         return None
@@ -44,7 +46,7 @@ def load_token(env_name) -> Optional[dict]:
         return None  # corrupt cache == miss; caller falls back to re-auth
 
 
-def delete_token(env_name) -> bool:
+def delete_token(env_name: str) -> bool:
     path = token_file(env_name)
     if path.exists():
         path.unlink()
