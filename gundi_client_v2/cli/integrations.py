@@ -84,6 +84,31 @@ def disable_integration(
     _set_enabled(integration_id, False, profile)
 
 
+@integrations_app.command("types")
+def list_integration_types(
+    json_output: bool = typer.Option(
+        False, "--json", help="Emit JSON instead of a table (pipe to jq)."
+    ),
+    profile: Optional[str] = typer.Option(
+        None, "--profile", help="Environment to use (overrides the active one)."
+    ),
+) -> None:
+    """List the integration types available in Gundi."""
+
+    async def _fetch(client):
+        return [t async for t in client.get_integration_types()]
+
+    types = run_command(profile, _fetch)
+
+    if json_output:
+        typer.echo(json.dumps([t.dict() for t in types], default=str, indent=2))
+        return
+    if not types:
+        typer.echo("No integration types found.", err=True)
+        return
+    typer.echo(_render_types_table(types))
+
+
 def _set_enabled(integration_id: str, enabled: bool, profile: Optional[str]) -> None:
     async def _update(client):
         return await client.update_integration(integration_id, {"enabled": enabled})
@@ -96,19 +121,31 @@ def _set_enabled(integration_id: str, enabled: bool, profile: Optional[str]) -> 
 def _render_table(integrations: List[Integration]) -> str:
     """Render integrations as a plain-text aligned table."""
     header = ("ID", "NAME", "TYPE", "ENABLED", "STATUS")
-    rows = [header]
-    for i in integrations:
-        rows.append(
-            (
-                str(i.id),
-                i.name or "",
-                i.type.value if i.type else "",
-                "true" if i.enabled else "false",
-                i.status or "",
-            )
+    rows = [
+        (
+            str(i.id),
+            i.name or "",
+            i.type.value if i.type else "",
+            "true" if i.enabled else "false",
+            i.status or "",
         )
-    widths = [max(len(row[col]) for row in rows) for col in range(len(header))]
+        for i in integrations
+    ]
+    return _format_table(header, rows)
+
+
+def _render_types_table(types: list) -> str:
+    """Render integration types as a plain-text aligned table."""
+    header = ("NAME", "SLUG", "ID")
+    rows = [(t.name or "", t.value or "", str(t.id)) for t in types]
+    return _format_table(header, rows)
+
+
+def _format_table(header: tuple, rows: list) -> str:
+    """Render a header + rows as a plain-text, column-aligned table."""
+    all_rows = [header, *rows]
+    widths = [max(len(row[col]) for row in all_rows) for col in range(len(header))]
     return "\n".join(
         "  ".join(cell.ljust(widths[col]) for col, cell in enumerate(row))
-        for row in rows
+        for row in all_rows
     )

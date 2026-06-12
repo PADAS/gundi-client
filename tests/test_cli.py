@@ -507,3 +507,79 @@ def test_list_unknown_profile_exits_2(tmp_path, monkeypatch):
     result = runner.invoke(app, ["integrations", "list", "--profile", "ghost"])
     assert result.exit_code == 2, result.output
     assert "unknown environment" in result.output
+
+
+def test_integrations_types_renders_table(
+    cli_env, auth_token_response, destination_integration_details
+):
+    type_payload = destination_integration_details["type"]
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [type_payload], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "types"])
+
+    assert result.exit_code == 0, result.output
+    assert "NAME" in result.output and "SLUG" in result.output and "ID" in result.output
+    assert "EarthRanger" in result.output
+    assert "earth_ranger" in result.output
+    assert type_payload["id"] in result.output
+
+
+def test_integrations_types_json(
+    cli_env, auth_token_response, destination_integration_details
+):
+    type_payload = destination_integration_details["type"]
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [type_payload], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "types", "--json"])
+
+    assert result.exit_code == 0, result.output
+    parsed = json.loads(result.output)
+    assert parsed[0]["value"] == "earth_ranger"
+
+
+def test_integrations_types_follows_pagination(
+    cli_env,
+    auth_token_response,
+    destination_integration_details,
+    webhook_integration_details,
+):
+    t1 = destination_integration_details["type"]  # earth_ranger
+    t2 = webhook_integration_details["type"]  # liquidtech
+    next_url = f"{TYPES_URL}?cursor=2"
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(next_url).respond(
+            status_code=httpx.codes.OK, json={"results": [t2], "next": None}
+        )
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [t1], "next": next_url}
+        )
+
+        result = runner.invoke(app, ["integrations", "types"])
+
+    assert result.exit_code == 0, result.output
+    assert "earth_ranger" in result.output
+    assert "liquidtech" in result.output
+
+
+def test_integrations_types_empty(cli_env, auth_token_response):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [], "next": None}
+        )
+
+        result = runner.invoke(app, ["integrations", "types"])
+
+    assert result.exit_code == 0, result.output
+    assert "No integration types found" in result.output

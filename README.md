@@ -353,6 +353,9 @@ gundi integrations list
 gundi integrations list --type earth_ranger
 gundi integrations list --json | jq '.[].name'
 
+# List the available integration types (table: NAME, SLUG, ID)
+gundi integrations types
+
 # Enable / disable an integration by id
 gundi integrations enable  338225f3-91f9-4fe1-b013-353a229ce504
 gundi integrations disable 338225f3-91f9-4fe1-b013-353a229ce504
