@@ -10,6 +10,7 @@ import asyncio
 import os
 from typing import Awaitable, Callable, Optional, TypeVar
 
+import httpx
 import typer
 
 from gundi_client_v2 import GundiClient
@@ -97,6 +98,9 @@ def run_with_client(async_fn: Callable[[GundiClient], Awaitable[T]]) -> T:
         return asyncio.run(_runner())
     except (AuthenticationError, GundiAPIError) as exc:
         typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+    except httpx.HTTPError as exc:
+        typer.echo(f"Error: request failed: {exc}", err=True)
         raise typer.Exit(1)
 
 
@@ -223,6 +227,9 @@ def run_command(
         raise typer.Exit(1)
     except GundiAPIError as exc:
         typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+    except httpx.HTTPError as exc:
+        typer.echo(f"Error: request failed: {exc}", err=True)
         raise typer.Exit(1)
 
     # Persist a newly obtained or rotated token.

@@ -947,3 +947,29 @@ def test_logs_by_type_sorts_newest_first_and_caps(
     assert result.exit_code == 0, result.output
     assert "Newer" in result.output
     assert "Older" not in result.output
+
+
+def test_list_transport_error_exits_1_clean(cli_env, auth_token_response):
+    # A transport-level failure (e.g. connection dropped) must be a clean
+    # Error + exit 1, not an uncaught traceback.
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(INTEGRATIONS_URL).mock(
+            side_effect=httpx.ReadError("connection dropped")
+        )
+
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 1, result.output
+    assert "Error" in result.output
+
+
+def test_logs_transport_error_exits_1_clean(cli_env, auth_token_response):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(LOGS_URL).mock(side_effect=httpx.ReadError("connection dropped"))
+
+        result = runner.invoke(app, ["integrations", "logs", "abc"])
+
+    assert result.exit_code == 1, result.output
+    assert "Error" in result.output
