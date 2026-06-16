@@ -24,6 +24,11 @@ def list_integrations(
         "--enabled/--disabled",
         help="Show only enabled (--enabled) or only disabled (--disabled). Default: all.",
     ),
+    status: Optional[str] = typer.Option(
+        None,
+        "--status",
+        help="Filter by health status (e.g. healthy, unhealthy, disabled).",
+    ),
     json_output: bool = typer.Option(
         False, "--json", help="Emit JSON instead of a table (pipe to jq)."
     ),
@@ -31,7 +36,7 @@ def list_integrations(
         None, "--profile", help="Environment to use (overrides the active one)."
     ),
 ) -> None:
-    """List integrations, optionally filtered by type and/or enabled state."""
+    """List integrations, optionally filtered by type, enabled state, and/or status."""
 
     async def _fetch(client):
         params = {}
@@ -41,6 +46,8 @@ def list_integrations(
             params["type"] = await _resolve_type_id(client, integration_type)
         if enabled is not None:
             params["enabled"] = "true" if enabled else "false"
+        if status:
+            params["status"] = status
         return [i async for i in client.get_integrations(params=params or None)]
 
     integrations = run_command(profile, _fetch)

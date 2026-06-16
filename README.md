@@ -352,7 +352,8 @@ gundi integrations list
 # Filter by integration type, by enabled state, and emit JSON for piping to jq
 gundi integrations list --type earth_ranger
 gundi integrations list --enabled       # only enabled (--disabled for only disabled)
-gundi integrations list --type earth_ranger --enabled
+gundi integrations list --status healthy   # by health status (healthy/unhealthy/disabled)
+gundi integrations list --type earth_ranger --enabled --status unhealthy
 gundi integrations list --json | jq '.[].name'
 
 # List the available integration types (table: NAME, SLUG, ID)

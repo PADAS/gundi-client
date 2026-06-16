@@ -803,3 +803,70 @@ def test_logs_empty(cli_env, auth_token_response):
 
     assert result.exit_code == 0, result.output
     assert "No activity logs found" in result.output
+
+
+def test_list_filter_status(
+    cli_env, auth_token_response, destination_integration_details
+):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        route = mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list", "--status", "healthy"])
+
+    assert result.exit_code == 0, result.output
+    assert route.calls.last.request.url.params["status"] == "healthy"
+
+
+def test_list_without_status_omits_param(
+    cli_env, auth_token_response, destination_integration_details
+):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        route = mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 0, result.output
+    assert "status" not in route.calls.last.request.url.params
+
+
+def test_list_status_composes_with_type_and_enabled(
+    cli_env, auth_token_response, destination_integration_details
+):
+    type_payload = destination_integration_details["type"]
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [type_payload], "next": None},
+        )
+        intg_route = mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(
+            app,
+            [
+                "integrations",
+                "list",
+                "--type",
+                "earth_ranger",
+                "--enabled",
+                "--status",
+                "unhealthy",
+            ],
+        )
+
+    assert result.exit_code == 0, result.output
+    params = intg_route.calls.last.request.url.params
+    assert params["type"] == type_payload["id"]
+    assert params["enabled"] == "true"
+    assert params["status"] == "unhealthy"
