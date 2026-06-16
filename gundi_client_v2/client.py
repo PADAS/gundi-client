@@ -318,6 +318,7 @@ class GundiClient:
         self.sources_endpoint = f"{self.api_base_path}/sources"
         self.routes_endpoint = f"{self.api_base_path}/routes"
         self.traces_endpoint = f"{self.api_base_path}/traces"
+        self.activity_logs_endpoint = f"{self.api_base_path}/logs"
 
         # Authentication settings
         # New oauth_* names preferred; keycloak_* still accepted for backward compatibility
@@ -922,6 +923,50 @@ class GundiClient:
                 url = data.get("next") or ""
             else:
                 return
+
+    async def get_activity_logs(
+        self, params: dict = None
+    ) -> AsyncGenerator[dict, None]:
+        """Iterate over activity logs, walking pagination automatically.
+
+        Logs are returned newest-first (the API orders by ``-created_at``).
+        ``gundi_core`` has no ActivityLog schema, so each entry is yielded as a
+        raw ``dict`` rather than a parsed model.
+
+        Usage::
+
+            async for log in client.get_activity_logs(params={"integration": id}):
+                print(log["created_at"], log["value"])
+
+        Args:
+            params: Optional dict of query parameters for the first request.
+                Common keys: ``integration`` (integration id), ``integration__in``
+                (comma-separated ids), ``log_level``, ``log_type``, ``from_date``,
+                ``to_date``. Subsequent page requests use the cursor embedded in
+                the ``next`` URL and ignore this dict.
+
+        Yields:
+            ``dict`` log entries across all pages, newest first.
+
+        Raises:
+            AuthenticationError: If the OAuth token request fails.
+            GundiAPIError: If the API returns a 4xx/5xx response on any
+                page request.
+        """
+        url = f"{self.activity_logs_endpoint}/"
+        while url:
+            response = await self._get(url, params=params)
+            self._raise_for_status(response)
+            data = response.json()
+            params = None  # the `next` URL already carries the query string
+            if isinstance(data, dict) and "results" in data:
+                items = data["results"]
+                url = data.get("next") or ""
+            else:
+                items = data if isinstance(data, list) else []
+                url = ""
+            for item in items:
+                yield item
 
     async def get_integration_details(self, integration_id: str | UUID) -> Integration:
         """Retrieve full details for a single Integration.

@@ -62,6 +62,43 @@ async def test_get_integration_types_paginates(
 
 
 @pytest.mark.asyncio
+async def test_get_activity_logs_paginates_and_yields_dicts(
+    auth_token_response, gundi_client_v2
+):
+    log1 = {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "created_at": "2026-06-12T09:00:00Z",
+        "log_level": 20,
+        "log_type": "event",
+        "value": "integration_action_started",
+        "title": "Action started",
+        "integration": {"id": "abc", "name": "ER Site"},
+    }
+    log2 = {
+        **log1,
+        "id": "22222222-2222-2222-2222-222222222222",
+        "title": "Action done",
+    }
+    async with respx.mock(assert_all_called=False) as gundi_portal_mock:
+        gundi_portal_mock.post(gundi_client_v2.oauth_token_url).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        logs_url = f"{gundi_client_v2.activity_logs_endpoint}/"
+        page2 = f"{logs_url}?cursor=2"
+        gundi_portal_mock.get(page2).respond(
+            status_code=httpx.codes.OK, json={"results": [log2], "next": None}
+        )
+        gundi_portal_mock.get(logs_url).respond(
+            status_code=httpx.codes.OK, json={"results": [log1], "next": page2}
+        )
+
+        results = [entry async for entry in gundi_client_v2.get_activity_logs()]
+
+    assert [r["title"] for r in results] == ["Action started", "Action done"]
+    assert all(isinstance(r, dict) for r in results)
+
+
+@pytest.mark.asyncio
 async def test_get_webhook_integration_details(
     auth_token_response, webhook_integration_details, gundi_client_v2
 ):

@@ -16,6 +16,7 @@ TOKEN_URL = f"{ISSUER}/protocol/openid-connect/token"
 DISCOVERY_URL = f"{ISSUER}/.well-known/openid-configuration"
 INTEGRATIONS_URL = f"{BASE_URL}/v2/integrations/"
 TYPES_URL = f"{BASE_URL}/v2/integrations/types/"
+LOGS_URL = f"{BASE_URL}/v2/logs/"
 
 
 @pytest.fixture(autouse=True)
@@ -656,3 +657,149 @@ def test_list_type_and_enabled_combined(
     params = intg_route.calls.last.request.url.params
     assert params["type"] == type_payload["id"]
     assert params["enabled"] == "true"
+
+
+def _log_entry(**overrides):
+    log = {
+        "id": "log-1",
+        "created_at": "2026-06-12T09:00:00Z",
+        "log_level": 20,
+        "log_type": "event",
+        "value": "integration_action_started",
+        "title": "Action started",
+        "integration": {"id": "abc", "name": "ER Site"},
+    }
+    log.update(overrides)
+    return log
+
+
+def test_logs_by_integration_id(cli_env, auth_token_response):
+    integration_id = "338225f3-91f9-4fe1-b013-353a229ce504"
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [_log_entry()], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "logs", integration_id])
+
+    assert result.exit_code == 0, result.output
+    assert route.calls.last.request.url.params["integration"] == integration_id
+    assert "LEVEL" in result.output
+    assert "INFO" in result.output  # log_level 20 -> INFO
+    assert "Action started" in result.output
+
+
+def test_logs_json(cli_env, auth_token_response):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [_log_entry()], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "logs", "abc", "--json"])
+
+    assert result.exit_code == 0, result.output
+    parsed = json.loads(result.output)
+    assert parsed[0]["title"] == "Action started"
+
+
+def test_logs_by_type_uses_integration_in(
+    cli_env, auth_token_response, destination_integration_details
+):
+    type_payload = destination_integration_details["type"]
+    integration_id = destination_integration_details["id"]
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [type_payload], "next": None},
+        )
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+        logs_route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={
+                "results": [
+                    _log_entry(
+                        integration={"id": integration_id, "name": "ER Load Testing"}
+                    )
+                ],
+                "next": None,
+            },
+        )
+
+        result = runner.invoke(app, ["integrations", "logs", "--type", "earth_ranger"])
+
+    assert result.exit_code == 0, result.output
+    assert logs_route.calls.last.request.url.params["integration__in"] == integration_id
+    assert "INTEGRATION" in result.output
+    assert "ER Load Testing" in result.output
+
+
+def test_logs_limit_caps_results(cli_env, auth_token_response):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={
+                "results": [
+                    _log_entry(id="1", title="First"),
+                    _log_entry(id="2", title="Second"),
+                ],
+                "next": None,
+            },
+        )
+
+        result = runner.invoke(app, ["integrations", "logs", "abc", "--limit", "1"])
+
+    assert result.exit_code == 0, result.output
+    assert "First" in result.output
+    assert "Second" not in result.output
+
+
+def test_logs_requires_a_target(cli_env, auth_token_response):
+    result = runner.invoke(app, ["integrations", "logs"])
+    assert result.exit_code == 2, result.output
+    assert "exactly one" in result.output.lower()
+
+
+def test_logs_rejects_both_targets(cli_env, auth_token_response):
+    result = runner.invoke(
+        app, ["integrations", "logs", "abc", "--type", "earth_ranger"]
+    )
+    assert result.exit_code == 2, result.output
+
+
+def test_logs_unknown_type_exits_2(
+    cli_env, auth_token_response, destination_integration_details
+):
+    type_payload = destination_integration_details["type"]  # only earth_ranger
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [type_payload], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "logs", "--type", "nope"])
+
+    assert result.exit_code == 2, result.output
+    assert "unknown integration type" in result.output
+
+
+def test_logs_empty(cli_env, auth_token_response):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [], "next": None}
+        )
+
+        result = runner.invoke(app, ["integrations", "logs", "abc"])
+
+    assert result.exit_code == 0, result.output
+    assert "No activity logs found" in result.output
