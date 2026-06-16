@@ -870,3 +870,80 @@ def test_list_status_composes_with_type_and_enabled(
     assert params["type"] == type_payload["id"]
     assert params["enabled"] == "true"
     assert params["status"] == "unhealthy"
+
+
+def test_logs_by_type_chunks_large_id_set(
+    cli_env, auth_token_response, destination_integration_details
+):
+    # A type with many integrations must not put every id in one
+    # integration__in query (that overruns the server's request-line limit).
+    type_payload = destination_integration_details["type"]
+    ids = [f"00000000-0000-0000-0000-{i:012d}" for i in range(100)]
+    integs = [{**destination_integration_details, "id": uid} for uid in ids]
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [type_payload], "next": None}
+        )
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK, json={"results": integs, "next": None}
+        )
+        logs_route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [_log_entry()], "next": None}
+        )
+
+        result = runner.invoke(app, ["integrations", "logs", "--type", "earth_ranger"])
+
+    assert result.exit_code == 0, result.output
+    assert logs_route.call_count >= 3  # 100 ids chunked into multiple requests
+    requested = []
+    for call in logs_route.calls:
+        chunk = call.request.url.params["integration__in"].split(",")
+        assert len(chunk) <= 40
+        assert len(str(call.request.url)) < 2048  # under the request-line limit
+        requested.extend(chunk)
+    assert set(requested) == set(ids)  # every integration covered across chunks
+
+
+def test_logs_by_type_sorts_newest_first_and_caps(
+    cli_env, auth_token_response, destination_integration_details
+):
+    type_payload = destination_integration_details["type"]
+    iid = destination_integration_details["id"]
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [type_payload], "next": None}
+        )
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+        mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={
+                "results": [
+                    _log_entry(
+                        id="n",
+                        created_at="2026-06-12T10:00:00Z",
+                        title="Newer",
+                        integration={"id": iid, "name": "ER"},
+                    ),
+                    _log_entry(
+                        id="o",
+                        created_at="2026-06-12T08:00:00Z",
+                        title="Older",
+                        integration={"id": iid, "name": "ER"},
+                    ),
+                ],
+                "next": None,
+            },
+        )
+
+        result = runner.invoke(
+            app, ["integrations", "logs", "--type", "earth_ranger", "--limit", "1"]
+        )
+
+    assert result.exit_code == 0, result.output
+    assert "Newer" in result.output
+    assert "Older" not in result.output

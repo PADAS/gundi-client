@@ -140,23 +140,25 @@ def integration_logs(
         raise typer.Exit(2)
 
     async def _fetch(client):
-        if integration_type:
-            type_id = await _resolve_type_id(client, integration_type)
-            ids = [
-                str(i.id)
-                async for i in client.get_integrations(params={"type": type_id})
-            ]
-            if not ids:
-                return []
-            params = {"integration__in": ",".join(ids)}
-        else:
-            params = {"integration": integration_id}
-        logs = []
-        async for log in client.get_activity_logs(params=params):
-            logs.append(log)
-            if len(logs) >= limit:
-                break
-        return logs
+        if integration_type is None:
+            return await _fetch_logs(client, {"integration": integration_id}, limit)
+        # By type: there's no type filter on logs, so gather the type's
+        # integration ids and filter by `integration__in`. The ids are chunked
+        # across requests so the query string stays under the server's
+        # request-line limit, then merged newest-first.
+        type_id = await _resolve_type_id(client, integration_type)
+        ids = [
+            str(i.id) async for i in client.get_integrations(params={"type": type_id})
+        ]
+        if not ids:
+            return []
+        collected = []
+        for chunk in _chunked(ids, _INTEGRATION_IN_CHUNK):
+            collected.extend(
+                await _fetch_logs(client, {"integration__in": ",".join(chunk)}, limit)
+            )
+        collected.sort(key=lambda log: log.get("created_at") or "", reverse=True)
+        return collected[:limit]
 
     logs = run_command(profile, _fetch)
 
@@ -194,6 +196,27 @@ def _render_table(integrations: List[Integration]) -> str:
         for i in integrations
     ]
     return _format_table(header, rows)
+
+
+# Integration ids per `integration__in` request. UUIDs are 36 chars + a comma,
+# so 40 keeps the query well under the server's 2048-byte request-line limit.
+_INTEGRATION_IN_CHUNK = 40
+
+
+def _chunked(items: list, size: int):
+    """Yield successive ``size``-length slices of ``items``."""
+    for start in range(0, len(items), size):
+        yield items[start : start + size]
+
+
+async def _fetch_logs(client, params: dict, limit: int) -> list:
+    """Collect up to ``limit`` activity logs (newest-first) for ``params``."""
+    logs = []
+    async for log in client.get_activity_logs(params=params):
+        logs.append(log)
+        if len(logs) >= limit:
+            break
+    return logs
 
 
 async def _resolve_type_id(client, slug: str) -> str:
