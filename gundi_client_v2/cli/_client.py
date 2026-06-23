@@ -218,10 +218,12 @@ def run_command(
 
     try:
         result = asyncio.run(_runner())
-    except AuthenticationError:
+    except AuthenticationError as exc:
         suffix = f" --profile {env_name}" if profile else ""
+        detail = f" ({exc})" if str(exc) else ""
         typer.echo(
-            f"Error: not authenticated for '{env_name}'. Run `gundi auth login{suffix}`.",
+            f"Error: not authenticated for '{env_name}'{detail}. "
+            f"Run `gundi auth login{suffix}`.",
             err=True,
         )
         raise typer.Exit(1)

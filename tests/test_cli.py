@@ -973,3 +973,23 @@ def test_logs_transport_error_exits_1_clean(cli_env, auth_token_response):
 
     assert result.exit_code == 1, result.output
     assert "Error" in result.output
+
+
+def test_not_authenticated_message_includes_reason(tmp_path, monkeypatch):
+    # When auth fails for a profile, the underlying reason should be shown
+    # alongside the `gundi auth login` hint (not swallowed).
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+    for var in ("OAUTH_CLIENT_SECRET", "GUNDI_PASSWORD", "GUNDI_USERNAME"):
+        monkeypatch.delenv(var, raising=False)
+    config_store.add_environment(
+        "prod", {"base_url": BASE_URL, "client_id": "c", "token_url": TOKEN_URL}
+    )
+    config_store.set_active("prod")
+
+    result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 1, result.output
+    assert "not authenticated" in result.output.lower()
+    assert "gundi auth login" in result.output.lower()
+    assert "credentials" in result.output.lower()  # underlying reason surfaced

@@ -1,6 +1,7 @@
 """`gundi integrations` commands: list, enable, disable."""
 
 import json
+from datetime import datetime, timezone
 from typing import List, Optional
 
 import typer
@@ -157,7 +158,7 @@ def integration_logs(
             collected.extend(
                 await _fetch_logs(client, {"integration__in": ",".join(chunk)}, limit)
             )
-        collected.sort(key=lambda log: log.get("created_at") or "", reverse=True)
+        collected.sort(key=_log_created_at, reverse=True)
         return collected[:limit]
 
     logs = run_command(profile, _fetch)
@@ -230,6 +231,18 @@ async def _resolve_type_id(client, slug: str) -> str:
             return str(itype.id)
     typer.echo(f"Error: unknown integration type '{slug}'.", err=True)
     raise typer.Exit(2)
+
+
+def _log_created_at(log: dict) -> datetime:
+    """Parse a log's ``created_at`` to a tz-aware datetime for sorting.
+
+    Falls back to the epoch minimum so unparseable timestamps sort last.
+    """
+    raw = log.get("created_at") or ""
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return datetime.min.replace(tzinfo=timezone.utc)
 
 
 def _log_level_name(level) -> str:
