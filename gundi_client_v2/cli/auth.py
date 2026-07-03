@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timezone
 from typing import Optional
 
+import httpx
 import typer
 
 from gundi_client_v2.errors import AuthenticationError, GundiAPIError
@@ -41,6 +42,9 @@ def login(
         asyncio.run(_authenticate())
     except (AuthenticationError, GundiAPIError) as exc:
         typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+    except httpx.HTTPError as exc:
+        typer.echo(f"Error: request failed: {exc}", err=True)
         raise typer.Exit(1)
 
     token_store.save_token(

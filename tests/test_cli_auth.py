@@ -150,3 +150,44 @@ def test_status_dangling_active_env_exits_2():
     result = runner.invoke(app, ["auth", "status"])
     assert result.exit_code == 2
     assert "unknown environment" in result.output.lower()
+
+
+def test_login_network_error_exits_1_clean(monkeypatch):
+    _add_cc_env()
+    monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post(TOKEN_URL).mock(side_effect=httpx.ConnectError("boom"))
+        result = runner.invoke(app, ["auth", "login"])
+    assert result.exit_code == 1, result.output
+    assert "Error" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_login_malformed_2xx_exits_1_clean(monkeypatch):
+    _add_cc_env()
+    monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, text="<html>nope</html>"
+        )
+        result = runner.invoke(app, ["auth", "login"])
+    assert result.exit_code == 1, result.output
+    assert "Error" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_status_reports_expired(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    _add_cc_env()
+
+    class _Tok:
+        access_token = "AT"
+        refresh_token = "R"
+        token_type = "Bearer"
+
+    past = datetime.now(timezone.utc) - timedelta(hours=1)
+    token_store.save_token("prod", _Tok(), past, past)
+    result = runner.invoke(app, ["auth", "status"])
+    assert result.exit_code == 0, result.output
+    assert "expired" in result.output.lower()

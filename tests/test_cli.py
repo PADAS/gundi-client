@@ -1062,3 +1062,21 @@ def test_run_command_persists_refreshed_token_on_api_error(
     saved = token_store.load_token("prod")
     assert saved is not None
     assert saved["access_token"] != "OLD"  # refreshed token was persisted
+
+
+def test_render_logs_table_flattens_multiline_values():
+    from gundi_client_v2.cli.integrations import _render_logs_table
+
+    logs = [
+        {
+            "created_at": "2026-06-12T10:00:00Z",
+            "log_level": 40,
+            "log_type": "event",
+            "value": "line1\nline2",
+            "title": "a\nb",
+        }
+    ]
+    out = _render_logs_table(logs)
+    # Header + exactly one data row must be two physical lines (no embedded newlines).
+    assert len(out.splitlines()) == 2
+    assert "line1 line2" in out

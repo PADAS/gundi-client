@@ -289,9 +289,18 @@ def _render_types_table(types: list) -> str:
     return _format_table(header, rows)
 
 
+def _flatten_cell(text: str) -> str:
+    """Collapse newlines so a cell stays on one physical line.
+
+    Activity-log ``value``/``title`` fields often contain multi-line text
+    (stack traces); left unflattened they would break the column alignment.
+    """
+    return " ".join(str(text).splitlines())
+
+
 def _format_table(header: tuple, rows: list) -> str:
     """Render a header + rows as a plain-text, column-aligned table."""
-    all_rows = [header, *rows]
+    all_rows = [tuple(_flatten_cell(cell) for cell in row) for row in (header, *rows)]
     widths = [max(len(row[col]) for row in all_rows) for col in range(len(header))]
     return "\n".join(
         "  ".join(cell.ljust(widths[col]) for col, cell in enumerate(row))

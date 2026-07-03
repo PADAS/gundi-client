@@ -49,11 +49,15 @@ async def test_post_retries_on_login_redirect(auth_token_response, gundi_client_
         mock.post(type_url).side_effect = [
             httpx.Response(
                 status_code=302,
-                headers={"location": "https://cdip-auth.pamdas.org/auth/realms/x/protocol/openid-connect/auth?response_type=code"},
+                headers={
+                    "location": "https://cdip-auth.pamdas.org/auth/realms/x/protocol/openid-connect/auth?response_type=code"
+                },
             ),
             httpx.Response(status_code=httpx.codes.OK, json=integration_type_payload),
         ]
-        result = await gundi_client_v2.register_integration_type(integration_type_payload)
+        result = await gundi_client_v2.register_integration_type(
+            integration_type_payload
+        )
         assert result == IntegrationType.parse_obj(integration_type_payload)
 
 
@@ -72,7 +76,9 @@ async def test_get_retries_on_login_redirect_preserves_custom_headers(
         route.side_effect = [
             httpx.Response(
                 status_code=302,
-                headers={"location": "https://cdip-auth.pamdas.org/auth/realms/x/protocol/openid-connect/auth?response_type=code"},
+                headers={
+                    "location": "https://cdip-auth.pamdas.org/auth/realms/x/protocol/openid-connect/auth?response_type=code"
+                },
             ),
             httpx.Response(status_code=httpx.codes.OK, json={}),
         ]
@@ -87,6 +93,7 @@ async def test_get_retries_on_login_redirect_preserves_custom_headers(
 def test_keycloak_settings_aliases_preserved():
     # The pre-rename module constants must remain importable as aliases of the OAUTH_* values.
     from gundi_client_v2 import settings
+
     assert settings.KEYCLOAK_ISSUER == settings.OAUTH_ISSUER
     assert settings.KEYCLOAK_CLIENT_ID == settings.OAUTH_CLIENT_ID
     assert settings.KEYCLOAK_CLIENT_SECRET == settings.OAUTH_CLIENT_SECRET
@@ -105,3 +112,27 @@ async def test_keycloak_kwargs_backward_compatible():
     assert client.client_id == "legacy-client"
     assert client.client_secret == "legacy-secret"
     assert client.audience == "legacy-aud"
+
+
+@pytest.mark.asyncio
+async def test_token_request_non_json_2xx_raises_auth_error():
+    from gundi_client_v2 import auth, errors
+
+    url = "https://idp.example.com/token"
+    async with respx.mock as mock:
+        mock.post(url).respond(status_code=httpx.codes.OK, text="<html>not json</html>")
+        async with httpx.AsyncClient() as session:
+            with pytest.raises(errors.AuthenticationError):
+                await auth._token_request(session, url, {"grant_type": "x"})
+
+
+@pytest.mark.asyncio
+async def test_token_request_missing_fields_2xx_raises_auth_error():
+    from gundi_client_v2 import auth, errors
+
+    url = "https://idp.example.com/token"
+    async with respx.mock as mock:
+        mock.post(url).respond(status_code=httpx.codes.OK, json={"not": "a token"})
+        async with httpx.AsyncClient() as session:
+            with pytest.raises(errors.AuthenticationError):
+                await auth._token_request(session, url, {"grant_type": "x"})
