@@ -115,7 +115,10 @@ def get_environment(name: str) -> dict:
     envs = load_config().get("environments", {})
     if name not in envs:
         raise ConfigError(f"unknown environment '{name}'")
-    return envs[name]
+    env = envs[name]
+    if not isinstance(env, dict):
+        raise ConfigError(f"environment '{name}' is not a JSON object")
+    return env
 
 
 def get_environments() -> dict:

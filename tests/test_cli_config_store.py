@@ -159,3 +159,9 @@ def test_write_private_oserror_raises_config_error(monkeypatch):
     monkeypatch.setattr(_tempfile, "mkstemp", _boom)
     with pytest.raises(config_store.ConfigError):
         config_store.write_private(config_store.config_file(), "{}")
+
+
+def test_get_environment_non_object_raises():
+    config_store.save_config({"active": None, "environments": {"prod": "not-a-dict"}})
+    with pytest.raises(config_store.ConfigError):
+        config_store.get_environment("prod")
