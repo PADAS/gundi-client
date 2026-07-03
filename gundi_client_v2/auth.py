@@ -38,12 +38,18 @@ async def _post_token(
     except httpx.HTTPStatusError as e:
         raise AuthenticationError(_extract_oauth_error(e.response)) from e
     try:
-        return response.json()
+        body = response.json()
     except ValueError as e:  # 2xx with a non-JSON body (e.g. a captive portal)
         raise AuthenticationError(
             f"Token endpoint {oauth_token_url} returned a non-JSON "
             f"{response.status_code} response"
         ) from e
+    if not isinstance(body, dict):  # 2xx JSON that isn't an object (e.g. [] or "ok")
+        raise AuthenticationError(
+            f"Token endpoint {oauth_token_url} returned an unexpected "
+            f"{response.status_code} response (not a JSON object)"
+        )
+    return body
 
 
 async def _token_request(

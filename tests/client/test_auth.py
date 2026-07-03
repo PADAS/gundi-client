@@ -186,3 +186,33 @@ async def test_refresh_access_token_null_refresh_token_reuses_fallback():
     assert token.access_token == "new"
     assert token.refresh_token == "RT_OLD"  # reused fallback, not the null
     assert rotated is False
+
+
+@pytest.mark.asyncio
+async def test_post_token_non_dict_2xx_raises_auth_error():
+    # A 2xx JSON non-object (e.g. []) must become a clean AuthenticationError
+    # (with URL + status), not an AttributeError in callers doing body.get(...).
+    from gundi_client_v2 import auth, errors
+    from gundi_core.schemas import OAuthToken
+
+    url = "https://idp.example.com/token"
+    fallback = OAuthToken(
+        access_token="old",
+        refresh_token="RT",
+        token_type="Bearer",
+        expires_in=60,
+        refresh_expires_in=3600,
+    )
+    async with respx.mock as mock:
+        mock.post(url).respond(status_code=httpx.codes.OK, json=[])
+        async with httpx.AsyncClient() as session:
+            with pytest.raises(errors.AuthenticationError) as exc:
+                await auth.refresh_access_token(
+                    session=session,
+                    oauth_token_url=url,
+                    client_id="c",
+                    refresh_token="RT",
+                    fallback=fallback,
+                )
+    msg = str(exc.value)
+    assert url in msg and "200" in msg
