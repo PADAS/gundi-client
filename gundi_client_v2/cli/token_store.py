@@ -6,7 +6,6 @@ instead of re-authenticating. One file per environment under
 """
 
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -17,7 +16,13 @@ from . import config_store
 
 
 def token_file(env_name: str) -> Path:
-    return config_store.tokens_dir() / f"{env_name}.json"
+    tokens = config_store.tokens_dir()
+    path = tokens / f"{env_name}.json"
+    # Defense in depth: a name with a path separator or ``..`` must not escape
+    # the tokens directory. (Names are also validated at `env add` time.)
+    if path.resolve().parent != tokens.resolve():
+        raise ValueError(f"invalid environment name: {env_name!r}")
+    return path
 
 
 def save_token(
@@ -31,9 +36,7 @@ def save_token(
         "expires_at": expires_at.isoformat(),
         "refresh_expires_at": refresh_expires_at.isoformat(),
     }
-    path = token_file(env_name)
-    path.write_text(json.dumps(payload, indent=2))
-    os.chmod(path, 0o600)
+    config_store.write_private(token_file(env_name), json.dumps(payload, indent=2))
 
 
 def load_token(env_name: str) -> Optional[dict]:

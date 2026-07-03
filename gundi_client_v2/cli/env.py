@@ -44,9 +44,13 @@ def add_env(
     ):
         if value:
             env[key] = value
-    config_store.add_environment(name, env)
-    if activate:
-        config_store.set_active(name)
+    try:
+        config_store.add_environment(name, env)
+        if activate:
+            config_store.set_active(name)
+    except config_store.ConfigError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2)
     typer.echo(f"Environment '{name}' saved.")
 
 

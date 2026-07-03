@@ -95,3 +95,17 @@ def test_load_config_non_object_raises_config_error():
     config_store.config_file().write_text("[1, 2, 3]")
     with pytest.raises(config_store.ConfigError):
         config_store.load_config()
+
+
+def test_add_environment_rejects_unsafe_name():
+    with pytest.raises(config_store.ConfigError):
+        config_store.add_environment("../evil", {"base_url": "u", "client_id": "c"})
+
+
+def test_save_config_tightens_preexisting_permissions():
+    config_store.ensure_dir(config_store.config_dir())
+    path = config_store.config_file()
+    path.write_text("{}")
+    os.chmod(path, 0o644)
+    config_store.save_config({"active": None, "environments": {}})
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600

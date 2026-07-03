@@ -111,3 +111,22 @@ def test_env_list_corrupt_config_exits_2():
     result = runner.invoke(app, ["env", "list"])
     assert result.exit_code == 2, result.output
     assert "Error" in result.output
+
+
+def test_env_add_rejects_unsafe_name():
+    result = runner.invoke(
+        app,
+        [
+            "env",
+            "add",
+            "../evil",
+            "--base-url",
+            "u",
+            "--client-id",
+            "c",
+            "--issuer",
+            "i",
+        ],
+    )
+    assert result.exit_code == 2, result.output
+    assert "invalid environment name" in result.output

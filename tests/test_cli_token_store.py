@@ -128,3 +128,19 @@ def test_apply_to_client_coerces_null_optional_fields():
     token_store.apply_to_client(client, data)  # must not raise
     assert client.cached_token.refresh_token == ""
     assert client.cached_token.token_type == "Bearer"
+
+
+def test_token_file_rejects_path_traversal():
+    with pytest.raises(ValueError):
+        token_store.token_file("../evil")
+
+
+def test_save_token_tightens_preexisting_permissions():
+    import os as _os
+
+    token_store.config_store.ensure_dir(token_store.config_store.tokens_dir())
+    path = token_store.token_file("prod")
+    path.write_text("{}")
+    _os.chmod(path, 0o644)
+    token_store.save_token("prod", FakeToken("AT"), _future(60), _future(60))
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600

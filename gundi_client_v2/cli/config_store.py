@@ -33,6 +33,31 @@ def ensure_dir(path: Path) -> None:
     os.chmod(path, 0o700)
 
 
+def write_private(path: Path, text: str) -> None:
+    """Write ``text`` to a user-private (0600) file without a umask race.
+
+    Opening with an explicit mode and ``fchmod`` before writing means the file
+    is never briefly world-readable (as ``write_text`` + later ``chmod`` can be),
+    which matters for the OAuth tokens and config this stores.
+    """
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        os.fchmod(fd, 0o600)  # tighten even if the file already existed
+        os.write(fd, text.encode())
+    finally:
+        os.close(fd)
+
+
+def validate_env_name(name: str) -> None:
+    """Reject environment names unsafe as a filename (path traversal, etc.).
+
+    Names key both ``config.json`` and per-environment token filenames, so a
+    name containing a path separator or ``..`` could escape the config dir.
+    """
+    if not name or name in (".", "..") or "/" in name or "\\" in name or "\x00" in name:
+        raise ConfigError(f"invalid environment name: {name!r}")
+
+
 def load_config() -> dict:
     path = config_file()
     if not path.exists():
@@ -48,12 +73,11 @@ def load_config() -> dict:
 
 def save_config(config: dict) -> None:
     ensure_dir(config_dir())
-    path = config_file()
-    path.write_text(json.dumps(config, indent=2))
-    os.chmod(path, 0o600)
+    write_private(config_file(), json.dumps(config, indent=2))
 
 
 def add_environment(name: str, env: dict) -> None:
+    validate_env_name(name)
     config = load_config()
     config.setdefault("environments", {})[name] = env
     save_config(config)
