@@ -52,7 +52,8 @@ def write_private(path: Path, text: str) -> None:
     except OSError as exc:
         raise ConfigError(f"could not write {path}: {exc}")
     try:
-        os.fchmod(fd, 0o600)  # mkstemp is already 0600; belt and suspenders
+        if hasattr(os, "fchmod"):  # not available on Windows
+            os.fchmod(fd, 0o600)  # mkstemp is already 0600; belt and suspenders
         with os.fdopen(fd, "w") as f:  # buffered writer handles partial writes
             f.write(text)
         os.replace(tmp, path)  # atomic rename over the destination

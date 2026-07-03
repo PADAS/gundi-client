@@ -165,3 +165,12 @@ def test_get_environment_non_object_raises():
     config_store.save_config({"active": None, "environments": {"prod": "not-a-dict"}})
     with pytest.raises(config_store.ConfigError):
         config_store.get_environment("prod")
+
+
+def test_write_private_works_without_fchmod(monkeypatch):
+    # Simulate Windows (no os.fchmod): must not AttributeError.
+    monkeypatch.delattr(os, "fchmod", raising=False)
+    config_store.ensure_dir(config_store.config_dir())
+    target = config_store.config_dir() / "x.json"
+    config_store.write_private(target, '{"a": 1}')
+    assert target.read_text() == '{"a": 1}'

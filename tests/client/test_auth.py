@@ -216,3 +216,16 @@ async def test_post_token_non_dict_2xx_raises_auth_error():
                 )
     msg = str(exc.value)
     assert url in msg and "200" in msg
+
+
+@pytest.mark.asyncio
+async def test_validation_error_message_includes_url():
+    from gundi_client_v2 import auth, errors
+
+    url = "https://idp.example.com/token"
+    async with respx.mock as mock:
+        mock.post(url).respond(status_code=httpx.codes.OK, json={"not": "a token"})
+        async with httpx.AsyncClient() as session:
+            with pytest.raises(errors.AuthenticationError) as exc:
+                await auth._token_request(session, url, {"grant_type": "x"})
+    assert url in str(exc.value)

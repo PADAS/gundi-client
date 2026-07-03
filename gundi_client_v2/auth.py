@@ -62,7 +62,7 @@ async def _token_request(
         )
     except ValidationError as e:  # 2xx JSON missing the expected token fields
         raise AuthenticationError(
-            f"Token endpoint returned an unexpected response: {e}"
+            f"Token endpoint {oauth_token_url} returned an unexpected response: {e}"
         ) from e
 
 
@@ -172,7 +172,7 @@ async def refresh_access_token(
         return OAuthToken.parse_obj(body), refresh_rotated
     except ValidationError as e:  # 2xx JSON missing the expected token fields
         raise AuthenticationError(
-            f"Token endpoint returned an unexpected response: {e}"
+            f"Token endpoint {oauth_token_url} returned an unexpected response: {e}"
         ) from e
 
 
