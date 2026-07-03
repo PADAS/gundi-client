@@ -41,9 +41,31 @@ def load_token(env_name: str) -> Optional[dict]:
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text())
+        data = json.loads(path.read_text())
     except (json.JSONDecodeError, OSError):
         return None  # corrupt cache == miss; caller falls back to re-auth
+    if not _is_valid_token_data(data):
+        return None  # malformed/incomplete cache == miss; re-auth instead of crashing
+    return data
+
+
+def _is_valid_token_data(data) -> bool:
+    """Check a cached token has the fields ``apply_to_client`` requires.
+
+    Guards against a valid-JSON-but-malformed cache (missing keys or a
+    non-ISO timestamp) that would otherwise raise from ``apply_to_client``.
+    """
+    if not isinstance(data, dict) or not data.get("access_token"):
+        return False
+    for key in ("expires_at", "refresh_expires_at"):
+        value = data.get(key)
+        if not isinstance(value, str):
+            return False
+        try:
+            datetime.fromisoformat(value)
+        except ValueError:
+            return False
+    return True
 
 
 def delete_token(env_name: str) -> bool:

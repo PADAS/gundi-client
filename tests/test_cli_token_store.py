@@ -76,3 +76,28 @@ def test_apply_to_client_restores_attributes():
     assert client.cached_token.access_token == "AT"
     assert client.cached_token_expires_at == exp
     assert client.cached_token_refresh_expires_at == rexp
+
+
+def test_load_token_missing_required_field_returns_none():
+    # Valid JSON but missing access_token -> treat as a miss, not a later crash.
+    token_store.config_store.ensure_dir(token_store.config_store.tokens_dir())
+    token_store.token_file("prod").write_text(
+        '{"expires_at": "2026-01-01T00:00:00+00:00", '
+        '"refresh_expires_at": "2026-01-01T00:00:00+00:00"}'
+    )
+    assert token_store.load_token("prod") is None
+
+
+def test_load_token_bad_timestamp_returns_none():
+    token_store.config_store.ensure_dir(token_store.config_store.tokens_dir())
+    token_store.token_file("prod").write_text(
+        '{"access_token": "AT", "expires_at": "not-a-date", '
+        '"refresh_expires_at": "2026-01-01T00:00:00+00:00"}'
+    )
+    assert token_store.load_token("prod") is None
+
+
+def test_load_token_non_object_returns_none():
+    token_store.config_store.ensure_dir(token_store.config_store.tokens_dir())
+    token_store.token_file("prod").write_text("[1, 2, 3]")
+    assert token_store.load_token("prod") is None

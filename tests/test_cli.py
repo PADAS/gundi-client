@@ -993,3 +993,26 @@ def test_not_authenticated_message_includes_reason(tmp_path, monkeypatch):
     assert "not authenticated" in result.output.lower()
     assert "gundi auth login" in result.output.lower()
     assert "credentials" in result.output.lower()  # underlying reason surfaced
+
+
+def test_log_created_at_naive_timestamp_is_made_utc():
+    from datetime import timezone
+    from gundi_client_v2.cli.integrations import _log_created_at
+
+    # API omitted the tz offset -> must still return a tz-aware datetime.
+    parsed = _log_created_at({"created_at": "2026-06-12T10:00:00"})
+    assert parsed.tzinfo is not None
+    assert parsed.utcoffset() == timezone.utc.utcoffset(None)
+
+
+def test_log_created_at_sorts_naive_and_unparseable_without_crash():
+    from gundi_client_v2.cli.integrations import _log_created_at
+
+    logs = [
+        {"created_at": "2026-06-12T10:00:00"},  # naive
+        {"created_at": "2026-06-12T09:00:00Z"},  # tz-aware
+        {"created_at": "not-a-date"},  # falls back to epoch-min UTC
+    ]
+    # Must not raise "can't compare offset-naive and offset-aware datetimes".
+    ordered = sorted(logs, key=_log_created_at, reverse=True)
+    assert ordered[0]["created_at"] == "2026-06-12T10:00:00"

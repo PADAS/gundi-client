@@ -240,9 +240,14 @@ def _log_created_at(log: dict) -> datetime:
     """
     raw = log.get("created_at") or ""
     try:
-        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    except (ValueError, TypeError):
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except (ValueError, TypeError, AttributeError):
         return datetime.min.replace(tzinfo=timezone.utc)
+    # A timestamp without an offset parses as naive; force UTC so it stays
+    # comparable with the tz-aware fallback (and other tz-aware timestamps).
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
 
 
 def _log_level_name(level) -> str:
