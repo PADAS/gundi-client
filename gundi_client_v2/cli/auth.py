@@ -32,7 +32,11 @@ def login(
 ) -> None:
     """Obtain and cache an OAuth token for the selected environment."""
     env_name = active_env_name(profile)
-    client = build_client_for_login(env_name, username=username)
+    try:
+        client = build_client_for_login(env_name, username=username)
+    except config_store.ConfigError as exc:  # e.g. env missing base_url/client_id
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2)
 
     async def _authenticate():
         async with client:

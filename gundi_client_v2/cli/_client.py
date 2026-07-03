@@ -121,7 +121,11 @@ def active_env_name(profile: Optional[str]) -> str:
 
     Exits 2 with guidance when no environment is selected.
     """
-    name = profile or os.environ.get("GUNDI_PROFILE") or config_store.get_active()
+    try:
+        name = profile or os.environ.get("GUNDI_PROFILE") or config_store.get_active()
+    except config_store.ConfigError as exc:  # corrupt/invalid config.json
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2)
     if not name:
         typer.echo(
             "Error: no environment selected. Run `gundi env use <name>` or pass --profile.",
@@ -137,6 +141,11 @@ def active_env_name(profile: Optional[str]) -> str:
 
 
 def _client_kwargs_from_env(env: dict) -> dict:
+    missing = [k for k in ("base_url", "client_id") if not env.get(k)]
+    if missing:
+        raise config_store.ConfigError(
+            f"environment is missing required field(s): {', '.join(missing)}"
+        )
     kwargs = {"base_url": env["base_url"], "oauth_client_id": env["client_id"]}
     if v := env.get("issuer"):
         kwargs["oauth_issuer"] = v
@@ -205,7 +214,11 @@ def run_command(
         # Backward-compatible raw-env path (no profile configured).
         return run_with_client(async_fn)
 
-    client = _build_profile_client(config_store.get_environment(env_name))
+    try:
+        client = _build_profile_client(config_store.get_environment(env_name))
+    except config_store.ConfigError as exc:  # e.g. env missing base_url/client_id
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2)
     cached = token_store.load_token(env_name)
     if cached:
         token_store.apply_to_client(client, cached)

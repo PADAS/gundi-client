@@ -109,3 +109,17 @@ def test_save_config_tightens_preexisting_permissions():
     os.chmod(path, 0o644)
     config_store.save_config({"active": None, "environments": {}})
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+def test_load_config_bad_active_type_raises():
+    config_store.config_dir().mkdir(parents=True, exist_ok=True)
+    config_store.config_file().write_text('{"active": {"x": 1}, "environments": {}}')
+    with pytest.raises(config_store.ConfigError):
+        config_store.load_config()
+
+
+def test_load_config_bad_environments_type_raises():
+    config_store.config_dir().mkdir(parents=True, exist_ok=True)
+    config_store.config_file().write_text('{"active": null, "environments": [1, 2]}')
+    with pytest.raises(config_store.ConfigError):
+        config_store.load_config()

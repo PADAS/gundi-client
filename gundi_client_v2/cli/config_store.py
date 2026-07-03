@@ -74,6 +74,11 @@ def load_config() -> dict:
         raise ConfigError(f"could not read config at {path}: {exc}")
     if not isinstance(data, dict):
         raise ConfigError(f"config at {path} is not a JSON object")
+    active = data.get("active")
+    if active is not None and not isinstance(active, str):
+        raise ConfigError(f"config at {path}: 'active' must be a string or null")
+    if not isinstance(data.get("environments", {}), dict):
+        raise ConfigError(f"config at {path}: 'environments' must be an object")
     return data
 
 

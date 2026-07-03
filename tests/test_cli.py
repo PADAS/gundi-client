@@ -1080,3 +1080,18 @@ def test_render_logs_table_flattens_multiline_values():
     # Header + exactly one data row must be two physical lines (no embedded newlines).
     assert len(out.splitlines()) == 2
     assert "line1 line2" in out
+
+
+def test_list_env_missing_required_key_exits_2(tmp_path, monkeypatch):
+    # Hand-edited env missing client_id must fail cleanly, not traceback.
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+    config_store.save_config(
+        {
+            "active": "prod",
+            "environments": {"prod": {"base_url": BASE_URL, "token_url": TOKEN_URL}},
+        }
+    )
+    result = runner.invoke(app, ["integrations", "list"])
+    assert result.exit_code == 2, result.output
+    assert "Traceback" not in result.output

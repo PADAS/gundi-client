@@ -191,3 +191,18 @@ def test_status_reports_expired(monkeypatch):
     result = runner.invoke(app, ["auth", "status"])
     assert result.exit_code == 0, result.output
     assert "expired" in result.output.lower()
+
+
+def test_login_env_missing_required_key_exits_2(monkeypatch):
+    monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
+    config_store.save_config(
+        {
+            "active": "prod",
+            "environments": {
+                "prod": {"base_url": "https://api.x", "token_url": TOKEN_URL}
+            },
+        }
+    )
+    result = runner.invoke(app, ["auth", "login"])
+    assert result.exit_code == 2, result.output
+    assert "Traceback" not in result.output
