@@ -43,7 +43,13 @@ def write_private(path: Path, text: str) -> None:
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     try:
         os.fchmod(fd, 0o600)  # tighten even if the file already existed
-        os.write(fd, text.encode())
+        data = text.encode()
+        while data:
+            try:
+                written = os.write(fd, data)
+            except InterruptedError:
+                continue  # retry on EINTR
+            data = data[written:]  # os.write may write only part of the buffer
     finally:
         os.close(fd)
 

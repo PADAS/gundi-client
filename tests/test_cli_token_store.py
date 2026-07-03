@@ -144,3 +144,14 @@ def test_save_token_tightens_preexisting_permissions():
     _os.chmod(path, 0o644)
     token_store.save_token("prod", FakeToken("AT"), _future(60), _future(60))
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+def test_delete_token_never_raises_on_oserror(monkeypatch):
+    import pathlib
+
+    def _boom(self, *args, **kwargs):
+        raise OSError("disk gone")
+
+    monkeypatch.setattr(pathlib.Path, "unlink", _boom)
+    # Must swallow the OSError and report False, not raise a traceback.
+    assert token_store.delete_token("prod") is False

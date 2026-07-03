@@ -76,11 +76,18 @@ def _is_valid_token_data(data) -> bool:
 
 
 def delete_token(env_name: str) -> bool:
-    path = token_file(env_name)
-    if path.exists():
-        path.unlink()
+    """Delete the cached token; return True iff a file was actually removed.
+
+    Never raises: attempting the unlink directly (rather than exists()-then-unlink)
+    avoids a TOCTOU race, and any OSError — a missing file (the common case) or a
+    filesystem error — is reported as False so `logout`/`env remove` don't emit a
+    traceback.
+    """
+    try:
+        token_file(env_name).unlink()
         return True
-    return False
+    except OSError:
+        return False
 
 
 def apply_to_client(client, data: dict) -> None:
