@@ -61,9 +61,13 @@ def login(
     # commands treat this as a password-grant environment without the flag.
     supplied = username or os.environ.get("GUNDI_USERNAME")
     if supplied:
-        env = config_store.get_environment(env_name)
-        if env.get("username") != supplied:
-            config_store.add_environment(env_name, {**env, "username": supplied})
+        try:
+            env = config_store.get_environment(env_name)
+            if env.get("username") != supplied:
+                config_store.add_environment(env_name, {**env, "username": supplied})
+        except config_store.ConfigError as exc:
+            typer.echo(f"Error: {exc}", err=True)
+            raise typer.Exit(2)
     typer.echo(f"Authenticated. Token cached for '{env_name}'.")
 
 

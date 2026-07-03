@@ -136,3 +136,17 @@ async def test_token_request_missing_fields_2xx_raises_auth_error():
         async with httpx.AsyncClient() as session:
             with pytest.raises(errors.AuthenticationError):
                 await auth._token_request(session, url, {"grant_type": "x"})
+
+
+@pytest.mark.asyncio
+async def test_non_json_2xx_error_includes_url_and_status():
+    from gundi_client_v2 import auth, errors
+
+    url = "https://idp.example.com/token"
+    async with respx.mock as mock:
+        mock.post(url).respond(status_code=httpx.codes.OK, text="<html>nope</html>")
+        async with httpx.AsyncClient() as session:
+            with pytest.raises(errors.AuthenticationError) as exc:
+                await auth._token_request(session, url, {"grant_type": "x"})
+    msg = str(exc.value)
+    assert url in msg and "200" in msg

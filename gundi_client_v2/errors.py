@@ -21,7 +21,9 @@ class GundiAPIError(GundiClientError):
     def __init__(self, status_code: int, detail: str = ""):
         self.status_code = status_code
         self.detail = detail
-        super().__init__(f"HTTP {status_code}: {detail}" if detail else f"HTTP {status_code}")
+        super().__init__(
+            f"HTTP {status_code}: {detail}" if detail else f"HTTP {status_code}"
+        )
 
 
 def raise_for_status(response):

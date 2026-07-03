@@ -67,6 +67,13 @@ def list_envs() -> None:
         typer.echo("No environments configured.", err=True)
         return
     active = config.get("active")
+    if active is not None and active not in environments:
+        typer.echo(
+            f"Error: active environment '{active}' does not exist "
+            "(config is inconsistent).",
+            err=True,
+        )
+        raise typer.Exit(2)
     for name in environments:
         typer.echo(f"{'*' if name == active else ' '} {name}")
 

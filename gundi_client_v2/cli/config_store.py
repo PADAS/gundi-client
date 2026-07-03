@@ -6,6 +6,7 @@ written here (see token_store for cached tokens). All files are user-private.
 
 import json
 import os
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -34,24 +35,27 @@ def ensure_dir(path: Path) -> None:
 
 
 def write_private(path: Path, text: str) -> None:
-    """Write ``text`` to a user-private (0600) file without a umask race.
+    """Atomically write ``text`` to a user-private (0600) file.
 
-    Opening with an explicit mode and ``fchmod`` before writing means the file
-    is never briefly world-readable (as ``write_text`` + later ``chmod`` can be),
-    which matters for the OAuth tokens and config this stores.
+    Writes to a 0600 temp file in the same directory, then ``os.replace()`` s it
+    into place — an atomic swap on POSIX. A crash mid-write leaves the previous
+    good file intact (never a truncated/partial config or token), and the file
+    is never briefly world-readable (``mkstemp`` creates it 0600).
     """
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    fd, tmp = tempfile.mkstemp(
+        dir=str(path.parent), prefix=f".{path.name}.", suffix=".tmp"
+    )
     try:
-        os.fchmod(fd, 0o600)  # tighten even if the file already existed
-        data = text.encode()
-        while data:
-            try:
-                written = os.write(fd, data)
-            except InterruptedError:
-                continue  # retry on EINTR
-            data = data[written:]  # os.write may write only part of the buffer
-    finally:
-        os.close(fd)
+        os.fchmod(fd, 0o600)  # mkstemp is already 0600; belt and suspenders
+        with os.fdopen(fd, "w") as f:  # buffered writer handles partial writes
+            f.write(text)
+        os.replace(tmp, path)  # atomic rename over the destination
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def validate_env_name(name: str) -> None:

@@ -40,7 +40,10 @@ async def _post_token(
     try:
         return response.json()
     except ValueError as e:  # 2xx with a non-JSON body (e.g. a captive portal)
-        raise AuthenticationError("Token endpoint returned a non-JSON response") from e
+        raise AuthenticationError(
+            f"Token endpoint {oauth_token_url} returned a non-JSON "
+            f"{response.status_code} response"
+        ) from e
 
 
 async def _token_request(

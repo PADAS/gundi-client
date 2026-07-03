@@ -130,3 +130,16 @@ def test_env_add_rejects_unsafe_name():
     )
     assert result.exit_code == 2, result.output
     assert "invalid environment name" in result.output
+
+
+def test_env_list_dangling_active_exits_2():
+    # Stored active points at a non-existent environment (hand-edited config).
+    config_store.save_config(
+        {
+            "active": "ghost",
+            "environments": {"prod": {"base_url": "u", "client_id": "c"}},
+        }
+    )
+    result = runner.invoke(app, ["env", "list"])
+    assert result.exit_code == 2, result.output
+    assert "Traceback" not in result.output

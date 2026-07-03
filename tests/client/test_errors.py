@@ -40,6 +40,8 @@ async def test_data_sender_update_raises_gundi_api_error(gundi_data_sender_clien
         url = f"{gundi_data_sender_client_v2.sensors_api_endpoint}/events/{event_id}/"
         mock.patch(url).respond(status_code=400, json={"detail": "bad update"})
         with pytest.raises(errors.GundiAPIError) as exc:
-            await gundi_data_sender_client_v2.update_event(event_id=event_id, data={"title": "x"})
+            await gundi_data_sender_client_v2.update_event(
+                event_id=event_id, data={"title": "x"}
+            )
         assert exc.value.status_code == 400
         assert "bad update" in exc.value.detail

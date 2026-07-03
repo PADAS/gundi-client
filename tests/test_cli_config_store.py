@@ -123,3 +123,15 @@ def test_load_config_bad_environments_type_raises():
     config_store.config_file().write_text('{"active": null, "environments": [1, 2]}')
     with pytest.raises(config_store.ConfigError):
         config_store.load_config()
+
+
+def test_write_private_atomic_no_leftover_temp_and_correct_content():
+    config_store.ensure_dir(config_store.config_dir())
+    target = config_store.config_dir() / "x.json"
+    config_store.write_private(target, '{"a": 1}')
+    assert target.read_text() == '{"a": 1}'
+    # No temp files left behind in the directory.
+    leftovers = [
+        p.name for p in config_store.config_dir().iterdir() if p.name != "x.json"
+    ]
+    assert leftovers == []
