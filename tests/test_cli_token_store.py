@@ -160,3 +160,17 @@ def test_delete_token_never_raises_on_oserror(monkeypatch):
 def test_save_token_unsafe_name_raises_config_error():
     with pytest.raises(token_store.config_store.ConfigError):
         token_store.save_token("../evil", FakeToken("AT"), _future(60), _future(60))
+
+
+def test_load_token_unsafe_name_returns_none():
+    assert token_store.load_token("../evil") is None
+
+
+def test_delete_token_unsafe_name_returns_false():
+    assert token_store.delete_token("../evil") is False
+
+
+def test_load_token_non_utf8_returns_none():
+    token_store.config_store.ensure_dir(token_store.config_store.tokens_dir())
+    token_store.token_file("prod").write_bytes(b"\xff\xfe\x00bad")
+    assert token_store.load_token("prod") is None

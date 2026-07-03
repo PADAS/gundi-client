@@ -46,13 +46,18 @@ def save_token(
 
 
 def load_token(env_name: str) -> Optional[dict]:
-    path = token_file(env_name)
+    try:
+        path = token_file(env_name)  # ValueError for an unsafe (hand-edited) name
+    except ValueError:
+        return None
     if not path.exists():
         return None
     try:
         data = json.loads(path.read_text())
-    except (json.JSONDecodeError, OSError):
-        return None  # corrupt cache == miss; caller falls back to re-auth
+    except (OSError, ValueError):
+        # corrupt cache == miss; caller falls back to re-auth. Covers OSError,
+        # json.JSONDecodeError and UnicodeDecodeError (both ValueError subclasses).
+        return None
     if not _is_valid_token_data(data):
         return None  # malformed/incomplete cache == miss; re-auth instead of crashing
     return data
@@ -86,13 +91,13 @@ def delete_token(env_name: str) -> bool:
 
     Never raises: attempting the unlink directly (rather than exists()-then-unlink)
     avoids a TOCTOU race, and any OSError — a missing file (the common case) or a
-    filesystem error — is reported as False so `logout`/`env remove` don't emit a
-    traceback.
+    filesystem error — is reported as False, as is a ValueError from an unsafe
+    (hand-edited) env name, so `logout`/`env remove` don't emit a traceback.
     """
     try:
         token_file(env_name).unlink()
         return True
-    except OSError:
+    except (OSError, ValueError):
         return False
 
 
