@@ -111,3 +111,20 @@ def test_load_token_naive_timestamp_returns_none():
         '"refresh_expires_at": "2026-01-01T00:00:00"}'
     )
     assert token_store.load_token("prod") is None
+
+
+def test_apply_to_client_coerces_null_optional_fields():
+    # An explicit JSON null for refresh_token/token_type must not blow up
+    # OAuthToken construction; coerce to safe defaults.
+    exp = _future(60)
+    data = {
+        "access_token": "AT",
+        "refresh_token": None,
+        "token_type": None,
+        "expires_at": exp.isoformat(),
+        "refresh_expires_at": exp.isoformat(),
+    }
+    client = FakeClient()
+    token_store.apply_to_client(client, data)  # must not raise
+    assert client.cached_token.refresh_token == ""
+    assert client.cached_token.token_type == "Bearer"

@@ -88,8 +88,9 @@ def apply_to_client(client, data: dict) -> None:
     """
     client.cached_token = OAuthToken(
         access_token=data["access_token"],
-        refresh_token=data.get("refresh_token", ""),
-        token_type=data.get("token_type", "Bearer"),
+        # `or` (not .get default) so an explicit JSON null coerces to the default.
+        refresh_token=data.get("refresh_token") or "",
+        token_type=data.get("token_type") or "Bearer",
         expires_in=0,
         refresh_expires_in=0,
     )

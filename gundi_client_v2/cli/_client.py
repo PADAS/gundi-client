@@ -216,6 +216,21 @@ def run_command(
         async with client:
             return await async_fn(client)
 
+    def _persist_token() -> None:
+        # Persist a newly obtained or rotated token. Runs on both success and
+        # error paths: the token may have been refreshed (and the refresh token
+        # rotated) before a later API/transport failure, and losing it would
+        # break transparent refresh on the next invocation.
+        if client.cached_token and (
+            not had_token or client.cached_token.access_token != before
+        ):
+            token_store.save_token(
+                env_name,
+                client.cached_token,
+                client.cached_token_expires_at,
+                client.cached_token_refresh_expires_at,
+            )
+
     try:
         result = asyncio.run(_runner())
     except AuthenticationError as exc:
@@ -233,15 +248,7 @@ def run_command(
     except httpx.HTTPError as exc:
         typer.echo(f"Error: request failed: {exc}", err=True)
         raise typer.Exit(1)
+    finally:
+        _persist_token()
 
-    # Persist a newly obtained or rotated token.
-    if client.cached_token and (
-        not had_token or client.cached_token.access_token != before
-    ):
-        token_store.save_token(
-            env_name,
-            client.cached_token,
-            client.cached_token_expires_at,
-            client.cached_token_refresh_expires_at,
-        )
     return result

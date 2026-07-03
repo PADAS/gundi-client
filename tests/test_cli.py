@@ -1022,3 +1022,43 @@ def test_logs_rejects_non_positive_limit(cli_env):
     result = runner.invoke(app, ["integrations", "logs", "some-id", "--limit", "0"])
     assert result.exit_code == 2, result.output
     assert "limit" in result.output.lower()
+
+
+def test_run_command_persists_refreshed_token_on_api_error(
+    tmp_path, monkeypatch, auth_token_response
+):
+    # Access token expired but refresh valid: the client refreshes (rotating the
+    # token) and THEN the API call fails. The refreshed token must still be
+    # persisted so the next invocation isn't left with a stale/rotated token.
+    from datetime import datetime, timedelta, timezone
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+    config_store.add_environment(
+        "prod", {"base_url": BASE_URL, "client_id": "c", "token_url": TOKEN_URL}
+    )
+    config_store.set_active("prod")
+
+    class _Tok:
+        access_token = "OLD"
+        refresh_token = "R"
+        token_type = "Bearer"
+
+    past = datetime.now(timezone.utc) - timedelta(minutes=1)
+    future = datetime.now(timezone.utc) + timedelta(hours=12)
+    token_store.save_token("prod", _Tok(), past, future)
+
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.INTERNAL_SERVER_ERROR, json={"detail": "boom"}
+        )
+
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 1, result.output
+    saved = token_store.load_token("prod")
+    assert saved is not None
+    assert saved["access_token"] != "OLD"  # refreshed token was persisted
