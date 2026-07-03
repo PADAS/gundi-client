@@ -38,9 +38,12 @@ def load_config() -> dict:
     if not path.exists():
         return {"active": None, "environments": {}}
     try:
-        return json.loads(path.read_text())
+        data = json.loads(path.read_text())
     except (json.JSONDecodeError, OSError) as exc:
         raise ConfigError(f"could not read config at {path}: {exc}")
+    if not isinstance(data, dict):
+        raise ConfigError(f"config at {path} is not a JSON object")
+    return data
 
 
 def save_config(config: dict) -> None:

@@ -62,8 +62,12 @@ def _is_valid_token_data(data) -> bool:
         if not isinstance(value, str):
             return False
         try:
-            datetime.fromisoformat(value)
+            parsed = datetime.fromisoformat(value)
         except ValueError:
+            return False
+        # Must be tz-aware; a naive timestamp would crash later comparisons
+        # against timezone-aware "now" (e.g. in `auth status`).
+        if parsed.tzinfo is None:
             return False
     return True
 

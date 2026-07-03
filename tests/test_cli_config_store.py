@@ -88,3 +88,10 @@ def test_remove_environment_clears_active_when_removed():
 def test_remove_unknown_raises():
     with pytest.raises(config_store.ConfigError):
         config_store.remove_environment("nope")
+
+
+def test_load_config_non_object_raises_config_error():
+    config_store.config_dir().mkdir(parents=True, exist_ok=True)
+    config_store.config_file().write_text("[1, 2, 3]")
+    with pytest.raises(config_store.ConfigError):
+        config_store.load_config()

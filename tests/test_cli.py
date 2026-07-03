@@ -1016,3 +1016,9 @@ def test_log_created_at_sorts_naive_and_unparseable_without_crash():
     # Must not raise "can't compare offset-naive and offset-aware datetimes".
     ordered = sorted(logs, key=_log_created_at, reverse=True)
     assert ordered[0]["created_at"] == "2026-06-12T10:00:00"
+
+
+def test_logs_rejects_non_positive_limit(cli_env):
+    result = runner.invoke(app, ["integrations", "logs", "some-id", "--limit", "0"])
+    assert result.exit_code == 2, result.output
+    assert "limit" in result.output.lower()

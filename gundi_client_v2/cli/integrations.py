@@ -139,6 +139,9 @@ def integration_logs(
             "Error: provide an integration id or --type (exactly one).", err=True
         )
         raise typer.Exit(2)
+    if limit < 1:
+        typer.echo("Error: --limit must be a positive integer.", err=True)
+        raise typer.Exit(2)
 
     async def _fetch(client):
         if integration_type is None:

@@ -101,3 +101,13 @@ def test_load_token_non_object_returns_none():
     token_store.config_store.ensure_dir(token_store.config_store.tokens_dir())
     token_store.token_file("prod").write_text("[1, 2, 3]")
     assert token_store.load_token("prod") is None
+
+
+def test_load_token_naive_timestamp_returns_none():
+    # Naive expires_at would crash `auth status` comparing to now(utc); miss instead.
+    token_store.config_store.ensure_dir(token_store.config_store.tokens_dir())
+    token_store.token_file("prod").write_text(
+        '{"access_token": "AT", "expires_at": "2026-01-01T00:00:00", '
+        '"refresh_expires_at": "2026-01-01T00:00:00"}'
+    )
+    assert token_store.load_token("prod") is None
