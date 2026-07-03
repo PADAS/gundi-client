@@ -101,7 +101,7 @@ def test_env_remove_deletes():
     )
     result = runner.invoke(app, ["env", "remove", "prod"])
     assert result.exit_code == 0
-    assert "prod" not in config_store.list_environments()
+    assert "prod" not in config_store.get_environments()
 
 
 def test_env_list_corrupt_config_exits_2():

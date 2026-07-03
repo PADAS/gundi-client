@@ -105,7 +105,8 @@ def get_environment(name: str) -> dict:
     return envs[name]
 
 
-def list_environments() -> dict:
+def get_environments() -> dict:
+    """Return the mapping of environment name -> config dict."""
     return load_config().get("environments", {})
 
 

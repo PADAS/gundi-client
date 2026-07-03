@@ -71,17 +71,17 @@ def test_set_and_get_active():
     assert config_store.get_active() == "prod"
 
 
-def test_list_environments():
+def test_get_environments():
     config_store.add_environment("a", {"base_url": "u"})
     config_store.add_environment("b", {"base_url": "u"})
-    assert set(config_store.list_environments()) == {"a", "b"}
+    assert set(config_store.get_environments()) == {"a", "b"}
 
 
 def test_remove_environment_clears_active_when_removed():
     config_store.add_environment("a", {"base_url": "u"})
     config_store.set_active("a")
     config_store.remove_environment("a")
-    assert "a" not in config_store.list_environments()
+    assert "a" not in config_store.get_environments()
     assert config_store.get_active() is None
 
 

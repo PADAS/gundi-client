@@ -152,10 +152,16 @@ async def refresh_access_token(
     if client_secret:
         payload["client_secret"] = client_secret
     body = await _post_token(session, oauth_token_url, payload)
-    refresh_rotated = "refresh_token" in body
-    # Backfill missing refresh fields before constructing OAuthToken (which requires them).
-    body.setdefault("refresh_token", fallback.refresh_token)
-    body.setdefault("refresh_expires_in", fallback.refresh_expires_in)
+    # A rotation means the IdP issued a new, non-empty refresh token. A missing,
+    # null, or empty value is NOT a rotation — reuse the prior refresh token and
+    # its lifetime (OAuthToken requires both fields and rejects null).
+    new_refresh_token = body.get("refresh_token")
+    refresh_rotated = bool(new_refresh_token)
+    if not new_refresh_token:
+        body["refresh_token"] = fallback.refresh_token
+        body["refresh_expires_in"] = fallback.refresh_expires_in
+    elif body.get("refresh_expires_in") is None:
+        body["refresh_expires_in"] = fallback.refresh_expires_in
     try:
         return OAuthToken.parse_obj(body), refresh_rotated
     except ValidationError as e:  # 2xx JSON missing the expected token fields

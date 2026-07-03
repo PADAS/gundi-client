@@ -150,3 +150,39 @@ async def test_non_json_2xx_error_includes_url_and_status():
                 await auth._token_request(session, url, {"grant_type": "x"})
     msg = str(exc.value)
     assert url in msg and "200" in msg
+
+
+@pytest.mark.asyncio
+async def test_refresh_access_token_null_refresh_token_reuses_fallback():
+    from gundi_client_v2 import auth
+    from gundi_core.schemas import OAuthToken
+
+    url = "https://idp.example.com/token"
+    fallback = OAuthToken(
+        access_token="old",
+        refresh_token="RT_OLD",
+        token_type="Bearer",
+        expires_in=60,
+        refresh_expires_in=3600,
+    )
+    async with respx.mock as mock:
+        mock.post(url).respond(
+            status_code=httpx.codes.OK,
+            json={
+                "access_token": "new",
+                "token_type": "Bearer",
+                "expires_in": 60,
+                "refresh_token": None,  # IdP returned explicit null
+            },
+        )
+        async with httpx.AsyncClient() as session:
+            token, rotated = await auth.refresh_access_token(
+                session=session,
+                oauth_token_url=url,
+                client_id="c",
+                refresh_token="RT_OLD",
+                fallback=fallback,
+            )
+    assert token.access_token == "new"
+    assert token.refresh_token == "RT_OLD"  # reused fallback, not the null
+    assert rotated is False
