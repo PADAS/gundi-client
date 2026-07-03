@@ -30,8 +30,11 @@ def tokens_dir() -> Path:
 
 def ensure_dir(path: Path) -> None:
     """Create ``path`` (and parents) private to the user (0700)."""
-    path.mkdir(parents=True, exist_ok=True)
-    os.chmod(path, 0o700)
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        os.chmod(path, 0o700)
+    except OSError as exc:  # unwritable/read-only location, etc.
+        raise ConfigError(f"could not create config directory {path}: {exc}")
 
 
 def write_private(path: Path, text: str) -> None:
@@ -42,20 +45,30 @@ def write_private(path: Path, text: str) -> None:
     good file intact (never a truncated/partial config or token), and the file
     is never briefly world-readable (``mkstemp`` creates it 0600).
     """
-    fd, tmp = tempfile.mkstemp(
-        dir=str(path.parent), prefix=f".{path.name}.", suffix=".tmp"
-    )
+    try:
+        fd, tmp = tempfile.mkstemp(
+            dir=str(path.parent), prefix=f".{path.name}.", suffix=".tmp"
+        )
+    except OSError as exc:
+        raise ConfigError(f"could not write {path}: {exc}")
     try:
         os.fchmod(fd, 0o600)  # mkstemp is already 0600; belt and suspenders
         with os.fdopen(fd, "w") as f:  # buffered writer handles partial writes
             f.write(text)
         os.replace(tmp, path)  # atomic rename over the destination
+    except OSError as exc:  # disk full, permission denied, cross-device, etc.
+        _quiet_unlink(tmp)
+        raise ConfigError(f"could not write {path}: {exc}")
     except BaseException:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
+        _quiet_unlink(tmp)
         raise
+
+
+def _quiet_unlink(path) -> None:
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
 
 
 def validate_env_name(name: str) -> None:

@@ -28,7 +28,11 @@ def token_file(env_name: str) -> Path:
 def save_token(
     env_name: str, token: OAuthToken, expires_at: datetime, refresh_expires_at: datetime
 ) -> None:
-    config_store.ensure_dir(config_store.tokens_dir())
+    try:
+        path = token_file(env_name)  # may raise ValueError for an unsafe name
+    except ValueError as exc:
+        raise config_store.ConfigError(f"invalid environment for token cache: {exc}")
+    config_store.ensure_dir(config_store.tokens_dir())  # raises ConfigError on OSError
     payload = {
         "access_token": token.access_token,
         "refresh_token": token.refresh_token,
@@ -36,7 +40,9 @@ def save_token(
         "expires_at": expires_at.isoformat(),
         "refresh_expires_at": refresh_expires_at.isoformat(),
     }
-    config_store.write_private(token_file(env_name), json.dumps(payload, indent=2))
+    config_store.write_private(
+        path, json.dumps(payload, indent=2)
+    )  # ConfigError on OSError
 
 
 def load_token(env_name: str) -> Optional[dict]:

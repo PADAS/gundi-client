@@ -155,3 +155,8 @@ def test_delete_token_never_raises_on_oserror(monkeypatch):
     monkeypatch.setattr(pathlib.Path, "unlink", _boom)
     # Must swallow the OSError and report False, not raise a traceback.
     assert token_store.delete_token("prod") is False
+
+
+def test_save_token_unsafe_name_raises_config_error():
+    with pytest.raises(token_store.config_store.ConfigError):
+        token_store.save_token("../evil", FakeToken("AT"), _future(60), _future(60))

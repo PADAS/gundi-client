@@ -51,23 +51,23 @@ def login(
         typer.echo(f"Error: request failed: {exc}", err=True)
         raise typer.Exit(1)
 
-    token_store.save_token(
-        env_name,
-        client.cached_token,
-        client.cached_token_expires_at,
-        client.cached_token_refresh_expires_at,
-    )
-    # Persist a newly supplied username (non-secret) so future logins and
-    # commands treat this as a password-grant environment without the flag.
-    supplied = username or os.environ.get("GUNDI_USERNAME")
-    if supplied:
-        try:
+    try:
+        token_store.save_token(
+            env_name,
+            client.cached_token,
+            client.cached_token_expires_at,
+            client.cached_token_refresh_expires_at,
+        )
+        # Persist a newly supplied username (non-secret) so future logins and
+        # commands treat this as a password-grant environment without the flag.
+        supplied = username or os.environ.get("GUNDI_USERNAME")
+        if supplied:
             env = config_store.get_environment(env_name)
             if env.get("username") != supplied:
                 config_store.add_environment(env_name, {**env, "username": supplied})
-        except config_store.ConfigError as exc:
-            typer.echo(f"Error: {exc}", err=True)
-            raise typer.Exit(2)
+    except config_store.ConfigError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2)
     typer.echo(f"Authenticated. Token cached for '{env_name}'.")
 
 

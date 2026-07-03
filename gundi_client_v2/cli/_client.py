@@ -233,16 +233,23 @@ def run_command(
         # Persist a newly obtained or rotated token. Runs on both success and
         # error paths: the token may have been refreshed (and the refresh token
         # rotated) before a later API/transport failure, and losing it would
-        # break transparent refresh on the next invocation.
+        # break transparent refresh on the next invocation. Best-effort: it runs
+        # in a finally, so a cache-write failure must warn, never raise (which
+        # would mask the command's real outcome/exit code).
         if client.cached_token and (
             not had_token or client.cached_token.access_token != before
         ):
-            token_store.save_token(
-                env_name,
-                client.cached_token,
-                client.cached_token_expires_at,
-                client.cached_token_refresh_expires_at,
-            )
+            try:
+                token_store.save_token(
+                    env_name,
+                    client.cached_token,
+                    client.cached_token_expires_at,
+                    client.cached_token_refresh_expires_at,
+                )
+            except config_store.ConfigError as exc:
+                typer.echo(
+                    f"Warning: could not cache token for '{env_name}': {exc}", err=True
+                )
 
     try:
         result = asyncio.run(_runner())

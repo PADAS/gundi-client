@@ -223,3 +223,20 @@ def test_login_username_persist_error_exits_2_clean(monkeypatch, auth_token_resp
         result = runner.invoke(app, ["auth", "login", "--username", "me@example.com"])
     assert result.exit_code == 2, result.output
     assert "Traceback" not in result.output
+
+
+def test_login_token_cache_failure_exits_2(monkeypatch, auth_token_response):
+    _add_cc_env()
+    monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
+
+    def _boom(*a, **k):
+        raise config_store.ConfigError("cannot write token")
+
+    monkeypatch.setattr(token_store, "save_token", _boom)
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        result = runner.invoke(app, ["auth", "login"])
+    assert result.exit_code == 2, result.output
+    assert "Traceback" not in result.output

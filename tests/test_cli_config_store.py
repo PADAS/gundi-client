@@ -135,3 +135,27 @@ def test_write_private_atomic_no_leftover_temp_and_correct_content():
         p.name for p in config_store.config_dir().iterdir() if p.name != "x.json"
     ]
     assert leftovers == []
+
+
+def test_ensure_dir_oserror_raises_config_error(monkeypatch):
+    import pathlib
+
+    def _boom(self, *a, **k):
+        raise OSError("read-only fs")
+
+    monkeypatch.setattr(pathlib.Path, "mkdir", _boom)
+    with pytest.raises(config_store.ConfigError):
+        config_store.ensure_dir(config_store.config_dir())
+
+
+def test_write_private_oserror_raises_config_error(monkeypatch):
+    import tempfile as _tempfile
+
+    config_store.config_dir().mkdir(parents=True, exist_ok=True)
+
+    def _boom(*a, **k):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(_tempfile, "mkstemp", _boom)
+    with pytest.raises(config_store.ConfigError):
+        config_store.write_private(config_store.config_file(), "{}")

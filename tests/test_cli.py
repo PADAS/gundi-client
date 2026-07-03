@@ -1095,3 +1095,46 @@ def test_list_env_missing_required_key_exits_2(tmp_path, monkeypatch):
     result = runner.invoke(app, ["integrations", "list"])
     assert result.exit_code == 2, result.output
     assert "Traceback" not in result.output
+
+
+def test_run_command_token_persist_failure_is_best_effort(
+    tmp_path, monkeypatch, auth_token_response, destination_integration_details
+):
+    # If caching a refreshed token fails, the command still succeeds (exit 0)
+    # with a warning — the finally-persist must not mask the primary outcome.
+    from datetime import datetime, timedelta, timezone
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+    config_store.add_environment(
+        "prod", {"base_url": BASE_URL, "client_id": "c", "token_url": TOKEN_URL}
+    )
+    config_store.set_active("prod")
+
+    class _Tok:
+        access_token = "OLD"
+        refresh_token = "R"
+        token_type = "Bearer"
+
+    past = datetime.now(timezone.utc) - timedelta(minutes=1)
+    future = datetime.now(timezone.utc) + timedelta(hours=12)
+    token_store.save_token("prod", _Tok(), past, future)  # real setup save
+
+    def _boom(*a, **k):
+        raise config_store.ConfigError("cannot cache")
+
+    monkeypatch.setattr(token_store, "save_token", _boom)  # subsequent saves fail
+
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 0, result.output
+    assert destination_integration_details["id"] in result.output
+    assert "Traceback" not in result.output
