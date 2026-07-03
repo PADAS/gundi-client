@@ -37,8 +37,8 @@ def ensure_dir(path: Path) -> None:
 def write_private(path: Path, text: str) -> None:
     """Atomically write ``text`` to a user-private (0600) file.
 
-    Writes to a 0600 temp file in the same directory, then ``os.replace()`` s it
-    into place — an atomic swap on POSIX. A crash mid-write leaves the previous
+    Writes to a 0600 temp file in the same directory, then swaps it into place
+    with ``os.replace()`` — an atomic rename on POSIX. A crash mid-write leaves the previous
     good file intact (never a truncated/partial config or token), and the file
     is never briefly world-readable (``mkstemp`` creates it 0600).
     """
