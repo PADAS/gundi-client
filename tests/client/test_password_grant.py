@@ -48,7 +48,9 @@ def _body(route, index=-1):
 async def test_password_grant_payload(auth_token_response):
     client = _public_password_client()
     async with respx.mock as mock:
-        route = mock.post(TOKEN_URL).respond(status_code=httpx.codes.OK, json=auth_token_response)
+        route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
         await client.get_access_token()
         params = _body(route)
         assert params["grant_type"] == ["password"]
@@ -63,7 +65,9 @@ async def test_audience_omitted_when_unset(auth_token_response):
     client = _confidential_client()
     client.audience = None
     async with respx.mock as mock:
-        route = mock.post(TOKEN_URL).respond(status_code=httpx.codes.OK, json=auth_token_response)
+        route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
         await client.get_access_token()
         assert "audience" not in _body(route)
 
@@ -72,7 +76,9 @@ async def test_audience_omitted_when_unset(auth_token_response):
 async def test_audience_included_when_set(auth_token_response):
     client = _confidential_client(oauth_audience="my-portal")
     async with respx.mock as mock:
-        route = mock.post(TOKEN_URL).respond(status_code=httpx.codes.OK, json=auth_token_response)
+        route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
         await client.get_access_token()
         assert _body(route)["audience"] == ["my-portal"]
 
@@ -81,7 +87,9 @@ async def test_audience_included_when_set(auth_token_response):
 async def test_scope_override(auth_token_response):
     client = _confidential_client(oauth_scope="openid profile")
     async with respx.mock as mock:
-        route = mock.post(TOKEN_URL).respond(status_code=httpx.codes.OK, json=auth_token_response)
+        route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
         await client.get_access_token()
         assert _body(route)["scope"] == ["openid profile"]
 
@@ -92,7 +100,10 @@ async def test_error_body_surfaced(auth_token_response):
     async with respx.mock as mock:
         mock.post(TOKEN_URL).respond(
             status_code=401,
-            json={"error": "invalid_client", "error_description": "Invalid client credentials"},
+            json={
+                "error": "invalid_client",
+                "error_description": "Invalid client credentials",
+            },
         )
         with pytest.raises(errors.AuthenticationError) as exc:
             await client.get_access_token()
@@ -104,7 +115,9 @@ async def test_error_body_surfaced(auth_token_response):
 async def test_refresh_grant_used_and_password_not_resent(auth_token_response):
     client = _public_password_client()
     async with respx.mock as mock:
-        route = mock.post(TOKEN_URL).respond(status_code=httpx.codes.OK, json=auth_token_response)
+        route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
         await client.get_access_token()
         await client.get_access_token(force_refresh_token=True)
         assert route.call_count == 2
@@ -123,7 +136,9 @@ async def test_refresh_failure_falls_back_to_full_auth(auth_token_response):
         route = mock.post(TOKEN_URL)
         route.side_effect = [
             httpx.Response(httpx.codes.OK, json=auth_token_response),
-            httpx.Response(400, json={"error": "invalid_grant", "error_description": "expired"}),
+            httpx.Response(
+                400, json={"error": "invalid_grant", "error_description": "expired"}
+            ),
             httpx.Response(httpx.codes.OK, json=auth_token_response),
         ]
         await client.get_access_token()
@@ -135,7 +150,9 @@ async def test_refresh_failure_falls_back_to_full_auth(auth_token_response):
 
 @pytest.mark.asyncio
 async def test_no_credentials_raises():
-    client = GundiClient(oauth_token_url=TOKEN_URL, base_url="https://api.fakeportal.com")
+    client = GundiClient(
+        oauth_token_url=TOKEN_URL, base_url="https://api.fakeportal.com"
+    )
     client.client_id = None
     client.client_secret = None
     client.username = None
@@ -148,11 +165,15 @@ async def test_no_credentials_raises():
 async def test_full_auth_when_token_and_refresh_expired(auth_token_response):
     client = _public_password_client()
     async with respx.mock as mock:
-        route = mock.post(TOKEN_URL).respond(status_code=httpx.codes.OK, json=auth_token_response)
+        route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
         await client.get_access_token()  # initial password grant, caches a refresh token
         # Simulate BOTH the access token and the refresh token having expired:
         client.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
-        client.cached_token_refresh_expires_at = datetime.min.replace(tzinfo=timezone.utc)
+        client.cached_token_refresh_expires_at = datetime.min.replace(
+            tzinfo=timezone.utc
+        )
         await client.get_access_token()  # must skip refresh and do a full password grant
         assert route.call_count == 2
         assert _body(route, 1)["grant_type"] == ["password"]
@@ -176,8 +197,10 @@ async def test_confidential_refresh_sends_client_secret(auth_token_response):
     # A confidential (client_credentials) client MUST send its client_secret on the refresh grant.
     client = _confidential_client()
     async with respx.mock as mock:
-        route = mock.post(TOKEN_URL).respond(status_code=httpx.codes.OK, json=auth_token_response)
-        await client.get_access_token()                          # initial client_credentials grant
+        route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        await client.get_access_token()  # initial client_credentials grant
         await client.get_access_token(force_refresh_token=True)  # refresh grant
         assert route.call_count == 2
         second = _body(route, 1)
@@ -223,8 +246,12 @@ async def test_refresh_preserves_cached_refresh_token_when_omitted(auth_token_re
     async with respx.mock as mock:
         route = mock.post(TOKEN_URL)
         route.side_effect = [
-            httpx.Response(httpx.codes.OK, json=auth_token_response),       # initial password grant
-            httpx.Response(httpx.codes.OK, json=partial_refresh_response),  # refresh: no refresh_token
+            httpx.Response(
+                httpx.codes.OK, json=auth_token_response
+            ),  # initial password grant
+            httpx.Response(
+                httpx.codes.OK, json=partial_refresh_response
+            ),  # refresh: no refresh_token
         ]
         await client.get_access_token()
         original_refresh_token = client.cached_token.refresh_token
@@ -286,7 +313,9 @@ async def test_get_access_token_client_credentials_payload(auth_token_response):
 
 
 @pytest.mark.asyncio
-async def test_get_access_token_client_credentials_with_audience_and_scope(auth_token_response):
+async def test_get_access_token_client_credentials_with_audience_and_scope(
+    auth_token_response,
+):
     token_url = "https://idp.example.com/oauth/token"
     async with respx.mock as mock:
         route = mock.post(token_url).respond(
@@ -310,7 +339,8 @@ async def test_get_access_token_client_credentials_with_audience_and_scope(auth_
 @pytest.mark.asyncio
 async def test_get_access_token_client_credentials_refreshless_response_parses():
     """RFC 6749 §4.4.3: client_credentials response SHOULD NOT include refresh_token.
-    The function backfills empty refresh fields so OAuthToken (which requires them) still parses."""
+    The function backfills empty refresh fields so OAuthToken (which requires them) still parses.
+    """
     refreshless = {
         "access_token": "cc-token-value",
         "expires_in": 1800,
@@ -345,7 +375,9 @@ async def test_get_access_token_client_credentials_explicit_null_refresh_fields(
     }
     token_url = "https://idp.example.com/oauth/token"
     async with respx.mock as mock:
-        mock.post(token_url).respond(status_code=httpx.codes.OK, json=null_refresh_response)
+        mock.post(token_url).respond(
+            status_code=httpx.codes.OK, json=null_refresh_response
+        )
         async with httpx.AsyncClient() as session:
             token = await auth.get_access_token_client_credentials(
                 session,
@@ -364,16 +396,20 @@ def test_store_token_refreshless_disables_refresh_tracking():
     must set cached_token_refresh_expires_at to datetime.min so the refresh-grant branch
     in _refresh_token is skipped on the next call."""
     client = _confidential_client()
-    refreshless = OAuthToken.parse_obj({
-        "access_token": "fresh-access",
-        "expires_in": 1800,
-        "refresh_token": "",
-        "refresh_expires_in": 0,
-        "token_type": "Bearer",
-    })
+    refreshless = OAuthToken.parse_obj(
+        {
+            "access_token": "fresh-access",
+            "expires_in": 1800,
+            "refresh_token": "",
+            "refresh_expires_in": 0,
+            "token_type": "Bearer",
+        }
+    )
     client._store_token(refreshless)
     assert client.cached_token.access_token == "fresh-access"
-    assert client.cached_token_refresh_expires_at == datetime.min.replace(tzinfo=timezone.utc)
+    assert client.cached_token_refresh_expires_at == datetime.min.replace(
+        tzinfo=timezone.utc
+    )
     # access-token expiry should still be set to a future moment via the buffer math
     assert client.cached_token_expires_at > datetime.now(tz=timezone.utc)
 
@@ -385,21 +421,26 @@ def test_store_token_refresh_not_rotated_preserves_existing_expiry():
     client = _confidential_client()
     sentinel = datetime.now(tz=timezone.utc) + timedelta(hours=12)
     client.cached_token_refresh_expires_at = sentinel
-    partial = OAuthToken.parse_obj({
-        "access_token": "new-access",
-        "expires_in": 1800,
-        "refresh_token": "",
-        "refresh_expires_in": 0,
-        "token_type": "Bearer",
-    })
+    partial = OAuthToken.parse_obj(
+        {
+            "access_token": "new-access",
+            "expires_in": 1800,
+            "refresh_token": "",
+            "refresh_expires_in": 0,
+            "token_type": "Bearer",
+        }
+    )
     client._store_token(partial, refresh_rotated=False)
     assert client.cached_token_refresh_expires_at is sentinel
 
 
 @pytest.mark.asyncio
-async def test_confidential_refresh_after_client_credentials_falls_back_to_full_auth(auth_token_response):
+async def test_confidential_refresh_after_client_credentials_falls_back_to_full_auth(
+    auth_token_response,
+):
     """A client_credentials initial response that lacks refresh_token must not be retried
-    on the refresh-token path; the next force_refresh must re-authenticate via client_credentials."""
+    on the refresh-token path; the next force_refresh must re-authenticate via client_credentials.
+    """
     client_credentials_response = {
         "access_token": "cc-access-token",
         "expires_in": auth_token_response["expires_in"],
@@ -410,9 +451,11 @@ async def test_confidential_refresh_after_client_credentials_falls_back_to_full_
         route = mock.post(TOKEN_URL).respond(
             status_code=httpx.codes.OK, json=client_credentials_response
         )
-        await client.get_access_token()                          # initial client_credentials
+        await client.get_access_token()  # initial client_credentials
         # Mechanism: _store_token recognizes the refreshless response and disables refresh tracking.
-        assert client.cached_token_refresh_expires_at == datetime.min.replace(tzinfo=timezone.utc)
+        assert client.cached_token_refresh_expires_at == datetime.min.replace(
+            tzinfo=timezone.utc
+        )
         await client.get_access_token(force_refresh_token=True)  # forced re-auth
         assert route.call_count == 2
         # Both calls must be client_credentials — refresh path was disabled by the empty refresh_token.

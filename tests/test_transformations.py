@@ -16,7 +16,6 @@ from gundi_core.schemas.v2 import (
     TextMessage,
 )
 
-
 PROVIDER_ID = "11111111-1111-1111-1111-111111111111"
 DESTINATION_ID = "22222222-2222-2222-2222-222222222222"
 OTHER_DESTINATION_ID = "33333333-3333-3333-3333-333333333333"
@@ -191,7 +190,9 @@ def test_unknown_target_field_logs_and_skips(observation, caplog):
             destination_id=DESTINATION_ID,
         )
     assert not hasattr(observation, "provider_key")
-    assert any("provider_key" in r.message and "skipping" in r.message for r in caplog.records)
+    assert any(
+        "provider_key" in r.message and "skipping" in r.message for r in caplog.records
+    )
 
 
 def test_rule_for_different_destination_is_ignored(event):

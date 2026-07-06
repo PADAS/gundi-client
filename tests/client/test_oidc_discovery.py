@@ -151,7 +151,9 @@ async def test_explicit_oauth_token_url_skips_discovery(auth_token_response):
 async def test_oauth_issuer_only_triggers_discovery(auth_token_response):
     issuer = "https://idp.example.com/realms/dev"
     discovery_url = f"{issuer}/.well-known/openid-configuration"
-    discovered_token_url = "https://idp.example.com/realms/dev/protocol/openid-connect/token"
+    discovered_token_url = (
+        "https://idp.example.com/realms/dev/protocol/openid-connect/token"
+    )
     # Pass oauth_token_url=None explicitly so any OAUTH_TOKEN_URL env var
     # cannot leak through settings.OAUTH_TOKEN_URL.
     client = GundiClient(
@@ -187,17 +189,24 @@ async def test_no_token_url_or_issuer_raises():
     client.oauth_issuer = None
     with pytest.raises(errors.AuthenticationError) as exc:
         await client.get_access_token()
-    assert str(exc.value) == "No token URL configured. Set oauth_token_url or oauth_issuer."
+    assert (
+        str(exc.value)
+        == "No token URL configured. Set oauth_token_url or oauth_issuer."
+    )
 
 
 @pytest.mark.asyncio
-async def test_refresh_branch_uses_discovered_url_after_initial_auth(auth_token_response):
+async def test_refresh_branch_uses_discovered_url_after_initial_auth(
+    auth_token_response,
+):
     """Regression: in the issuer-only flow, the refresh branch fires after the
     access token expires; it must reuse the URL discovered during the initial auth
     (served from auth._DISCOVERY_CACHE on the second call), not pass None."""
     issuer = "https://idp.example.com/realms/dev"
     discovery_url = f"{issuer}/.well-known/openid-configuration"
-    discovered_token_url = "https://idp.example.com/realms/dev/protocol/openid-connect/token"
+    discovered_token_url = (
+        "https://idp.example.com/realms/dev/protocol/openid-connect/token"
+    )
     client = GundiClient(
         oauth_token_url=None,
         oauth_issuer=issuer,
@@ -214,7 +223,7 @@ async def test_refresh_branch_uses_discovered_url_after_initial_auth(auth_token_
         token_route = mock.post(discovered_token_url).respond(
             status_code=httpx.codes.OK, json=auth_token_response
         )
-        await client.get_access_token()                       # initial password grant via discovery
+        await client.get_access_token()  # initial password grant via discovery
         await client.get_access_token(force_refresh_token=True)  # refresh branch fires
         # Discovery happened exactly once; both token requests went to the discovered URL.
         assert discovery_route.call_count == 1
@@ -225,12 +234,16 @@ async def test_refresh_branch_uses_discovered_url_after_initial_auth(auth_token_
 
 
 @pytest.mark.asyncio
-async def test_clear_discovery_cache_forces_rediscovery_for_existing_client(auth_token_response):
+async def test_clear_discovery_cache_forces_rediscovery_for_existing_client(
+    auth_token_response,
+):
     """After clear_discovery_cache(), a client that previously discovered must rediscover
     on its next auth attempt — i.e. the cache invalidation reaches the live client."""
     issuer = "https://idp.example.com/realms/dev"
     discovery_url = f"{issuer}/.well-known/openid-configuration"
-    discovered_token_url = "https://idp.example.com/realms/dev/protocol/openid-connect/token"
+    discovered_token_url = (
+        "https://idp.example.com/realms/dev/protocol/openid-connect/token"
+    )
     client = GundiClient(
         oauth_token_url=None,
         oauth_issuer=issuer,
@@ -247,11 +260,13 @@ async def test_clear_discovery_cache_forces_rediscovery_for_existing_client(auth
         mock.post(discovered_token_url).respond(
             status_code=httpx.codes.OK, json=auth_token_response
         )
-        await client.get_access_token()                       # initial auth via discovery
+        await client.get_access_token()  # initial auth via discovery
         assert discovery_route.call_count == 1
-        auth.clear_discovery_cache()                          # operator invalidates
-        await client.get_access_token(force_refresh_token=True)  # next auth on the SAME client
-        assert discovery_route.call_count == 2                # must have re-discovered
+        auth.clear_discovery_cache()  # operator invalidates
+        await client.get_access_token(
+            force_refresh_token=True
+        )  # next auth on the SAME client
+        assert discovery_route.call_count == 2  # must have re-discovered
 
 
 @pytest.mark.asyncio

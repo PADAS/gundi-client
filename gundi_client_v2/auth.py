@@ -2,10 +2,12 @@ import logging
 
 import httpx
 from gundi_core.schemas import OAuthToken
+from pydantic import ValidationError
 
 from .errors import AuthenticationError
 
 logger = logging.getLogger(__name__)
+
 
 def _extract_oauth_error(response: httpx.Response) -> str:
     """Build a detail string from an RFC 6749 §5.2 token-error response."""
@@ -26,19 +28,42 @@ def _extract_oauth_error(response: httpx.Response) -> str:
     return f"Token request failed: HTTP {status} ({error})"
 
 
-async def _post_token(session: httpx.AsyncClient, oauth_token_url: str, payload: dict) -> dict:
+async def _post_token(
+    session: httpx.AsyncClient, oauth_token_url: str, payload: dict
+) -> dict:
     """POST to the token endpoint; raise AuthenticationError on non-2xx."""
     response = await session.post(oauth_token_url, data=payload)
     try:
         response.raise_for_status()
     except httpx.HTTPStatusError as e:
         raise AuthenticationError(_extract_oauth_error(e.response)) from e
-    return response.json()
+    try:
+        body = response.json()
+    except ValueError as e:  # 2xx with a non-JSON body (e.g. a captive portal)
+        raise AuthenticationError(
+            f"Token endpoint {oauth_token_url} returned a non-JSON "
+            f"{response.status_code} response"
+        ) from e
+    if not isinstance(body, dict):  # 2xx JSON that isn't an object (e.g. [] or "ok")
+        raise AuthenticationError(
+            f"Token endpoint {oauth_token_url} returned an unexpected "
+            f"{response.status_code} response (not a JSON object)"
+        )
+    return body
 
 
-async def _token_request(session: httpx.AsyncClient, oauth_token_url: str, payload: dict) -> OAuthToken:
+async def _token_request(
+    session: httpx.AsyncClient, oauth_token_url: str, payload: dict
+) -> OAuthToken:
     """Thin wrapper around _post_token that coerces the response dict to OAuthToken."""
-    return OAuthToken.parse_obj(await _post_token(session, oauth_token_url, payload))
+    try:
+        return OAuthToken.parse_obj(
+            await _post_token(session, oauth_token_url, payload)
+        )
+    except ValidationError as e:  # 2xx JSON missing the expected token fields
+        raise AuthenticationError(
+            f"Token endpoint {oauth_token_url} returned an unexpected response: {e}"
+        ) from e
 
 
 # NOTE: The Resource Owner Password Credentials (ROPC) grant is discouraged by OAuth 2.1
@@ -75,7 +100,9 @@ async def get_access_token_password_grant(
     Raises:
         AuthenticationError: If the token endpoint returns a non-2xx response.
     """
-    logger.debug(f"get_access_token (password grant) from {oauth_token_url} for user: {username}")
+    logger.debug(
+        f"get_access_token (password grant) from {oauth_token_url} for user: {username}"
+    )
     payload = {
         "client_id": client_id,
         "username": username,
@@ -119,7 +146,9 @@ async def refresh_access_token(
     Raises:
         AuthenticationError: If the token endpoint returns a non-2xx response.
     """
-    logger.debug(f"refresh_access_token from {oauth_token_url} using client_id: {client_id}")
+    logger.debug(
+        f"refresh_access_token from {oauth_token_url} using client_id: {client_id}"
+    )
     payload = {
         "client_id": client_id,
         "grant_type": "refresh_token",
@@ -129,11 +158,22 @@ async def refresh_access_token(
     if client_secret:
         payload["client_secret"] = client_secret
     body = await _post_token(session, oauth_token_url, payload)
-    refresh_rotated = "refresh_token" in body
-    # Backfill missing refresh fields before constructing OAuthToken (which requires them).
-    body.setdefault("refresh_token", fallback.refresh_token)
-    body.setdefault("refresh_expires_in", fallback.refresh_expires_in)
-    return OAuthToken.parse_obj(body), refresh_rotated
+    # A rotation means the IdP issued a new, non-empty refresh token. A missing,
+    # null, or empty value is NOT a rotation — reuse the prior refresh token and
+    # its lifetime (OAuthToken requires both fields and rejects null).
+    new_refresh_token = body.get("refresh_token")
+    refresh_rotated = bool(new_refresh_token)
+    if not new_refresh_token:
+        body["refresh_token"] = fallback.refresh_token
+        body["refresh_expires_in"] = fallback.refresh_expires_in
+    elif body.get("refresh_expires_in") is None:
+        body["refresh_expires_in"] = fallback.refresh_expires_in
+    try:
+        return OAuthToken.parse_obj(body), refresh_rotated
+    except ValidationError as e:  # 2xx JSON missing the expected token fields
+        raise AuthenticationError(
+            f"Token endpoint {oauth_token_url} returned an unexpected response: {e}"
+        ) from e
 
 
 async def get_access_token_client_credentials(
@@ -170,7 +210,9 @@ async def get_access_token_client_credentials(
     Raises:
         AuthenticationError: If the token endpoint returns a non-2xx response.
     """
-    logger.debug(f"get_access_token (client_credentials) from {oauth_token_url} using client_id: {client_id}")
+    logger.debug(
+        f"get_access_token (client_credentials) from {oauth_token_url} using client_id: {client_id}"
+    )
     payload = {
         "client_id": client_id,
         "client_secret": client_secret,
@@ -234,9 +276,7 @@ async def discover_token_endpoint(session: httpx.AsyncClient, issuer: str) -> st
         response = await session.get(discovery_url)
         response.raise_for_status()
     except httpx.HTTPError as e:
-        raise AuthenticationError(
-            f"OIDC discovery failed for {issuer}: {e}"
-        ) from e
+        raise AuthenticationError(f"OIDC discovery failed for {issuer}: {e}") from e
     try:
         body = response.json()
     except ValueError as e:

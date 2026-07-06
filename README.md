@@ -324,6 +324,98 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+## Command-Line Interface
+
+An optional `gundi` command wraps `GundiClient` for common integration tasks. It
+ships in the `cli` extra (keeps Typer out of the core install):
+
+```bash
+pip install "gundi-client-v2[cli]"
+```
+
+Authentication reuses the same environment variables as the library (see
+[Configuration](#configuration)). The CLI needs `GUNDI_API_BASE_URL`,
+`OAUTH_CLIENT_ID`, plus:
+
+- **Credentials** — either `GUNDI_USERNAME` + `GUNDI_PASSWORD` (password grant,
+  for developers) or `OAUTH_CLIENT_SECRET` (client-credentials, for services).
+- **Token endpoint** — `OAUTH_ISSUER` (preferred; resolved via OIDC discovery)
+  or an explicit `OAUTH_TOKEN_URL`.
+
+`OAUTH_AUDIENCE` is forwarded when set. A `.env` file in the working directory
+is loaded automatically.
+
+```bash
+# List all integrations (table: ID, NAME, TYPE, ENABLED, STATUS)
+gundi integrations list
+
+# Filter by integration type, by enabled state, and emit JSON for piping to jq
+gundi integrations list --type earth_ranger
+gundi integrations list --enabled       # only enabled (--disabled for only disabled)
+gundi integrations list --status healthy   # by health status (healthy/unhealthy/disabled)
+gundi integrations list --type earth_ranger --enabled --status unhealthy
+gundi integrations list --json | jq '.[].name'
+
+# List the available integration types (table: NAME, SLUG, ID)
+gundi integrations types
+
+# Read the latest activity logs for an integration or a whole type
+gundi integrations logs 338225f3-91f9-4fe1-b013-353a229ce504
+gundi integrations logs --type earth_ranger --limit 100
+# Filter logs by level (matches that level and above), origin, and a date range
+gundi integrations logs 338225f3-91f9-4fe1-b013-353a229ce504 --level error
+gundi integrations logs --type earth_ranger --level warning --origin dispatcher \
+  --since 2026-07-01 --until 2026-07-06
+
+# Enable / disable an integration by id
+gundi integrations enable  338225f3-91f9-4fe1-b013-353a229ce504
+gundi integrations disable 338225f3-91f9-4fe1-b013-353a229ce504
+```
+
+Run `gundi --help` or `gundi integrations --help` for the full command list.
+
+**Exit codes:** `0` success · `1` API or authentication error (a clean
+`Error: …` message, no traceback) · `2` missing or invalid configuration.
+
+### Named environments
+
+Instead of exporting auth env vars each time, save named environments and switch
+between them. Config lives in `~/.config/gundi/config.json` (mode 0600);
+**secrets are never written** — only the OAuth tokens derived from them, cached
+per environment under `~/.config/gundi/tokens/`.
+
+```bash
+# Add environments (connection config only — no secrets)
+gundi env add prod --base-url https://api.gundi.example.com \
+  --client-id my-client --issuer https://auth.example.com/realms/prod
+gundi env add dev  --base-url https://api.dev.example.com \
+  --client-id my-client --issuer https://auth.example.com/realms/dev --username me@example.com
+
+gundi env use prod          # set the active environment
+gundi env list              # '*' marks the active one
+gundi env show prod
+
+# Authenticate once; the token is cached and reused by later commands.
+# The secret/password is read from env (OAUTH_CLIENT_SECRET / GUNDI_PASSWORD)
+# or prompted (hidden) — and never stored.
+gundi auth login                              # grant chosen by the env's config
+gundi auth login --username me@example.com    # force the password grant
+gundi auth status
+gundi integrations list     # reuses the cached token; no re-auth
+
+# Override the active environment per command:
+gundi integrations list --profile dev
+gundi auth logout
+```
+
+**Environment selection precedence:** `--profile` flag → `GUNDI_PROFILE` env var
+→ stored active environment → raw `OAUTH_*` / `GUNDI_*` env vars (the original
+behavior, used when no environments are configured).
+
+**Token refresh:** password-grant environments refresh transparently using the
+cached refresh token. Client-credentials environments (no refresh token) require
+`gundi auth login` again once the access token expires.
+
 ## Error Handling
 
 The client raises specific exceptions for different failure modes:

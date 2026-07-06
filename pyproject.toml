@@ -26,6 +26,16 @@ docs = [
     "mkdocs-exclude>=1.0",
     "mkdocstrings[python]>=0.24",
 ]
+# The `gundi` console command. Kept out of the core install so a plain
+# `import gundi_client_v2` never requires Typer; install with
+# `pip install gundi-client-v2[cli]`.
+cli = [
+    "typer>=0.12",
+]
+
+# Console entry point for the optional CLI (requires the `cli` extra).
+[project.scripts]
+gundi = "gundi_client_v2.cli:app"
 
 [dependency-groups]
 dev = [
@@ -33,6 +43,7 @@ dev = [
     "black>=23.1",
     "pytest>=7.2",
     "pytest-asyncio>=0.20",
+    "typer>=0.12",
 ]
 
 [tool.hatch.version]

@@ -78,9 +78,7 @@ def get_sender_kwargs():
     """Build GundiDataSenderClient kwargs from environment, validating required settings."""
     sensors_api_base_url = os.environ.get("SENSORS_API_BASE_URL")
     if not sensors_api_base_url:
-        raise ValueError(
-            "Missing required environment variable: SENSORS_API_BASE_URL"
-        )
+        raise ValueError("Missing required environment variable: SENSORS_API_BASE_URL")
     return {"sensors_api_base_url": sensors_api_base_url}
 
 
@@ -111,9 +109,7 @@ async def main():
         # 2. Get the integration's API key
         api_key = await client.get_integration_api_key(integration.id)
         if not api_key:
-            raise ValueError(
-                f"Integration {integration_name!r} has no API key."
-            )
+            raise ValueError(f"Integration {integration_name!r} has no API key.")
 
     # 3. Send observations using GundiDataSenderClient
     sender = GundiDataSenderClient(

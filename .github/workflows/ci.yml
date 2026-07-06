@@ -1,0 +1,66 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [v2, main]
+
+# Only read access is needed to run tests/lint.
+permissions:
+  contents: read
+
+# Cancel superseded runs: a new push to a PR/branch stops the previous run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # Pinned (not `ubuntu-latest`) so a runner refresh can't silently change
+    # the environment under the test suite, matching release.yml.
+    runs-on: ubuntu-24.04
+    strategy:
+      # Report every Python version's result rather than stopping at the first
+      # failure — useful for seeing which specific versions break.
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    name: test (py${{ matrix.python }})
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv (with the matrix Python)
+        # python-version makes setup-uv install this CPython AND makes it the
+        # interpreter `uv sync` / `uv run` resolve to, so each matrix leg tests
+        # the intended version regardless of what's first on the runner PATH.
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+
+      - name: Install dependencies
+        # uv sync installs the project plus the `dev` dependency group.
+        run: uv sync
+
+      - name: Run tests
+        run: uv run pytest -q
+
+  lint:
+    # Formatting is version-independent, so run Black once instead of per-matrix.
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Check formatting (black)
+        run: uv run black --check .
