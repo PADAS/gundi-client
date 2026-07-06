@@ -1822,10 +1822,54 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiClient.get_integration_types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_integration_types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiClient.get_activity_logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_activity_logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#gundi_client_v2.client.GundiClient.get_integration_details" class="md-nav__link">
     <span class="md-ellipsis">
       
         get_integration_details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiClient.update_integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update_integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiClient.update_integration_configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update_integration_configuration
       
     </span>
   </a>
@@ -2255,10 +2299,54 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiClient.get_integration_types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_integration_types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiClient.get_activity_logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_activity_logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#gundi_client_v2.client.GundiClient.get_integration_details" class="md-nav__link">
     <span class="md-ellipsis">
       
         get_integration_details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiClient.update_integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update_integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gundi_client_v2.client.GundiClient.update_integration_configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update_integration_configuration
       
     </span>
   </a>
@@ -3845,7 +3933,8 @@ first page only, this method is an async generator that follows the
             <td>
               <div class="doc-md-description">
                 <p>Optional dict of query parameters for the first
-request. Common keys: <code>type</code> (integration type slug),
+request. Common keys: <code>type</code> (integration type <strong>UUID</strong>,
+not the slug — resolve a slug via <code>get_integration_types</code>),
 <code>owner</code> (organization ID), <code>search</code> (substring match).
 Subsequent page requests use the cursor embedded in the
 <code>next</code> URL and ignore this dict.</p>
@@ -3885,6 +3974,251 @@ Subsequent page requests use the cursor embedded in the
             <td>
               <div class="doc-md-description">
                 <p>pages.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (gundi_client_v2.errors.AuthenticationError)" href="../errors/#gundi_client_v2.errors.AuthenticationError">AuthenticationError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the OAuth token request fails.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="GundiAPIError (gundi_client_v2.errors.GundiAPIError)" href="../errors/#gundi_client_v2.errors.GundiAPIError">GundiAPIError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns a 4xx/5xx response on any
+page request.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gundi_client_v2.client.GundiClient.get_integration_types" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_integration_types</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#gundi_client_v2.client.GundiClient.get_integration_types" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_integration_types</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncGenerator</span><span class="p">[</span><span class="n">IntegrationType</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Iterate over all IntegrationTypes, walking pagination automatically.</p>
+<p>Mirrors <code>get_integrations</code>: an async generator that follows the
+<code>next</code> cursor until all pages are exhausted. Useful for resolving an
+integration type slug (<code>IntegrationType.value</code>) to its <code>id</code> for the
+<code>type</code> filter on <code>get_integrations</code>.</p>
+<p>Usage::</p>
+<div class="highlight"><pre><span></span><code>async for itype in client.get_integration_types():
+    print(itype.value, itype.id)
+</code></pre></div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>params</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dict of query parameters for the first request.
+Subsequent page requests use the cursor embedded in the
+<code>next</code> URL and ignore this dict.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Yields:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.AsyncGenerator">AsyncGenerator</span>[<span title="gundi_core.schemas.v2.IntegrationType">IntegrationType</span>, None]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>IntegrationType</code> objects across all pages.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (gundi_client_v2.errors.AuthenticationError)" href="../errors/#gundi_client_v2.errors.AuthenticationError">AuthenticationError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the OAuth token request fails.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="GundiAPIError (gundi_client_v2.errors.GundiAPIError)" href="../errors/#gundi_client_v2.errors.GundiAPIError">GundiAPIError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns a 4xx/5xx response on any
+page request.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gundi_client_v2.client.GundiClient.get_activity_logs" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_activity_logs</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#gundi_client_v2.client.GundiClient.get_activity_logs" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_activity_logs</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncGenerator</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Iterate over activity logs, walking pagination automatically.</p>
+<p>Logs are returned newest-first (the API orders by <code>-created_at</code>).
+<code>gundi_core</code> has no ActivityLog schema, so each entry is yielded as a
+raw <code>dict</code> rather than a parsed model.</p>
+<p>Usage::</p>
+<div class="highlight"><pre><span></span><code>async for log in client.get_activity_logs(params={&quot;integration&quot;: id}):
+    print(log[&quot;created_at&quot;], log[&quot;value&quot;])
+</code></pre></div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>params</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dict of query parameters for the first request.
+Common keys: <code>integration</code> (integration id), <code>integration__in</code>
+(comma-separated ids), <code>log_level</code>, <code>log_type</code>, <code>from_date</code>,
+<code>to_date</code>. Subsequent page requests use the cursor embedded in
+the <code>next</code> URL and ignore this dict.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Yields:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.AsyncGenerator">AsyncGenerator</span>[<span title="dict">dict</span>, None]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>dict</code> log entries across all pages, newest first.</p>
               </div>
             </td>
           </tr>
@@ -4032,6 +4366,342 @@ page request.</p>
                 <p>If the API returns a 4xx/5xx response (e.g.
 404 if the integration does not exist or is not
 accessible).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gundi_client_v2.client.GundiClient.update_integration" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">update_integration</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#gundi_client_v2.client.GundiClient.update_integration" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">update_integration</span><span class="p">(</span><span class="n">integration_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Integration</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Partially update an Integration via HTTP PATCH.</p>
+<p>Only the fields present in <code>data</code> are modified; omitted fields
+retain their current values on the server (standard PATCH
+semantics).</p>
+<p>To update an action configuration, pass a <code>configurations</code> list
+whose entries carry the configuration <code>id</code> and the new <code>data</code>::</p>
+<div class="highlight"><pre><span></span><code>await client.update_integration(
+    integration_id,
+    {&quot;configurations&quot;: [{&quot;id&quot;: config_id, &quot;data&quot;: {...}}]},
+)
+</code></pre></div>
+<p>See <code>update_integration_configuration()</code> for a convenience wrapper
+around that common case.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>integration_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | <span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>UUID of the Integration to update.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Partial dict of fields to update.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="gundi_core.schemas.v2.Integration">Integration</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The updated <code>Integration</code>, re-fetched via</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="gundi_core.schemas.v2.Integration">Integration</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>get_integration_details</code>. (The PATCH response itself is</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="gundi_core.schemas.v2.Integration">Integration</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>serialized with the write serializer, which renders <code>type</code> /</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="gundi_core.schemas.v2.Integration">Integration</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>owner</code> / action references as bare ids rather than the nested</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="gundi_core.schemas.v2.Integration">Integration</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>objects the <code>Integration</code> schema requires — so we re-read the</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="gundi_core.schemas.v2.Integration">Integration</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>canonical representation instead of parsing the PATCH body.)</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (gundi_client_v2.errors.AuthenticationError)" href="../errors/#gundi_client_v2.errors.AuthenticationError">AuthenticationError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the OAuth token request fails.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="GundiAPIError (gundi_client_v2.errors.GundiAPIError)" href="../errors/#gundi_client_v2.errors.GundiAPIError">GundiAPIError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns a 4xx/5xx response.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gundi_client_v2.client.GundiClient.update_integration_configuration" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">update_integration_configuration</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#gundi_client_v2.client.GundiClient.update_integration_configuration" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">update_integration_configuration</span><span class="p">(</span><span class="n">integration_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">configuration_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Integration</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Update a single action configuration's <code>data</code> on an Integration.</p>
+<p>Convenience wrapper around <code>update_integration()</code> for the common
+case of rewriting one action configuration's payload (e.g. updating
+a destination's field/tag mappings). The configuration is matched by
+its <code>id</code>; its action binding is left unchanged.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>integration_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | <span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>UUID of the Integration that owns the configuration.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>configuration_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | <span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>UUID of the action configuration to update.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The new <code>data</code> payload for that configuration.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="gundi_core.schemas.v2.Integration">Integration</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The updated <code>Integration</code> object as returned by the API.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (gundi_client_v2.errors.AuthenticationError)" href="../errors/#gundi_client_v2.errors.AuthenticationError">AuthenticationError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the OAuth token request fails.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="GundiAPIError (gundi_client_v2.errors.GundiAPIError)" href="../errors/#gundi_client_v2.errors.GundiAPIError">GundiAPIError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns a 4xx/5xx response.</p>
               </div>
             </td>
           </tr>
