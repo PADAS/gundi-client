@@ -103,6 +103,13 @@ gundi integrations enable  338225f3-...
 - **Client-credentials tokens don't refresh.** Password-grant envs refresh
   transparently; a client-credentials env needs `gundi auth login` again once the
   access token expires.
+- **`auth status` reports `valid` from the cached expiry, not real acceptance.**
+  It only checks the locally-stored `expires_at`; the server can still reject the
+  token (a stale access token whose refresh token was already rotated). So a
+  command can fail with `not authenticated` right after `auth status` says
+  `valid`. Don't gate on `auth status` — just run the command, and on a `1`
+  auth error run `gundi auth login` again (add `--profile <env>` to match the
+  command that failed).
 
 ## Exit codes
 
