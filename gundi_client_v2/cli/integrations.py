@@ -123,6 +123,20 @@ def integration_logs(
         "--type",
         help="Type slug; show logs across all integrations of this type.",
     ),
+    level: Optional[str] = typer.Option(
+        None,
+        "--level",
+        help="Minimum log level: debug, info, warning, or error (matches that level and above).",
+    ),
+    origin: Optional[str] = typer.Option(
+        None, "--origin", help="Filter by log origin (exact match)."
+    ),
+    since: Optional[str] = typer.Option(
+        None, "--since", help="Only logs at/after this date (YYYY-MM-DD or ISO 8601)."
+    ),
+    until: Optional[str] = typer.Option(
+        None, "--until", help="Only logs at/before this date (YYYY-MM-DD or ISO 8601)."
+    ),
     limit: int = typer.Option(
         50, "--limit", help="Maximum number of latest logs to show."
     ),
@@ -143,9 +157,22 @@ def integration_logs(
         typer.echo("Error: --limit must be a positive integer.", err=True)
         raise typer.Exit(2)
 
+    # Build the server-side log filters (validated before any network call).
+    filters = {}
+    if level is not None:
+        filters["log_level"] = _resolve_log_level(level)
+    if origin is not None:
+        filters["origin"] = origin
+    if since is not None:
+        filters["from_date"] = _validate_date(since, "--since")
+    if until is not None:
+        filters["to_date"] = _validate_date(until, "--until")
+
     async def _fetch(client):
         if integration_type is None:
-            return await _fetch_logs(client, {"integration": integration_id}, limit)
+            return await _fetch_logs(
+                client, {"integration": integration_id, **filters}, limit
+            )
         # By type: there's no type filter on logs, so gather the type's
         # integration ids and filter by `integration__in`. The ids are chunked
         # across requests so the query string stays under the server's
@@ -159,7 +186,9 @@ def integration_logs(
         collected = []
         for chunk in _chunked(ids, _INTEGRATION_IN_CHUNK):
             collected.extend(
-                await _fetch_logs(client, {"integration__in": ",".join(chunk)}, limit)
+                await _fetch_logs(
+                    client, {"integration__in": ",".join(chunk), **filters}, limit
+                )
             )
         collected.sort(key=_log_created_at, reverse=True)
         return collected[:limit]
@@ -234,6 +263,34 @@ async def _resolve_type_id(client, slug: str) -> str:
             return str(itype.id)
     typer.echo(f"Error: unknown integration type '{slug}'.", err=True)
     raise typer.Exit(2)
+
+
+def _resolve_log_level(name: str) -> int:
+    """Map a level name to its integer value (the API filters level >=).
+
+    Exits 2 with the valid options if the name is unknown.
+    """
+    try:
+        return LogLevel[name.upper()].value
+    except KeyError:
+        valid = ", ".join(m.name.lower() for m in LogLevel)
+        typer.echo(
+            f"Error: invalid --level '{name}'. Choose one of: {valid}.", err=True
+        )
+        raise typer.Exit(2)
+
+
+def _validate_date(value: str, flag: str) -> str:
+    """Validate a date/datetime string (YYYY-MM-DD or ISO 8601); exit 2 if bad."""
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        typer.echo(
+            f"Error: invalid {flag} date '{value}' (use YYYY-MM-DD or ISO 8601).",
+            err=True,
+        )
+        raise typer.Exit(2)
+    return value
 
 
 def _log_created_at(log: dict) -> datetime:

@@ -362,6 +362,10 @@ gundi integrations types
 # Read the latest activity logs for an integration or a whole type
 gundi integrations logs 338225f3-91f9-4fe1-b013-353a229ce504
 gundi integrations logs --type earth_ranger --limit 100
+# Filter logs by level (matches that level and above), origin, and a date range
+gundi integrations logs 338225f3-91f9-4fe1-b013-353a229ce504 --level error
+gundi integrations logs --type earth_ranger --level warning --origin dispatcher \
+  --since 2026-07-01 --until 2026-07-06
 
 # Enable / disable an integration by id
 gundi integrations enable  338225f3-91f9-4fe1-b013-353a229ce504

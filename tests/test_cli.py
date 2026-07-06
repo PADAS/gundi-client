@@ -1138,3 +1138,112 @@ def test_run_command_token_persist_failure_is_best_effort(
     assert result.exit_code == 0, result.output
     assert destination_integration_details["id"] in result.output
     assert "Traceback" not in result.output
+
+
+def test_logs_level_filter_forwards_log_level(cli_env, auth_token_response):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [_log_entry()], "next": None}
+        )
+        result = runner.invoke(
+            app, ["integrations", "logs", "id-1", "--level", "error"]
+        )
+    assert result.exit_code == 0, result.output
+    assert route.calls.last.request.url.params["log_level"] == "40"
+
+
+def test_logs_level_is_case_insensitive(cli_env, auth_token_response):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [_log_entry()], "next": None}
+        )
+        result = runner.invoke(
+            app, ["integrations", "logs", "id-1", "--level", "Warning"]
+        )
+    assert result.exit_code == 0, result.output
+    assert route.calls.last.request.url.params["log_level"] == "30"
+
+
+def test_logs_invalid_level_exits_2(cli_env):
+    result = runner.invoke(app, ["integrations", "logs", "id-1", "--level", "bogus"])
+    assert result.exit_code == 2, result.output
+    assert "level" in result.output.lower()
+
+
+def test_logs_origin_filter_forwards(cli_env, auth_token_response):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [_log_entry()], "next": None}
+        )
+        result = runner.invoke(
+            app, ["integrations", "logs", "id-1", "--origin", "dispatcher"]
+        )
+    assert result.exit_code == 0, result.output
+    assert route.calls.last.request.url.params["origin"] == "dispatcher"
+
+
+def test_logs_since_until_forwards_dates(cli_env, auth_token_response):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [_log_entry()], "next": None}
+        )
+        result = runner.invoke(
+            app,
+            [
+                "integrations",
+                "logs",
+                "id-1",
+                "--since",
+                "2026-07-01",
+                "--until",
+                "2026-07-06",
+            ],
+        )
+    assert result.exit_code == 0, result.output
+    params = route.calls.last.request.url.params
+    assert params["from_date"] == "2026-07-01"
+    assert params["to_date"] == "2026-07-06"
+
+
+def test_logs_invalid_date_exits_2(cli_env):
+    result = runner.invoke(
+        app, ["integrations", "logs", "id-1", "--since", "last-tuesday"]
+    )
+    assert result.exit_code == 2, result.output
+    assert "date" in result.output.lower()
+
+
+def test_logs_filters_forwarded_on_type_path(
+    cli_env, auth_token_response, destination_integration_details
+):
+    type_payload = destination_integration_details["type"]
+    integration_id = destination_integration_details["id"]
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [type_payload], "next": None}
+        )
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+        logs_route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={
+                "results": [
+                    _log_entry(integration={"id": integration_id, "name": "x"})
+                ],
+                "next": None,
+            },
+        )
+        result = runner.invoke(
+            app, ["integrations", "logs", "--type", "earth_ranger", "--level", "error"]
+        )
+    assert result.exit_code == 0, result.output
+    last = logs_route.calls.last.request.url.params
+    assert last["log_level"] == "40"
+    assert "integration__in" in last
