@@ -22,8 +22,10 @@ pip install "gundi-client-v2[cli]"
 Every command needs a token. There are two ways to supply auth; pick one.
 
 **A. Named environments (recommended for repeated use).** Save connection config
-once, log in once, and later commands reuse a cached token. **Secrets are never
-written to disk** — only the derived OAuth tokens, under `~/.config/gundi/tokens/`.
+once, log in once, and later commands reuse a cached token. **Raw credentials
+(password / client secret) are never written to disk** — but the OAuth tokens
+derived from them (access *and* refresh tokens, which are themselves secrets) are
+cached under `~/.config/gundi/tokens/` at mode 0600.
 
 ```bash
 # Developer (password grant): include --username so login knows who you are.
@@ -43,11 +45,16 @@ it comes from the env's stored `--username`, the `--username`/`-u` flag on
 not password grant. For a service env, skip `--username` and supply
 `OAUTH_CLIENT_SECRET` (via env or prompt) instead.
 
-**B. Raw env vars (good for one-offs / CI).** Set and run; a `.env` in the CWD is
-auto-loaded. Required: `GUNDI_API_BASE_URL`, `OAUTH_CLIENT_ID`, a token endpoint
-(`OAUTH_ISSUER` preferred, or `OAUTH_TOKEN_URL`), and credentials:
+**B. Raw env vars (good for one-offs / CI).** Export them and run. Required:
+`GUNDI_API_BASE_URL`, `OAUTH_CLIENT_ID`, a token endpoint (`OAUTH_ISSUER`
+preferred, or `OAUTH_TOKEN_URL`), and credentials:
 - `GUNDI_USERNAME` + `GUNDI_PASSWORD` (password grant, for developers), **or**
 - `OAUTH_CLIENT_SECRET` (client-credentials, for services).
+
+There is **no automatic `.env` loading from the current directory.** To load a
+file, point `GUNDI_CLIENT_ENVFILE` at its path (e.g.
+`GUNDI_CLIENT_ENVFILE=./dev.env gundi integrations list`), or export the vars
+yourself (direnv, your shell, CI secrets).
 
 Selection precedence: `--profile` → `GUNDI_PROFILE` → active env → raw env vars.
 
@@ -63,7 +70,7 @@ Selection precedence: `--profile` → `GUNDI_PROFILE` → active env → raw env
 | `gundi integrations types` | Table: NAME, SLUG, ID |
 | `gundi integrations logs <uuid>` | Latest activity logs for one integration |
 | `gundi integrations logs --type earth_ranger` | Logs across all integrations of a type |
-| `gundi integrations enable <uuid>` / `disable <uuid>` | Toggle the enabled flag |
+| `gundi integrations enable <uuid>` / `gundi integrations disable <uuid>` | Toggle the enabled flag |
 | `gundi env add/list/show/use/remove` | Manage named environments |
 | `gundi auth login/logout/status` | Manage the cached token |
 
@@ -100,9 +107,11 @@ gundi integrations enable  338225f3-...
 - **`logs --type` can be slow / large.** There's no server-side type filter yet
   (tracked in GUNDI-5409), so the CLI gathers every integration of the type and
   merges their logs. Prefer a single `<uuid>` when you know it.
-- **Client-credentials tokens don't refresh.** Password-grant envs refresh
-  transparently; a client-credentials env needs `gundi auth login` again once the
-  access token expires.
+- **Client-credentials grant has no refresh token.** Password-grant envs refresh
+  transparently. A client-credentials env can't *refresh*, but it will
+  *re-authenticate* automatically when `OAUTH_CLIENT_SECRET` is present in the
+  environment at command time; without the secret, run `gundi auth login` again
+  once the access token expires.
 - **`auth status` reports `valid` from the cached expiry, not real acceptance.**
   It only checks the locally-stored `expires_at`; the server can still reject the
   token (a stale access token whose refresh token was already rotated). So a
