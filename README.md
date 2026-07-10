@@ -104,7 +104,7 @@ Settings can be provided as **environment variables** or **constructor keyword a
 | `SENSORS_API_BASE_URL` | Sensors/routing API base URL (used by `GundiDataSenderClient`) | — |
 | `GUNDI_API_SSL_VERIFY` | Verify SSL certificates | `true` |
 | `LOG_LEVEL` | Logging level (env-only) | `INFO` |
-| `GUNDI_CLIENT_ENVFILE` | Path to a `.env` file to load (env-only; defaults to `.env` in cwd) | — |
+| `GUNDI_CLIENT_ENVFILE` | Path to a `.env` file to load (env-only). If unset, no `.env` is auto-loaded from the working directory. | — |
 
 ### GundiClient constructor kwargs
 
@@ -342,8 +342,10 @@ Authentication reuses the same environment variables as the library (see
 - **Token endpoint** — `OAUTH_ISSUER` (preferred; resolved via OIDC discovery)
   or an explicit `OAUTH_TOKEN_URL`.
 
-`OAUTH_AUDIENCE` is forwarded when set. A `.env` file in the working directory
-is loaded automatically.
+`OAUTH_AUDIENCE` is forwarded when set. A `.env` file in the working directory is
+**not** loaded automatically — point `GUNDI_CLIENT_ENVFILE` at one
+(e.g. `GUNDI_CLIENT_ENVFILE=./dev.env gundi integrations list`) or export the
+variables yourself (direnv, your shell, CI secrets).
 
 ```bash
 # List all integrations (table: ID, NAME, TYPE, ENABLED, STATUS)
