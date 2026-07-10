@@ -39,3 +39,42 @@ def test_oauth_token_url_no_longer_derived_from_issuer(monkeypatch, tmp_path):
     reloaded = importlib.reload(settings_module)
     assert reloaded.OAUTH_ISSUER == "https://idp.example.com/realms/x"
     assert reloaded.OAUTH_TOKEN_URL is None
+
+
+def test_dotenv_in_cwd_is_loaded(monkeypatch, tmp_path):
+    """A `.env` in the current working directory is auto-loaded when
+    GUNDI_CLIENT_ENVFILE is unset (environs' default resolves from the installed
+    package dir, not the caller's cwd — so we must find it from cwd explicitly)."""
+    monkeypatch.delenv("GUNDI_CLIENT_ENVFILE", raising=False)
+    monkeypatch.delenv("GUNDI_API_BASE_URL", raising=False)
+    (tmp_path / ".env").write_text(
+        "GUNDI_API_BASE_URL=https://from-cwd-dotenv.example\n"
+    )
+    monkeypatch.chdir(tmp_path)
+    reloaded = importlib.reload(settings_module)
+    assert reloaded.GUNDI_API_BASE_URL == "https://from-cwd-dotenv.example"
+
+
+def test_dotenv_found_by_walking_up_from_cwd(monkeypatch, tmp_path):
+    """The `.env` is discovered by walking up from cwd, like other dotenv tools,
+    so running from a subdirectory of the project still picks it up."""
+    monkeypatch.delenv("GUNDI_CLIENT_ENVFILE", raising=False)
+    monkeypatch.delenv("GUNDI_API_BASE_URL", raising=False)
+    (tmp_path / ".env").write_text("GUNDI_API_BASE_URL=https://from-parent.example\n")
+    subdir = tmp_path / "nested" / "deeper"
+    subdir.mkdir(parents=True)
+    monkeypatch.chdir(subdir)
+    reloaded = importlib.reload(settings_module)
+    assert reloaded.GUNDI_API_BASE_URL == "https://from-parent.example"
+
+
+def test_envfile_overrides_cwd_dotenv(monkeypatch, tmp_path):
+    """GUNDI_CLIENT_ENVFILE takes precedence over a `.env` in the cwd."""
+    monkeypatch.delenv("GUNDI_API_BASE_URL", raising=False)
+    (tmp_path / ".env").write_text("GUNDI_API_BASE_URL=https://from-cwd.example\n")
+    explicit = tmp_path / "explicit.env"
+    explicit.write_text("GUNDI_API_BASE_URL=https://from-envfile.example\n")
+    monkeypatch.setenv("GUNDI_CLIENT_ENVFILE", str(explicit))
+    monkeypatch.chdir(tmp_path)
+    reloaded = importlib.reload(settings_module)
+    assert reloaded.GUNDI_API_BASE_URL == "https://from-envfile.example"

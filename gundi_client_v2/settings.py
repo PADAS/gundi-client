@@ -8,8 +8,12 @@ env = Env()
 if envfile:
     env.read_env(envfile)
 else:
-    # Default behavior
-    env.read_env()
+    # Pass a bare filename (not the no-arg form): environs' no-arg read_env()
+    # resolves the .env relative to THIS file's directory (site-packages on a
+    # normal install), so a project-local .env is never found. Given a bare
+    # filename it instead searches from the current working directory, walking
+    # up the tree — matching how other dotenv-based tools behave.
+    env.read_env(".env")
 
 # OAuth settings — OAUTH_* preferred; KEYCLOAK_* accepted for backward compatibility.
 # The token URL is either set directly via OAUTH_TOKEN_URL or discovered at runtime
