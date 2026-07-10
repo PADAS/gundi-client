@@ -14,7 +14,9 @@ authors = [
 dependencies = [
     "environs>=9.5,<12",
     "pydantic>=1.10,<2",
-    "httpx>=0.28",
+    # <1: httpx 1.0 removes top-level exports we import (see issue #50);
+    # lift deliberately in a release ported to the httpx 1.0 API.
+    "httpx>=0.28,<1",
     "gundi-core>=1.5.8,<3",
 ]
 
