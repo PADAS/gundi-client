@@ -25,7 +25,8 @@ Every command needs a token. There are two ways to supply auth; pick one.
 once, log in once, and later commands reuse a cached token. **Raw credentials
 (password / client secret) are never written to disk** — but the OAuth tokens
 derived from them (access *and* refresh tokens, which are themselves secrets) are
-cached under `~/.config/gundi/tokens/` at mode 0600.
+cached under `$XDG_CONFIG_HOME/gundi/tokens/` (defaults to `~/.config/gundi/tokens/`)
+at mode 0600.
 
 ```bash
 # Developer (password grant): include --username so login knows who you are.
@@ -100,8 +101,10 @@ gundi integrations enable  338225f3-...
 ## Key gotchas
 
 - **Type is a slug, integration is a UUID.** `--type earth_ranger` takes the
-  slug (the CLI resolves it to the type UUID server-side). `enable`/`disable`/
-  `logs <id>` take the integration's **UUID** — get it from `list`.
+  slug; the CLI resolves it to the type's UUID **client-side** (an extra call to
+  the types API, so an unknown slug exits 2 before anything is listed) and then
+  filters server-side by that UUID. `enable`/`disable`/`logs <id>` take the
+  integration's **UUID** — get it from `list`.
 - **`logs` needs exactly one target:** either a positional `<uuid>` **or**
   `--type <slug>`, not both and not neither (exits 2).
 - **`logs --type` can be slow / large.** There's no server-side type filter yet
