@@ -52,10 +52,11 @@ preferred, or `OAUTH_TOKEN_URL`), and credentials:
 - `GUNDI_USERNAME` + `GUNDI_PASSWORD` (password grant, for developers), **or**
 - `OAUTH_CLIENT_SECRET` (client-credentials, for services).
 
-There is **no automatic `.env` loading from the current directory.** To load a
-file, point `GUNDI_CLIENT_ENVFILE` at its path (e.g.
-`GUNDI_CLIENT_ENVFILE=./dev.env gundi integrations list`), or export the vars
-yourself (direnv, your shell, CI secrets).
+A `.env` in the current directory (or a parent — it walks up) is **loaded
+automatically**. To load a specific file instead, point `GUNDI_CLIENT_ENVFILE`
+at its path (e.g. `GUNDI_CLIENT_ENVFILE=./dev.env gundi integrations list`); it
+takes precedence over a discovered `.env`. Real environment variables always
+win over both.
 
 Selection precedence: `--profile` → `GUNDI_PROFILE` → active env → raw env vars.
 
