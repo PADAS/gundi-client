@@ -1,5 +1,21 @@
-import pytest
-from gundi_client_v2.client import GundiClient, GundiDataSenderClient
+import os
+import tempfile
+
+# Neutralize project-local `.env` auto-loading for the whole test session.
+# `gundi_client_v2.settings` loads a `.env` (discovered from the cwd, walking up)
+# at import time, so a developer's local `.env` in or above the repo could leak
+# into os.environ before any per-test monkeypatch isolation runs. Point
+# GUNDI_CLIENT_ENVFILE at an empty file (respecting an explicit override). This
+# MUST run before the first gundi_client_v2 import below.
+os.environ.setdefault(
+    "GUNDI_CLIENT_ENVFILE",
+    tempfile.NamedTemporaryFile(
+        prefix="gundi-empty-", suffix=".env", delete=False
+    ).name,
+)
+
+import pytest  # noqa: E402
+from gundi_client_v2.client import GundiClient, GundiDataSenderClient  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
