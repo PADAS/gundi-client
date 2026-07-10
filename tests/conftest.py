@@ -7,12 +7,10 @@ import tempfile
 # into os.environ before any per-test monkeypatch isolation runs. Point
 # GUNDI_CLIENT_ENVFILE at an empty file (respecting an explicit override). This
 # MUST run before the first gundi_client_v2 import below.
-os.environ.setdefault(
-    "GUNDI_CLIENT_ENVFILE",
-    tempfile.NamedTemporaryFile(
-        prefix="gundi-empty-", suffix=".env", delete=False
-    ).name,
-)
+if "GUNDI_CLIENT_ENVFILE" not in os.environ:
+    _fd, _empty_env = tempfile.mkstemp(prefix="gundi-empty-", suffix=".env")
+    os.close(_fd)
+    os.environ["GUNDI_CLIENT_ENVFILE"] = _empty_env
 
 import pytest  # noqa: E402
 from gundi_client_v2.client import GundiClient, GundiDataSenderClient  # noqa: E402
