@@ -1247,3 +1247,32 @@ def test_logs_filters_forwarded_on_type_path(
     last = logs_route.calls.last.request.url.params
     assert last["log_level"] == "40"
     assert "integration__in" in last
+
+
+def test_list_by_type_clean_error_on_unparseable_type(
+    cli_env, auth_token_response, destination_integration_details
+):
+    # A type whose `value` violates gundi_core's slug regex (^[a-z0-9_]+$) makes
+    # parse_obj_as(List[IntegrationType], ...) raise while resolving --type. One
+    # bad type must surface a clean CLI error (exit 1), not a raw traceback.
+    from pydantic import ValidationError
+
+    good_type = destination_integration_details["type"]
+    bad_type = {
+        **good_type,
+        "id": "9f000000-0000-0000-0000-0000000000bd",
+        "name": "Kenwood Radios",
+        "value": "kenwood-radios",  # hyphen -> fails ^[a-z0-9_]+$
+    }
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(TYPES_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [good_type, bad_type], "next": None},
+        )
+        result = runner.invoke(app, ["integrations", "list", "--type", "earth_ranger"])
+
+    assert result.exit_code == 1, result.output
+    assert "Error:" in result.output
+    # The pydantic ValidationError must be handled, not propagated as a traceback.
+    assert not isinstance(result.exception, ValidationError), result.output
