@@ -108,9 +108,10 @@ gundi integrations enable  338225f3-...
   integration's **UUID** — get it from `list`.
 - **`logs` needs exactly one target:** either a positional `<uuid>` **or**
   `--type <slug>`, not both and not neither (exits 2).
-- **`logs --type` can be slow / large.** There's no server-side type filter yet
-  (tracked in GUNDI-5409), so the CLI gathers every integration of the type and
-  merges their logs. Prefer a single `<uuid>` when you know it.
+- **`logs --type <slug>` is filtered server-side** in one request (the
+  `/v2/logs/?integration_type=` filter) — no id-gathering. Unlike `list --type`,
+  it does *not* validate the slug client-side, so an unknown/typo'd slug returns
+  no logs rather than an error.
 - **Client-credentials grant has no refresh token.** Password-grant envs refresh
   transparently. A client-credentials env can't *refresh*, but it will
   *re-authenticate* automatically when `OAUTH_CLIENT_SECRET` is present in the
