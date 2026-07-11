@@ -128,5 +128,7 @@ gundi integrations enable  338225f3-...
 ## Exit codes
 
 `0` success · `1` API/auth error (clean `Error: …`, no traceback) · `2` missing
-or invalid configuration (bad env, unknown type slug, bad `--level`/date, etc.).
-Scripts can branch on these.
+or invalid configuration (bad env, unknown **`list --type`** slug, bad
+`--level`/date, etc.). Note `logs --type <unknown-slug>` is *not* an error — it
+resolves server-side and returns exit `0` with no logs. Scripts can branch on
+these.
