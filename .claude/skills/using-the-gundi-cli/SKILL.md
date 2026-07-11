@@ -108,9 +108,16 @@ gundi integrations enable  338225f3-...
   integration's **UUID** — get it from `list`.
 - **`logs` needs exactly one target:** either a positional `<uuid>` **or**
   `--type <slug>`, not both and not neither (exits 2).
-- **`logs --type` can be slow / large.** There's no server-side type filter yet
-  (tracked in GUNDI-5409), so the CLI gathers every integration of the type and
-  merges their logs. Prefer a single `<uuid>` when you know it.
+- **`logs --type <slug>` is filtered server-side** in one request (the
+  `/v2/logs/?integration_type=` filter) — no id-gathering. Unlike `list --type`,
+  it does *not* validate the slug client-side, so an unknown/typo'd slug returns
+  no logs rather than an error.
+- **`logs --type` requires the server-side filter to be deployed.** It relies on
+  the portal supporting `/v2/logs/?integration_type=`. An **older portal silently
+  ignores the unknown param and returns _unfiltered_ logs** (all types) — so if
+  `logs --type X` looks like it's returning everything, that portal predates the
+  filter. There's no client-side detection (an ignored param still returns HTTP
+  200), so treat unexpectedly broad `--type` output as "filter not deployed here."
 - **Client-credentials grant has no refresh token.** Password-grant envs refresh
   transparently. A client-credentials env can't *refresh*, but it will
   *re-authenticate* automatically when `OAUTH_CLIENT_SECRET` is present in the
@@ -127,5 +134,8 @@ gundi integrations enable  338225f3-...
 ## Exit codes
 
 `0` success · `1` API/auth error (clean `Error: …`, no traceback) · `2` missing
-or invalid configuration (bad env, unknown type slug, bad `--level`/date, etc.).
-Scripts can branch on these.
+or invalid configuration (bad env, unknown **`list --type`** slug, bad
+`--level`/date, etc.). Note `logs --type <unknown-slug>` is *not* an error — it
+resolves server-side and returns exit `0` with no logs (assuming the
+`integration_type` filter is deployed; an older portal ignores it and returns
+exit `0` with *unfiltered* logs). Scripts can branch on these.

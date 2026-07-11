@@ -706,21 +706,12 @@ def test_logs_json(cli_env, auth_token_response):
     assert parsed[0]["title"] == "Action started"
 
 
-def test_logs_by_type_uses_integration_in(
-    cli_env, auth_token_response, destination_integration_details
-):
-    type_payload = destination_integration_details["type"]
-    integration_id = destination_integration_details["id"]
+def test_logs_by_type_uses_server_filter(cli_env, auth_token_response):
+    # --type filters server-side via ?integration_type=<slug> in ONE request:
+    # no types lookup, no id-gathering, no integration__in chunking.
+    integration_id = "338225f3-91f9-4fe1-b013-353a229ce504"
     with respx.mock(assert_all_called=False) as mock:
         _mock_auth(mock, auth_token_response)
-        mock.get(TYPES_URL).respond(
-            status_code=httpx.codes.OK,
-            json={"results": [type_payload], "next": None},
-        )
-        mock.get(INTEGRATIONS_URL).respond(
-            status_code=httpx.codes.OK,
-            json={"results": [destination_integration_details], "next": None},
-        )
         logs_route = mock.get(LOGS_URL).respond(
             status_code=httpx.codes.OK,
             json={
@@ -736,7 +727,9 @@ def test_logs_by_type_uses_integration_in(
         result = runner.invoke(app, ["integrations", "logs", "--type", "earth_ranger"])
 
     assert result.exit_code == 0, result.output
-    assert logs_route.calls.last.request.url.params["integration__in"] == integration_id
+    params = logs_route.calls.last.request.url.params
+    assert params["integration_type"] == "earth_ranger"
+    assert "integration__in" not in params
     assert "INTEGRATION" in result.output
     assert "ER Load Testing" in result.output
 
@@ -775,21 +768,20 @@ def test_logs_rejects_both_targets(cli_env, auth_token_response):
     assert result.exit_code == 2, result.output
 
 
-def test_logs_unknown_type_exits_2(
-    cli_env, auth_token_response, destination_integration_details
-):
-    type_payload = destination_integration_details["type"]  # only earth_ranger
+def test_logs_unknown_type_returns_empty(cli_env, auth_token_response):
+    # --type no longer resolves the slug client-side; an unknown/typo'd slug is
+    # forwarded to the server, which returns no logs (not a client-side exit 2).
     with respx.mock(assert_all_called=False) as mock:
         _mock_auth(mock, auth_token_response)
-        mock.get(TYPES_URL).respond(
-            status_code=httpx.codes.OK,
-            json={"results": [type_payload], "next": None},
+        logs_route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [], "next": None}
         )
 
         result = runner.invoke(app, ["integrations", "logs", "--type", "nope"])
 
-    assert result.exit_code == 2, result.output
-    assert "unknown integration type" in result.output
+    assert result.exit_code == 0, result.output
+    assert "No activity logs found" in result.output
+    assert logs_route.calls.last.request.url.params["integration_type"] == "nope"
 
 
 def test_logs_empty(cli_env, auth_token_response):
@@ -872,83 +864,6 @@ def test_list_status_composes_with_type_and_enabled(
     assert params["status"] == "unhealthy"
 
 
-def test_logs_by_type_chunks_large_id_set(
-    cli_env, auth_token_response, destination_integration_details
-):
-    # A type with many integrations must not put every id in one
-    # integration__in query (that overruns the server's request-line limit).
-    type_payload = destination_integration_details["type"]
-    ids = [f"00000000-0000-0000-0000-{i:012d}" for i in range(100)]
-    integs = [{**destination_integration_details, "id": uid} for uid in ids]
-    with respx.mock(assert_all_called=False) as mock:
-        _mock_auth(mock, auth_token_response)
-        mock.get(TYPES_URL).respond(
-            status_code=httpx.codes.OK, json={"results": [type_payload], "next": None}
-        )
-        mock.get(INTEGRATIONS_URL).respond(
-            status_code=httpx.codes.OK, json={"results": integs, "next": None}
-        )
-        logs_route = mock.get(LOGS_URL).respond(
-            status_code=httpx.codes.OK, json={"results": [_log_entry()], "next": None}
-        )
-
-        result = runner.invoke(app, ["integrations", "logs", "--type", "earth_ranger"])
-
-    assert result.exit_code == 0, result.output
-    assert logs_route.call_count >= 3  # 100 ids chunked into multiple requests
-    requested = []
-    for call in logs_route.calls:
-        chunk = call.request.url.params["integration__in"].split(",")
-        assert len(chunk) <= 40
-        assert len(str(call.request.url)) < 2048  # under the request-line limit
-        requested.extend(chunk)
-    assert set(requested) == set(ids)  # every integration covered across chunks
-
-
-def test_logs_by_type_sorts_newest_first_and_caps(
-    cli_env, auth_token_response, destination_integration_details
-):
-    type_payload = destination_integration_details["type"]
-    iid = destination_integration_details["id"]
-    with respx.mock(assert_all_called=False) as mock:
-        _mock_auth(mock, auth_token_response)
-        mock.get(TYPES_URL).respond(
-            status_code=httpx.codes.OK, json={"results": [type_payload], "next": None}
-        )
-        mock.get(INTEGRATIONS_URL).respond(
-            status_code=httpx.codes.OK,
-            json={"results": [destination_integration_details], "next": None},
-        )
-        mock.get(LOGS_URL).respond(
-            status_code=httpx.codes.OK,
-            json={
-                "results": [
-                    _log_entry(
-                        id="n",
-                        created_at="2026-06-12T10:00:00Z",
-                        title="Newer",
-                        integration={"id": iid, "name": "ER"},
-                    ),
-                    _log_entry(
-                        id="o",
-                        created_at="2026-06-12T08:00:00Z",
-                        title="Older",
-                        integration={"id": iid, "name": "ER"},
-                    ),
-                ],
-                "next": None,
-            },
-        )
-
-        result = runner.invoke(
-            app, ["integrations", "logs", "--type", "earth_ranger", "--limit", "1"]
-        )
-
-    assert result.exit_code == 0, result.output
-    assert "Newer" in result.output
-    assert "Older" not in result.output
-
-
 def test_list_transport_error_exits_1_clean(cli_env, auth_token_response):
     # A transport-level failure (e.g. connection dropped) must be a clean
     # Error + exit 1, not an uncaught traceback.
@@ -993,29 +908,6 @@ def test_not_authenticated_message_includes_reason(tmp_path, monkeypatch):
     assert "not authenticated" in result.output.lower()
     assert "gundi auth login" in result.output.lower()
     assert "credentials" in result.output.lower()  # underlying reason surfaced
-
-
-def test_log_created_at_naive_timestamp_is_made_utc():
-    from datetime import timezone
-    from gundi_client_v2.cli.integrations import _log_created_at
-
-    # API omitted the tz offset -> must still return a tz-aware datetime.
-    parsed = _log_created_at({"created_at": "2026-06-12T10:00:00"})
-    assert parsed.tzinfo is not None
-    assert parsed.utcoffset() == timezone.utc.utcoffset(None)
-
-
-def test_log_created_at_sorts_naive_and_unparseable_without_crash():
-    from gundi_client_v2.cli.integrations import _log_created_at
-
-    logs = [
-        {"created_at": "2026-06-12T10:00:00"},  # naive
-        {"created_at": "2026-06-12T09:00:00Z"},  # tz-aware
-        {"created_at": "not-a-date"},  # falls back to epoch-min UTC
-    ]
-    # Must not raise "can't compare offset-naive and offset-aware datetimes".
-    ordered = sorted(logs, key=_log_created_at, reverse=True)
-    assert ordered[0]["created_at"] == "2026-06-12T10:00:00"
 
 
 def test_logs_rejects_non_positive_limit(cli_env):
@@ -1217,20 +1109,10 @@ def test_logs_invalid_date_exits_2(cli_env):
     assert "date" in result.output.lower()
 
 
-def test_logs_filters_forwarded_on_type_path(
-    cli_env, auth_token_response, destination_integration_details
-):
-    type_payload = destination_integration_details["type"]
-    integration_id = destination_integration_details["id"]
+def test_logs_filters_forwarded_on_type_path(cli_env, auth_token_response):
+    integration_id = "338225f3-91f9-4fe1-b013-353a229ce504"
     with respx.mock(assert_all_called=False) as mock:
         _mock_auth(mock, auth_token_response)
-        mock.get(TYPES_URL).respond(
-            status_code=httpx.codes.OK, json={"results": [type_payload], "next": None}
-        )
-        mock.get(INTEGRATIONS_URL).respond(
-            status_code=httpx.codes.OK,
-            json={"results": [destination_integration_details], "next": None},
-        )
         logs_route = mock.get(LOGS_URL).respond(
             status_code=httpx.codes.OK,
             json={
@@ -1246,7 +1128,7 @@ def test_logs_filters_forwarded_on_type_path(
     assert result.exit_code == 0, result.output
     last = logs_route.calls.last.request.url.params
     assert last["log_level"] == "40"
-    assert "integration__in" in last
+    assert last["integration_type"] == "earth_ranger"
 
 
 def test_list_by_type_clean_error_on_unparseable_type(
@@ -1279,3 +1161,19 @@ def test_list_by_type_clean_error_on_unparseable_type(
     assert "Traceback" not in result.output
     # The pydantic ValidationError must be handled, not propagated.
     assert not isinstance(result.exception, ValidationError), result.output
+
+
+def test_logs_by_type_slug_is_lowercased(cli_env, auth_token_response):
+    # Slugs are lowercase by convention; normalize client-side so `--type
+    # Earth_Ranger` matches regardless of the server filter's case handling.
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        logs_route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [], "next": None}
+        )
+        result = runner.invoke(app, ["integrations", "logs", "--type", "Earth_Ranger"])
+
+    assert result.exit_code == 0, result.output
+    assert (
+        logs_route.calls.last.request.url.params["integration_type"] == "earth_ranger"
+    )

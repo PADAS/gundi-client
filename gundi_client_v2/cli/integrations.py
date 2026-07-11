@@ -1,7 +1,7 @@
 """`gundi integrations` commands: list, enable, disable."""
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Optional
 
 import typer
@@ -169,29 +169,17 @@ def integration_logs(
         filters["to_date"] = _validate_date(until, "--until")
 
     async def _fetch(client):
-        if integration_type is None:
-            return await _fetch_logs(
-                client, {"integration": integration_id, **filters}, limit
-            )
-        # By type: there's no type filter on logs, so gather the type's
-        # integration ids and filter by `integration__in`. The ids are chunked
-        # across requests so the query string stays under the server's
-        # request-line limit, then merged newest-first.
-        type_id = await _resolve_type_id(client, integration_type)
-        ids = [
-            str(i.id) async for i in client.get_integrations(params={"type": type_id})
-        ]
-        if not ids:
-            return []
-        collected = []
-        for chunk in _chunked(ids, _INTEGRATION_IN_CHUNK):
-            collected.extend(
-                await _fetch_logs(
-                    client, {"integration__in": ",".join(chunk), **filters}, limit
-                )
-            )
-        collected.sort(key=_log_created_at, reverse=True)
-        return collected[:limit]
+        # One target key: a specific integration id, or the type slug — the
+        # /v2/logs/ endpoint filters by type slug server-side
+        # (?integration_type=<slug>), so no id-gathering or chunking is needed.
+        target = (
+            {"integration": integration_id}
+            if integration_type is None
+            # Slugs are lowercase by convention; normalize client-side so the
+            # match is case-insensitive regardless of the server filter.
+            else {"integration_type": integration_type.lower()}
+        )
+        return await _fetch_logs(client, {**target, **filters}, limit)
 
     logs = run_command(profile, _fetch)
 
@@ -229,17 +217,6 @@ def _render_table(integrations: List[Integration]) -> str:
         for i in integrations
     ]
     return _format_table(header, rows)
-
-
-# Integration ids per `integration__in` request. UUIDs are 36 chars + a comma,
-# so 40 keeps the query well under the server's 2048-byte request-line limit.
-_INTEGRATION_IN_CHUNK = 40
-
-
-def _chunked(items: list, size: int):
-    """Yield successive ``size``-length slices of ``items``."""
-    for start in range(0, len(items), size):
-        yield items[start : start + size]
 
 
 async def _fetch_logs(client, params: dict, limit: int) -> list:
@@ -291,23 +268,6 @@ def _validate_date(value: str, flag: str) -> str:
         )
         raise typer.Exit(2)
     return value
-
-
-def _log_created_at(log: dict) -> datetime:
-    """Parse a log's ``created_at`` to a tz-aware datetime for sorting.
-
-    Falls back to the epoch minimum so unparseable timestamps sort last.
-    """
-    raw = log.get("created_at") or ""
-    try:
-        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    except (ValueError, TypeError, AttributeError):
-        return datetime.min.replace(tzinfo=timezone.utc)
-    # A timestamp without an offset parses as naive; force UTC so it stays
-    # comparable with the tz-aware fallback (and other tz-aware timestamps).
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed
 
 
 def _log_level_name(level) -> str:
