@@ -1274,5 +1274,8 @@ def test_list_by_type_clean_error_on_unparseable_type(
 
     assert result.exit_code == 1, result.output
     assert "Error:" in result.output
-    # The pydantic ValidationError must be handled, not propagated as a traceback.
+    # The clean-error message contract, on one line, with no traceback leaked.
+    assert "could not parse" in result.output
+    assert "Traceback" not in result.output
+    # The pydantic ValidationError must be handled, not propagated.
     assert not isinstance(result.exception, ValidationError), result.output

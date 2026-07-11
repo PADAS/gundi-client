@@ -86,7 +86,8 @@ def build_client() -> GundiClient:
 def run_with_client(async_fn: Callable[[GundiClient], Awaitable[T]]) -> T:
     """Run ``async_fn(client)`` inside an open client, mapping errors to exits.
 
-    AuthenticationError / GundiAPIError are rendered as ``Error: ...`` on stderr
+    AuthenticationError / GundiAPIError, a ValidationError from unparseable API
+    data, and httpx transport errors are rendered as ``Error: ...`` on stderr
     with exit code 1; unexpected exceptions propagate.
     """
     client = build_client()  # may raise typer.Exit(2)
@@ -101,8 +102,11 @@ def run_with_client(async_fn: Callable[[GundiClient], Awaitable[T]]) -> T:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
     except ValidationError as exc:
+        # pydantic's ValidationError str is multi-line; collapse it so the CLI
+        # keeps its single-line "Error: ..." contract.
+        detail = " ".join(str(exc).split())
         typer.echo(
-            f"Error: the Gundi API returned data the client could not parse: {exc}",
+            f"Error: the Gundi API returned data the client could not parse: {detail}",
             err=True,
         )
         raise typer.Exit(1)
@@ -273,8 +277,11 @@ def run_command(
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
     except ValidationError as exc:
+        # pydantic's ValidationError str is multi-line; collapse it so the CLI
+        # keeps its single-line "Error: ..." contract.
+        detail = " ".join(str(exc).split())
         typer.echo(
-            f"Error: the Gundi API returned data the client could not parse: {exc}",
+            f"Error: the Gundi API returned data the client could not parse: {detail}",
             err=True,
         )
         raise typer.Exit(1)
