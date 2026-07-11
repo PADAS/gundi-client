@@ -1161,3 +1161,19 @@ def test_list_by_type_clean_error_on_unparseable_type(
     assert "Traceback" not in result.output
     # The pydantic ValidationError must be handled, not propagated.
     assert not isinstance(result.exception, ValidationError), result.output
+
+
+def test_logs_by_type_slug_is_lowercased(cli_env, auth_token_response):
+    # Slugs are lowercase by convention; normalize client-side so `--type
+    # Earth_Ranger` matches regardless of the server filter's case handling.
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        logs_route = mock.get(LOGS_URL).respond(
+            status_code=httpx.codes.OK, json={"results": [], "next": None}
+        )
+        result = runner.invoke(app, ["integrations", "logs", "--type", "Earth_Ranger"])
+
+    assert result.exit_code == 0, result.output
+    assert (
+        logs_route.calls.last.request.url.params["integration_type"] == "earth_ranger"
+    )

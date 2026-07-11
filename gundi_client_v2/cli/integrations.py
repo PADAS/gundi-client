@@ -175,7 +175,9 @@ def integration_logs(
         target = (
             {"integration": integration_id}
             if integration_type is None
-            else {"integration_type": integration_type}
+            # Slugs are lowercase by convention; normalize client-side so the
+            # match is case-insensitive regardless of the server filter.
+            else {"integration_type": integration_type.lower()}
         )
         return await _fetch_logs(client, {**target, **filters}, limit)
 
