@@ -14,8 +14,11 @@ outgoing request — but they differ in how that token is obtained.
 
 OIDC discovery is **not a separate grant type** — it's a mechanism for the
 library to discover the IdP's token endpoint at runtime from
-`{OAUTH_ISSUER}/.well-known/openid-configuration`. You combine it with one of
+`{GUNDI_OAUTH_ISSUER}/.well-known/openid-configuration`. You combine it with one of
 the other two grants.
+
+The un-prefixed `OAUTH_*` names (and, for the library, the legacy `KEYCLOAK_*`
+names) are still accepted as fallbacks.
 
 ## How the client picks a grant
 
@@ -46,10 +49,10 @@ from gundi_client_v2.auth import (
 The library needs to know **where** to POST the token request. Two ways to
 configure this, in priority order:
 
-1. **`OAUTH_TOKEN_URL`** (or the `oauth_token_url` kwarg) — set this
+1. **`GUNDI_OAUTH_TOKEN_URL`** (or the `oauth_token_url` kwarg) — set this
    directly to a fully-qualified URL like
    `https://auth.example.com/realms/myrealm/protocol/openid-connect/token`.
-2. **`OAUTH_ISSUER`** (or the `oauth_issuer` kwarg) — set this to the
+2. **`GUNDI_OAUTH_ISSUER`** (or the `oauth_issuer` kwarg) — set this to the
    issuer base URL; the library performs OIDC discovery to resolve the token
    endpoint. The result is cached for the process lifetime; call
    `auth.clear_discovery_cache()` to invalidate.

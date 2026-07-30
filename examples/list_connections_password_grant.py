@@ -3,11 +3,11 @@ Example: list Gundi connections using the OAuth2 password grant
 (public client / user-facing developer auth).
 
 # Required env vars:
-#   GUNDI_API_BASE_URL, OAUTH_CLIENT_ID,
+#   GUNDI_API_BASE_URL, GUNDI_OAUTH_CLIENT_ID,
 #   GUNDI_USERNAME, GUNDI_PASSWORD,
-#   OAUTH_TOKEN_URL
+#   GUNDI_OAUTH_TOKEN_URL
 # Conditional:
-#   OAUTH_AUDIENCE  — required by some IdPs (e.g. Auth0 won't issue a usable
+#   GUNDI_OAUTH_AUDIENCE  — required by some IdPs (e.g. Auth0 won't issue a usable
 #                     API access token without it); ignored by Keycloak.
 
 Run from the examples/ directory (so the local .env is loaded):
@@ -33,10 +33,10 @@ def _get_kwargs() -> dict:
     else:
         missing.append("GUNDI_API_BASE_URL")
 
-    if client_id := os.environ.get("OAUTH_CLIENT_ID"):
+    if client_id := os.environ.get("GUNDI_OAUTH_CLIENT_ID"):
         kwargs["oauth_client_id"] = client_id
     else:
-        missing.append("OAUTH_CLIENT_ID")
+        missing.append("GUNDI_OAUTH_CLIENT_ID")
 
     if username := os.environ.get("GUNDI_USERNAME"):
         kwargs["username"] = username
@@ -48,13 +48,13 @@ def _get_kwargs() -> dict:
     else:
         missing.append("GUNDI_PASSWORD")
 
-    if token_url := os.environ.get("OAUTH_TOKEN_URL"):
+    if token_url := os.environ.get("GUNDI_OAUTH_TOKEN_URL"):
         kwargs["oauth_token_url"] = token_url
     else:
-        missing.append("OAUTH_TOKEN_URL")
+        missing.append("GUNDI_OAUTH_TOKEN_URL")
 
     # Conditional — sent to the token endpoint when set; some IdPs require it.
-    if audience := os.environ.get("OAUTH_AUDIENCE"):
+    if audience := os.environ.get("GUNDI_OAUTH_AUDIENCE"):
         kwargs["oauth_audience"] = audience
 
     if missing:

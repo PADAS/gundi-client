@@ -15,10 +15,10 @@ for **server-to-server** authentication. There is no user identity involved
 
 ```env
 GUNDI_API_BASE_URL=https://api.gundiservice.org
-OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
-OAUTH_CLIENT_ID=your-client-id
-OAUTH_CLIENT_SECRET=your-client-secret
-# OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
+GUNDI_OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
+GUNDI_OAUTH_CLIENT_ID=your-client-id
+GUNDI_OAUTH_CLIENT_SECRET=your-client-secret
+# GUNDI_OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
 ```
 
 ## Minimal example
@@ -47,14 +47,14 @@ The library POSTs to the token endpoint with:
 
 ```
 grant_type=client_credentials
-client_id=<OAUTH_CLIENT_ID>
-client_secret=<OAUTH_CLIENT_SECRET>
+client_id=<GUNDI_OAUTH_CLIENT_ID>
+client_secret=<GUNDI_OAUTH_CLIENT_SECRET>
 scope=openid
-audience=<OAUTH_AUDIENCE>     # only if set
+audience=<GUNDI_OAUTH_AUDIENCE>     # only if set
 ```
 
-The token endpoint is either `OAUTH_TOKEN_URL` directly, or resolved via
-OIDC discovery from `OAUTH_ISSUER`.
+The token endpoint is either `GUNDI_OAUTH_TOKEN_URL` directly, or resolved via
+OIDC discovery from `GUNDI_OAUTH_ISSUER`.
 
 ## Refresh behavior
 

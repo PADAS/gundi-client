@@ -44,13 +44,16 @@ Only the **secret/password** is ever prompted. The **username is not prompted** 
 it comes from the env's stored `--username`, the `--username`/`-u` flag on
 `auth login`, or `GUNDI_USERNAME`. Omit all three and you get client-credentials,
 not password grant. For a service env, skip `--username` and supply
-`OAUTH_CLIENT_SECRET` (via env or prompt) instead.
+`GUNDI_OAUTH_CLIENT_SECRET` (via env or prompt) instead.
 
 **B. Raw env vars (good for one-offs / CI).** Export them and run. Required:
-`GUNDI_API_BASE_URL`, `OAUTH_CLIENT_ID`, a token endpoint (`OAUTH_ISSUER`
-preferred, or `OAUTH_TOKEN_URL`), and credentials:
+`GUNDI_API_BASE_URL`, `GUNDI_OAUTH_CLIENT_ID`, a token endpoint (`GUNDI_OAUTH_ISSUER`
+preferred, or `GUNDI_OAUTH_TOKEN_URL`), and credentials:
 - `GUNDI_USERNAME` + `GUNDI_PASSWORD` (password grant, for developers), **or**
-- `OAUTH_CLIENT_SECRET` (client-credentials, for services).
+- `GUNDI_OAUTH_CLIENT_SECRET` (client-credentials, for services).
+
+The un-prefixed `OAUTH_*` names (and, for the library, the legacy `KEYCLOAK_*`
+names) are still accepted as fallbacks.
 
 A `.env` in the current directory (or a parent — it walks up) is **loaded
 automatically**. To load a specific file instead, point `GUNDI_CLIENT_ENVFILE`
@@ -120,7 +123,7 @@ gundi integrations enable  338225f3-...
   200), so treat unexpectedly broad `--type` output as "filter not deployed here."
 - **Client-credentials grant has no refresh token.** Password-grant envs refresh
   transparently. A client-credentials env can't *refresh*, but it will
-  *re-authenticate* automatically when `OAUTH_CLIENT_SECRET` is present in the
+  *re-authenticate* automatically when `GUNDI_OAUTH_CLIENT_SECRET` is present in the
   environment at command time; without the secret, run `gundi auth login` again
   once the access token expires.
 - **`auth status` reports `valid` from the cached expiry, not real acceptance.**

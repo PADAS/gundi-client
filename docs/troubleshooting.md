@@ -9,7 +9,7 @@ for the full catalog with explanations.
 
 ## `httpx.ConnectError: [Errno -2] Name or service not known`
 
-The hostname in `GUNDI_API_BASE_URL` or `OAUTH_ISSUER` doesn't resolve.
+The hostname in `GUNDI_API_BASE_URL` or `GUNDI_OAUTH_ISSUER` doesn't resolve.
 
 **Fix:** Verify the URLs are correct and reachable from the host running
 your code. Common gotchas:

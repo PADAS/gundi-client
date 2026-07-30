@@ -6,7 +6,7 @@ document includes the `token_endpoint`, `authorization_endpoint`, supported
 scopes, and other configuration.
 
 `gundi-client-v2` uses this to **avoid hard-coding** the token endpoint URL.
-Set `OAUTH_ISSUER` to the IdP's issuer base URL, and the library fetches and
+Set `GUNDI_OAUTH_ISSUER` to the IdP's issuer base URL, and the library fetches and
 caches the resolved token endpoint at runtime.
 
 ## When to use it
@@ -20,7 +20,7 @@ caches the resolved token endpoint at runtime.
 ## Environment variable
 
 ```env
-OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
+GUNDI_OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
 ```
 
 Combine with the credentials for your chosen grant
@@ -57,11 +57,11 @@ network I/O for discovery.
 ## Skipping discovery
 
 If your IdP doesn't expose a discovery document, or you want to skip the
-extra request, set `OAUTH_TOKEN_URL` directly instead. When both are set,
-`OAUTH_TOKEN_URL` wins:
+extra request, set `GUNDI_OAUTH_TOKEN_URL` directly instead. When both are set,
+`GUNDI_OAUTH_TOKEN_URL` wins:
 
 ```env
-OAUTH_TOKEN_URL=https://auth.example.com/realms/myrealm/protocol/openid-connect/token
+GUNDI_OAUTH_TOKEN_URL=https://auth.example.com/realms/myrealm/protocol/openid-connect/token
 ```
 
 ## Errors

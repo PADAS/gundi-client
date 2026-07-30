@@ -1,5 +1,23 @@
 # Migration guide
 
+## 3.7.0 — `GUNDI_OAUTH_*` env var names
+
+The preferred env var names for OAuth configuration are now prefixed with
+`GUNDI_` to avoid collisions with other tools sharing an environment:
+
+| Old (still accepted) | New (preferred) |
+|---|---|
+| `OAUTH_ISSUER` | `GUNDI_OAUTH_ISSUER` |
+| `OAUTH_TOKEN_URL` | `GUNDI_OAUTH_TOKEN_URL` |
+| `OAUTH_CLIENT_ID` | `GUNDI_OAUTH_CLIENT_ID` |
+| `OAUTH_CLIENT_SECRET` | `GUNDI_OAUTH_CLIENT_SECRET` |
+| `OAUTH_AUDIENCE` | `GUNDI_OAUTH_AUDIENCE` |
+| `OAUTH_SCOPE` | `GUNDI_OAUTH_SCOPE` |
+
+No action is required: the old `OAUTH_*` names (and the pre-3.0 `KEYCLOAK_*`
+names, for the library) keep working as silent fallbacks. When both spellings
+are set, the `GUNDI_`-prefixed one wins.
+
 ## Upgrading to 3.0 from 2.x
 
 This release modernizes the OAuth2 implementation, bumps the `httpx` runtime

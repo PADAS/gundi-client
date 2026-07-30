@@ -50,8 +50,8 @@ user credentials are involved, this is cheap.
 
 The client ID or secret is wrong, or the client doesn't exist in the realm.
 
-**Fix:** Verify `OAUTH_CLIENT_ID` and `OAUTH_CLIENT_SECRET`. For Keycloak,
-also confirm the client is in the correct realm under `OAUTH_ISSUER`.
+**Fix:** Verify `GUNDI_OAUTH_CLIENT_ID` and `GUNDI_OAUTH_CLIENT_SECRET`. For Keycloak,
+also confirm the client is in the correct realm under `GUNDI_OAUTH_ISSUER`.
 
 ### `Token request failed: HTTP 401 (invalid_grant)`
 
@@ -78,7 +78,7 @@ client.
 The requested scope isn't allowed for this client.
 
 **Fix:** Pass a `scope=...` kwarg to the grant function, or unset
-`OAUTH_SCOPE` if you set it explicitly. The library's default scope is
+`GUNDI_OAUTH_SCOPE` if you set it explicitly. The library's default scope is
 `openid`.
 
 ### `AuthenticationError: OIDC discovery failed for ...`
