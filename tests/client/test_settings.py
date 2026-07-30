@@ -78,3 +78,74 @@ def test_envfile_overrides_cwd_dotenv(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     reloaded = importlib.reload(settings_module)
     assert reloaded.GUNDI_API_BASE_URL == "https://from-envfile.example"
+
+
+_GUNDI_OAUTH_VARS = (
+    "GUNDI_OAUTH_ISSUER",
+    "GUNDI_OAUTH_TOKEN_URL",
+    "GUNDI_OAUTH_CLIENT_ID",
+    "GUNDI_OAUTH_CLIENT_SECRET",
+    "GUNDI_OAUTH_AUDIENCE",
+    "GUNDI_OAUTH_SCOPE",
+)
+
+
+def _clear_oauth_env(monkeypatch):
+    """Drop every spelling of the OAuth vars so precedence tests start clean."""
+    for name in _GUNDI_OAUTH_VARS:
+        monkeypatch.delenv(name, raising=False)
+        monkeypatch.delenv(name.removeprefix("GUNDI_"), raising=False)
+        monkeypatch.delenv(name.replace("GUNDI_OAUTH_", "KEYCLOAK_"), raising=False)
+
+
+def test_gundi_oauth_names_work_alone(monkeypatch, tmp_path):
+    _isolate_envfile(monkeypatch, tmp_path)
+    _clear_oauth_env(monkeypatch)
+    monkeypatch.setenv("GUNDI_OAUTH_ISSUER", "https://idp.example.com/realms/x")
+    monkeypatch.setenv("GUNDI_OAUTH_TOKEN_URL", "https://idp.example.com/token")
+    monkeypatch.setenv("GUNDI_OAUTH_CLIENT_ID", "my-client")
+    monkeypatch.setenv("GUNDI_OAUTH_CLIENT_SECRET", "shhh")
+    monkeypatch.setenv("GUNDI_OAUTH_AUDIENCE", "gundi-api")
+    monkeypatch.setenv("GUNDI_OAUTH_SCOPE", "openid profile")
+    reloaded = importlib.reload(settings_module)
+    assert reloaded.OAUTH_ISSUER == "https://idp.example.com/realms/x"
+    assert reloaded.OAUTH_TOKEN_URL == "https://idp.example.com/token"
+    assert reloaded.OAUTH_CLIENT_ID == "my-client"
+    assert reloaded.OAUTH_CLIENT_SECRET == "shhh"
+    assert reloaded.OAUTH_AUDIENCE == "gundi-api"
+    assert reloaded.OAUTH_SCOPE == "openid profile"
+
+
+def test_gundi_oauth_prefix_wins_over_oauth_and_keycloak(monkeypatch, tmp_path):
+    _isolate_envfile(monkeypatch, tmp_path)
+    _clear_oauth_env(monkeypatch)
+    monkeypatch.setenv("GUNDI_OAUTH_CLIENT_ID", "prefixed")
+    monkeypatch.setenv("OAUTH_CLIENT_ID", "generic")
+    monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "legacy")
+    reloaded = importlib.reload(settings_module)
+    assert reloaded.OAUTH_CLIENT_ID == "prefixed"
+
+
+def test_oauth_still_wins_over_keycloak(monkeypatch, tmp_path):
+    _isolate_envfile(monkeypatch, tmp_path)
+    _clear_oauth_env(monkeypatch)
+    monkeypatch.setenv("OAUTH_CLIENT_ID", "generic")
+    monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "legacy")
+    reloaded = importlib.reload(settings_module)
+    assert reloaded.OAUTH_CLIENT_ID == "generic"
+
+
+def test_keycloak_fallback_still_works(monkeypatch, tmp_path):
+    _isolate_envfile(monkeypatch, tmp_path)
+    _clear_oauth_env(monkeypatch)
+    monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "legacy")
+    reloaded = importlib.reload(settings_module)
+    assert reloaded.OAUTH_CLIENT_ID == "legacy"
+    assert reloaded.KEYCLOAK_CLIENT_ID == "legacy"  # alias constant still mirrors
+
+
+def test_gundi_oauth_scope_default(monkeypatch, tmp_path):
+    _isolate_envfile(monkeypatch, tmp_path)
+    _clear_oauth_env(monkeypatch)
+    reloaded = importlib.reload(settings_module)
+    assert reloaded.OAUTH_SCOPE == "openid"
