@@ -16,6 +16,7 @@ the Auth0 tenant and this same script keeps working.
 # Conditional:
 #   GUNDI_OAUTH_AUDIENCE  — required by some IdPs (e.g. Auth0 won't issue a usable
 #                     API access token without it); ignored by Keycloak.
+# Legacy un-prefixed OAUTH_* spellings are also accepted (prefixed wins).
 
 # Requires gundi-client-v2 >= 3.0.0 (OIDC discovery support).
 
@@ -36,6 +37,11 @@ import os
 from gundi_client_v2 import GundiClient
 
 
+def _env(name: str):
+    """Prefer the GUNDI_-prefixed spelling; fall back to the legacy bare name."""
+    return os.environ.get(f"GUNDI_{name}") or os.environ.get(name)
+
+
 def _get_kwargs() -> dict:
     """Validate required env vars; raise ValueError listing any that are missing."""
     missing = []
@@ -46,7 +52,7 @@ def _get_kwargs() -> dict:
     else:
         missing.append("GUNDI_API_BASE_URL")
 
-    if client_id := os.environ.get("GUNDI_OAUTH_CLIENT_ID"):
+    if client_id := _env("OAUTH_CLIENT_ID"):
         kwargs["oauth_client_id"] = client_id
     else:
         missing.append("GUNDI_OAUTH_CLIENT_ID")
@@ -63,13 +69,13 @@ def _get_kwargs() -> dict:
 
     # NOTE: oauth_issuer (NOT oauth_token_url) — the library will resolve the
     # token endpoint via OIDC discovery at runtime.
-    if issuer := os.environ.get("GUNDI_OAUTH_ISSUER"):
+    if issuer := _env("OAUTH_ISSUER"):
         kwargs["oauth_issuer"] = issuer
     else:
         missing.append("GUNDI_OAUTH_ISSUER")
 
     # Conditional — sent to the token endpoint when set; some IdPs require it.
-    if audience := os.environ.get("GUNDI_OAUTH_AUDIENCE"):
+    if audience := _env("OAUTH_AUDIENCE"):
         kwargs["oauth_audience"] = audience
 
     if missing:
