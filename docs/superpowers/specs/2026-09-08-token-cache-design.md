@@ -134,10 +134,10 @@ composed of the memory layer and the optional backend.
      has a live refresh token, else full authentication (the existing
      `_refresh_token` logic, operating on a `CachedToken` instead of instance
      attributes); write the result to memory and the backend; adopt and return.
-4. `force_refresh_token=True` (a 401, or the auth-realm redirect in `_get`,
-   `_post`, `_patch`, `_delete`) first deletes the key from memory and the
-   backend, then proceeds from step 3's fetch branch. A token the server has
-   rejected must not be served to any other client or replica.
+4. `force_refresh_token=True` (the auth-realm redirect in `_get`, `_post`,
+   `_patch`, `_delete`, or an explicit caller) first deletes the key from
+   memory and the backend, then proceeds from step 3's fetch branch. A token
+   the server has rejected must not be served to any other client or replica.
 
 "Adopt" means setting `cached_token`, `cached_token_expires_at` and
 `cached_token_refresh_expires_at` on the instance, so the CLI's

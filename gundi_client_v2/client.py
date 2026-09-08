@@ -648,9 +648,10 @@ class GundiClient:
         Lookup order: this instance's token, the process-wide memory layer, the
         configured backend (Redis or file), then the IdP (refresh grant when a
         live refresh token is known, else full authentication). Whatever is
-        fetched is written to every layer. ``force_refresh_token=True`` (a 401,
-        or the login redirect) first evicts the shared entry so no other client
-        or replica keeps serving a token the server has rejected.
+        fetched is written to every layer. ``force_refresh_token=True`` (which
+        the request helpers pass after the API's login redirect) first evicts
+        the shared entry so no other client or replica keeps serving a token
+        the server has rejected.
 
         Args:
             force_refresh_token: When ``True``, evict the cached entry and

@@ -44,9 +44,10 @@ key, so a token minted under the old secret is never reused. The key reveals
 nothing about the credentials.
 
 In Redis, entries expire with the later of the access-token and refresh-token
-lifetimes. A token the API has rejected (a 401, or the login redirect) is evicted
-from every layer before the client re-authenticates, so no other replica keeps
-serving it.
+lifetimes. When the API answers with its login redirect (the response it gives
+a token it no longer accepts), or when a caller passes `force_refresh_token=True`,
+the entry is evicted from every layer before the client re-authenticates, so no
+other replica keeps serving it.
 
 ## Security
 
