@@ -23,6 +23,7 @@ from gundi_core.schemas.v2 import (
 )
 from . import settings, errors
 from . import auth
+from . import token_cache as _token_cache
 
 logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
@@ -299,6 +300,16 @@ class GundiClient:
                 * ``oauth_scope`` (str): Space-separated OAuth scopes.
                   Env: ``OAUTH_SCOPE`` (default ``"openid"``).
 
+                **Token cache settings**
+
+                * ``token_cache_url`` (str): Durable token cache backend
+                  shared with other processes: ``redis://host:port/db``,
+                  ``rediss://…`` or ``file:///dir``. Env:
+                  ``GUNDI_TOKEN_CACHE_URL``. Unset means tokens are shared
+                  only within this process (always on).
+                * ``token_cache`` (TokenCache): An injected backend; takes
+                  precedence over ``token_cache_url``.
+
                 **Retry / timeout settings**
 
                 * ``max_http_retries`` (int): Number of automatic HTTP
@@ -342,6 +353,14 @@ class GundiClient:
         self.cached_token = None
         self.cached_token_expires_at = datetime.min.replace(tzinfo=timezone.utc)
         self.cached_token_refresh_expires_at = datetime.min.replace(tzinfo=timezone.utc)
+
+        # Shared token cache: process-wide memory layer, plus one optional backend.
+        backend = kwargs.get("token_cache")
+        if backend is None:
+            backend = _token_cache.token_cache_from_url(
+                kwargs.get("token_cache_url", settings.GUNDI_TOKEN_CACHE_URL)
+            )
+        self._token_store = _token_cache.TokenStore(backend)
 
         # Retries and timeouts settings
         self.max_retries = kwargs.get(
