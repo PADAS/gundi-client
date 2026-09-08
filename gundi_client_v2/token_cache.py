@@ -15,7 +15,7 @@ import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Protocol
+from typing import Dict, Protocol, Tuple
 from urllib.parse import urlparse
 
 from gundi_core.schemas import OAuthToken
@@ -157,7 +157,11 @@ class MemoryTokenCache:
 
     def __init__(self) -> None:
         self._entries: Dict[str, CachedToken] = {}
-        self._locks: Dict[str, asyncio.Lock] = {}
+        # key -> (the loop the lock is bound to, the lock). An asyncio.Lock binds
+        # to the loop that first contends it, so a process that runs more than one
+        # event loop over its life (a worker calling asyncio.run per job) needs a
+        # fresh lock per loop; reusing one raises "bound to a different event loop".
+        self._locks: Dict[str, Tuple[asyncio.AbstractEventLoop, asyncio.Lock]] = {}
 
     async def get(self, key: str) -> "CachedToken | None":
         token = self._entries.get(key)
@@ -176,9 +180,12 @@ class MemoryTokenCache:
         self._entries.pop(key, None)
 
     def lock(self, key: str) -> asyncio.Lock:
-        # setdefault is atomic enough: asyncio is single-threaded and there is
-        # no await between the lookup and the insert.
-        return self._locks.setdefault(key, asyncio.Lock())
+        loop = asyncio.get_running_loop()  # lock() is only called from a coroutine
+        bound = self._locks.get(key)
+        if bound is None or bound[0] is not loop or bound[0].is_closed():
+            bound = (loop, asyncio.Lock())
+            self._locks[key] = bound
+        return bound[1]
 
     def clear(self) -> None:
         self._entries.clear()

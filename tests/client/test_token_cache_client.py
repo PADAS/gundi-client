@@ -83,6 +83,40 @@ async def test_concurrent_first_requests_in_one_process_make_one_token_request(
     assert route.call_count == 1
 
 
+def test_a_second_event_loop_reuses_the_lock_without_crashing(
+    client_settings, auth_token_response, monkeypatch
+):
+    """A process that runs several event loops over its life (a worker that calls
+    asyncio.run per job) must not trip over a per-key asyncio.Lock bound to the
+    first loop that contended it."""
+    from datetime import timedelta
+
+    from gundi_client_v2 import token_cache as tc
+
+    base = tc._now()
+    clock = {"now": base}
+    monkeypatch.setattr(tc, "_now", lambda: clock["now"])
+
+    async def one_loop():
+        async with respx.mock as mock:
+            route = mock.post(TOKEN_URL)
+
+            async def slow(request):
+                await asyncio.sleep(0)  # suspend so the lock is really contended
+                return httpx.Response(200, json=auth_token_response)
+
+            route.side_effect = slow
+            clients = [GundiClient(**client_settings) for _ in range(5)]
+            await asyncio.gather(*(c.get_auth_header() for c in clients))
+            return route.call_count
+
+    assert asyncio.run(one_loop()) == 1
+    # No clear_token_cache(): the entry (and its lock) survive into the next loop.
+    # Age it so the second loop misses on the access token and fetches again.
+    clock["now"] = base + timedelta(seconds=auth_token_response["expires_in"] + 60)
+    assert asyncio.run(one_loop()) == 1
+
+
 @pytest.mark.asyncio
 async def test_different_secret_gets_its_own_token(
     client_settings, auth_token_response

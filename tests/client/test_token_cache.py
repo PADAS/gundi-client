@@ -195,11 +195,27 @@ async def test_memory_cache_drops_an_entry_whose_tokens_have_both_expired(clock)
     assert "k" not in cache._entries
 
 
-def test_memory_cache_lock_is_per_key():
+@pytest.mark.asyncio
+async def test_memory_cache_lock_is_per_key():
+    # lock() needs a running loop: the lock it returns is bound to it.
     cache = MemoryTokenCache()
     assert cache.lock("a") is cache.lock("a")
     assert cache.lock("a") is not cache.lock("b")
     assert isinstance(cache.lock("a"), asyncio.Lock)
+
+
+def test_memory_cache_lock_is_rebuilt_for_a_new_event_loop():
+    """Two asyncio.run calls are two loops; each must get its own lock."""
+    cache = MemoryTokenCache()
+
+    async def take_lock():
+        lock = cache.lock("a")
+        assert cache._locks["a"][0] is asyncio.get_running_loop()
+        return lock
+
+    first = asyncio.run(take_lock())
+    second = asyncio.run(take_lock())
+    assert first is not second
 
 
 @pytest.mark.asyncio

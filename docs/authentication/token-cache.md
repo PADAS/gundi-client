@@ -33,7 +33,11 @@ or a long-running process that must drop every cached token).
 There is no fallback chain. When the backend is unreachable the client logs one
 warning per outage and runs on the memory layer until it recovers; the cache
 never raises into an API call. A bad URL, or `redis://` without the `redis`
-package, raises `TokenCacheConfigError` when the client is constructed.
+package, raises `TokenCacheConfigError` when the client is constructed. A Redis
+backend built from a URL is memoized per process and its connection pool is
+bound to the event loop that first used it, so a process that runs more than one
+event loop over its life degrades to the memory layer, with one warning, on the
+other loops.
 
 ## What is shared, and with whom
 
