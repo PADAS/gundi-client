@@ -204,9 +204,10 @@ class MemoryTokenCache:
             return None
         now = _now()
         if not token.is_live(now) and not token.refresh_is_live(now):
-            self._entries.pop(
-                key, None
-            )  # another thread's loop may have got here first
+            # Drop only the entry we judged dead; another thread's loop may have
+            # replaced it since the read above.
+            if self._entries.get(key) is token:
+                self._entries.pop(key, None)
             return None
         return token
 
@@ -221,13 +222,19 @@ class MemoryTokenCache:
         with self._guard:
             per_loop = self._locks.setdefault(key, {})
             # A closed loop is gone. A stopped-but-open loop is pruned only when
-            # nobody holds its lock: a task parked inside `async with lock` while
-            # its loop is paused between run_until_complete calls must get the
-            # same lock back, or a second task in that loop would fetch too.
+            # nobody holds its lock and nobody is queued for it: a task parked
+            # inside `async with lock` while its loop is paused between
+            # run_until_complete calls, or a waiter already woken by release()
+            # whose step has not run yet, must get the same lock back.
             for stale in [
                 l
                 for l, lk in list(per_loop.items())
-                if l.is_closed() or (not l.is_running() and not lk.locked())
+                if l.is_closed()
+                or (
+                    not l.is_running()
+                    and not lk.locked()
+                    and not getattr(lk, "_waiters", None)
+                )
             ]:
                 per_loop.pop(stale, None)
             lock = per_loop.get(loop)

@@ -584,10 +584,13 @@ class GundiClient:
 
         When both fail, the raised AuthenticationError carries
         ``refresh_token_rejected=True`` if the refresh grant was answered with
-        400 ``invalid_grant`` (the refresh token itself is dead) rather than a
-        5xx, a rate limit, another 4xx, or a network error (the refresh token
-        may still be good). Network failures surface as AuthenticationError too
-        (auth._post_token wraps them), so one except clause covers "no token"."""
+        ``invalid_grant`` (400 on Keycloak, 403 on Auth0) or a bare 400 (the
+        refresh token itself is dead), rather than a 5xx, a rate limit, another
+        4xx, or a network error (the refresh token may still be good). A network
+        failure on the refresh grant is raised at once, without trying the full
+        authentication on the same broken network; it surfaces as
+        AuthenticationError with ``status_code`` None (auth._post_token wraps
+        transport errors), so one except clause covers "no token"."""
         now = _token_cache._now()
         refresh_rejected = False
         # 1. Prefer the refresh-token grant when we hold a live refresh token.
@@ -617,11 +620,17 @@ class GundiClient:
                     token, refresh_rotated=refresh_rotated and not carried, prior=prior
                 )
             except errors.AuthenticationError as e:
-                # 400 invalid_grant is the IdP's verdict on the refresh token
-                # (RFC 6749 §5.2); everything else says nothing about it.
-                refresh_rejected = e.status_code == 400 and e.error in (
-                    None,
-                    "invalid_grant",
+                if e.status_code is None:
+                    # No response at all: the network that just failed would
+                    # fail the full authentication too, and the credentials
+                    # should not go down a broken connection. One attempt.
+                    raise
+                # `invalid_grant` is the IdP's verdict on the refresh token (RFC
+                # 6749 §5.2; Keycloak sends it with 400, Auth0 with 403). A 400
+                # with no error code at all is taken the same way. Any other
+                # response says nothing about the refresh token.
+                refresh_rejected = e.error == "invalid_grant" or (
+                    e.status_code == 400 and e.error is None
                 )
                 logger.info(
                     "Refresh-token grant failed; falling back to full re-authentication."
@@ -750,10 +759,10 @@ class GundiClient:
                     self.cached_token_expires_at = _token_cache.NO_REFRESH
                     self.cached_token_refresh_expires_at = _token_cache.NO_REFRESH
                 elif e.refresh_token_rejected:
-                    # The IdP refused the refresh token itself (4xx): drop the
-                    # shared entry so no replica replays it, and stop this
-                    # instance from trying it again. A 5xx or a network error
-                    # leaves everything in place; the refresh token may be fine.
+                    # The IdP refused the refresh token itself (invalid_grant, or
+                    # a bare 400): drop the shared entry so no replica replays
+                    # it, and stop this instance from trying it again. Any other
+                    # failure leaves everything in place; the token may be fine.
                     await self._token_store.delete(key)
                     if self.cached_token is not None:
                         self.cached_token_refresh_expires_at = _token_cache.NO_REFRESH

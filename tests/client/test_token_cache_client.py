@@ -849,3 +849,71 @@ def test_authentication_error_declares_refresh_token_rejected():
         AuthenticationError("x", refresh_token_rejected=True).refresh_token_rejected
         is True
     )
+
+
+@pytest.mark.asyncio
+async def test_a_403_invalid_grant_on_the_refresh_grant_marks_the_refresh_token_dead(
+    client_settings, auth_token_response, monkeypatch
+):
+    """Auth0 answers a revoked refresh token with 403 invalid_grant; the error
+    code, not the status, is the verdict."""
+    from datetime import timedelta
+    from urllib.parse import parse_qs
+    from gundi_client_v2 import token_cache as tc
+    from gundi_client_v2.errors import AuthenticationError
+
+    base = tc._now()
+    clock = {"now": base}
+    monkeypatch.setattr(tc, "_now", lambda: clock["now"])
+    calls = []
+
+    def respond(request):
+        calls.append(parse_qs(request.content.decode())["grant_type"][0])
+        if len(calls) == 1:
+            return httpx.Response(200, json=auth_token_response)
+        if calls[-1] == "refresh_token":
+            return httpx.Response(403, json={"error": "invalid_grant"})
+        return httpx.Response(503, json={"error": "temporarily_unavailable"})
+
+    async with respx.mock as mock:
+        mock.post(TOKEN_URL).mock(side_effect=respond)
+        client = GundiClient(**client_settings)
+        await client.get_auth_header()
+        clock["now"] += timedelta(seconds=auth_token_response["expires_in"] + 60)
+        for _ in range(2):
+            with pytest.raises(AuthenticationError):
+                await client.get_auth_header()
+    assert calls == [
+        "client_credentials",
+        "refresh_token",
+        "client_credentials",
+        "client_credentials",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_a_transport_error_on_the_refresh_grant_does_not_retry_with_full_authentication(
+    client_settings, auth_token_response, monkeypatch
+):
+    """A network that just failed will fail again; one attempt, one timeout, and
+    the credentials are not sent down a broken connection."""
+    from datetime import timedelta
+    from gundi_client_v2 import token_cache as tc
+    from gundi_client_v2.errors import AuthenticationError
+
+    base = tc._now()
+    clock = {"now": base}
+    monkeypatch.setattr(tc, "_now", lambda: clock["now"])
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).respond(200, json=auth_token_response)
+        client = GundiClient(**client_settings)
+        await client.get_auth_header()
+        clock["now"] += timedelta(seconds=auth_token_response["expires_in"] + 60)
+        route.mock(side_effect=httpx.ConnectError("down"))
+        with pytest.raises(AuthenticationError) as info:
+            await client.get_auth_header()
+    assert route.call_count == 2  # the login, then exactly one refresh attempt
+    assert info.value.status_code is None
+    assert (
+        client.cached_token_refresh_expires_at > clock["now"]
+    )  # the refresh token is kept

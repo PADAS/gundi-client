@@ -154,9 +154,11 @@ composed of the memory layer and the optional backend.
    IdP). A backend outage during that re-read falls back to memory rather than
    discarding an in-process sibling's replacement. When the fetch fails: after a
    forced refresh the instance drops its token entirely; after a refresh grant
-   the IdP answered with `400 invalid_grant`, the shared entry is deleted and
-   the instance stops trying that refresh token; a 5xx, a rate limit, another
-   4xx, or a network failure leaves everything in place (amended 2026-09-08,
+   the IdP answered with `invalid_grant` (400 on Keycloak, 403 on Auth0) or a
+   bare 400 without an error code, the shared entry is deleted and the instance
+   stops trying that refresh token; a 5xx, a rate limit, another 4xx, or a
+   network failure leaves everything in place, and a network failure on the
+   refresh grant is raised without attempting the full grant (amended 2026-09-08,
    second and third reviews: a dead-token marker had republished the rejected
    access token, a 5xx had discarded a valid refresh token, and a transport
    error escaped as a raw httpx exception). `auth._post_token` wraps transport

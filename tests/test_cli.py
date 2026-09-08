@@ -1250,3 +1250,25 @@ def test_bad_token_cache_url_exits_2_with_a_clean_error(cli_env, monkeypatch):
     assert "Error:" in result.output
     assert "bogus" in result.output
     assert "Traceback" not in result.output
+
+
+def test_idp_network_outage_is_not_reported_as_not_authenticated(tmp_path, monkeypatch):
+    """Logging in cannot fix a network outage; the login hint is for rejected
+    credentials, not for an unreachable token endpoint."""
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("GUNDI_PROFILE", raising=False)
+    for var in ("GUNDI_PASSWORD", "GUNDI_USERNAME"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
+    config_store.add_environment(
+        "prod", {"base_url": BASE_URL, "client_id": "c", "token_url": TOKEN_URL}
+    )
+    config_store.set_active("prod")
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post(TOKEN_URL).mock(side_effect=httpx.ConnectError("boom"))
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 1, result.output
+    assert "request failed" in result.output.lower()
+    assert "not authenticated" not in result.output.lower()
+    assert "gundi auth login" not in result.output.lower()

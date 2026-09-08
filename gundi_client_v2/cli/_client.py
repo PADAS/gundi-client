@@ -280,6 +280,11 @@ def run_command(
     try:
         result = asyncio.run(_runner())
     except AuthenticationError as exc:
+        if exc.status_code is None and exc.__cause__ is not None:
+            # The token endpoint never answered (network failure): logging in
+            # again cannot fix that, so no login hint.
+            typer.echo(f"Error: request failed: {exc}", err=True)
+            raise typer.Exit(1)
         suffix = f" --profile {env_name}" if profile else ""
         detail = f" ({exc})" if str(exc) else ""
         typer.echo(
