@@ -38,7 +38,7 @@ You should see a connection count and a JSON dump of the first Connection.
 ## What just happened
 
 1. **`GundiClient()`** read your env vars (`GUNDI_API_BASE_URL`,
-   `OAUTH_ISSUER`, and the credentials) into a configured client.
+   `GUNDI_OAUTH_ISSUER`, and the credentials) into a configured client.
 2. **`async with`** opened the underlying HTTPX session. No network
    traffic yet.
 3. **`client.get_connections()`** triggered the first authenticated

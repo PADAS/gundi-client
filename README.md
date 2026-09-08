@@ -29,7 +29,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-Configure the client via environment variables (see [Configuration](#configuration)) or pass values directly. The Quick Start snippet needs more than credentials at runtime — at minimum a `base_url` / `GUNDI_API_BASE_URL`, an `OAUTH_CLIENT_ID`, and either an `OAUTH_ISSUER` or `oauth_token_url`. Example with kwargs:
+Configure the client via environment variables (see [Configuration](#configuration)) or pass values directly. The Quick Start snippet needs more than credentials at runtime — at minimum a `base_url` / `GUNDI_API_BASE_URL`, a `GUNDI_OAUTH_CLIENT_ID`, and either a `GUNDI_OAUTH_ISSUER` or `oauth_token_url`. Example with kwargs:
 
 ```python
 client = GundiClient(
@@ -94,17 +94,19 @@ Settings can be provided as **environment variables** or **constructor keyword a
 |---|---|---|
 | `GUNDI_USERNAME` | Your Gundi username (email) — required for password grant | — |
 | `GUNDI_PASSWORD` | Your Gundi password — required for password grant | — |
-| `OAUTH_CLIENT_ID` | OAuth client ID | — |
-| `OAUTH_CLIENT_SECRET` | OAuth client secret — required for client-credentials grant | — |
-| `OAUTH_ISSUER` | OIDC issuer URL. When set without `OAUTH_TOKEN_URL`, the token endpoint is discovered at runtime from `{OAUTH_ISSUER}/.well-known/openid-configuration`. A trailing slash is normalized. | — |
-| `OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. When set, overrides OIDC discovery from `OAUTH_ISSUER`. | — |
-| `OAUTH_AUDIENCE` | OAuth audience. Sent to the token endpoint when set. Required by some IdPs (e.g. Auth0 won't issue a usable API access token without it); ignored by others (Keycloak password grant). | — |
-| `OAUTH_SCOPE` | OAuth scope | `openid` |
+| `GUNDI_OAUTH_CLIENT_ID` | OAuth client ID | — |
+| `GUNDI_OAUTH_CLIENT_SECRET` | OAuth client secret — required for client-credentials grant | — |
+| `GUNDI_OAUTH_ISSUER` | OIDC issuer URL. When set without `GUNDI_OAUTH_TOKEN_URL`, the token endpoint is discovered at runtime from `{GUNDI_OAUTH_ISSUER}/.well-known/openid-configuration`. A trailing slash is normalized. | — |
+| `GUNDI_OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. When set, overrides OIDC discovery from `GUNDI_OAUTH_ISSUER`. | — |
+| `GUNDI_OAUTH_AUDIENCE` | OAuth audience. Sent to the token endpoint when set. Required by some IdPs (e.g. Auth0 won't issue a usable API access token without it); ignored by others (Keycloak password grant). | — |
+| `GUNDI_OAUTH_SCOPE` | OAuth scope | `openid` |
 | `GUNDI_API_BASE_URL` | Gundi API base URL | — |
 | `SENSORS_API_BASE_URL` | Sensors/routing API base URL (used by `GundiDataSenderClient`) | — |
 | `GUNDI_API_SSL_VERIFY` | Verify SSL certificates | `true` |
 | `LOG_LEVEL` | Logging level (env-only) | `INFO` |
 | `GUNDI_CLIENT_ENVFILE` | Path to a `.env` file to load (env-only; defaults to `.env` in cwd) | — |
+
+The un-prefixed `OAUTH_*` names (and, for the library, the legacy `KEYCLOAK_*` names) are still accepted as fallbacks.
 
 ### GundiClient constructor kwargs
 
@@ -114,12 +116,12 @@ Settings can be provided as **environment variables** or **constructor keyword a
 | `use_ssl` | `GUNDI_API_SSL_VERIFY` | Verify SSL certificates |
 | `username` | `GUNDI_USERNAME` | Gundi username |
 | `password` | `GUNDI_PASSWORD` | Gundi password |
-| `oauth_client_id` | `OAUTH_CLIENT_ID` | OAuth client ID |
-| `oauth_client_secret` | `OAUTH_CLIENT_SECRET` | OAuth client secret |
-| `oauth_token_url` | `OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. When set, used as-is. |
-| `oauth_issuer` | `OAUTH_ISSUER` | OIDC issuer URL. When set without `oauth_token_url`, the token endpoint is discovered via OIDC discovery. |
-| `oauth_audience` | `OAUTH_AUDIENCE` | OAuth audience. IdP-dependent — required for Auth0, optional for Keycloak password grant. |
-| `oauth_scope` | `OAUTH_SCOPE` | OAuth scope |
+| `oauth_client_id` | `GUNDI_OAUTH_CLIENT_ID` | OAuth client ID |
+| `oauth_client_secret` | `GUNDI_OAUTH_CLIENT_SECRET` | OAuth client secret |
+| `oauth_token_url` | `GUNDI_OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. When set, used as-is. |
+| `oauth_issuer` | `GUNDI_OAUTH_ISSUER` | OIDC issuer URL. When set without `oauth_token_url`, the token endpoint is discovered via OIDC discovery. |
+| `oauth_audience` | `GUNDI_OAUTH_AUDIENCE` | OAuth audience. IdP-dependent — required for Auth0, optional for Keycloak password grant. |
+| `oauth_scope` | `GUNDI_OAUTH_SCOPE` | OAuth scope |
 | `max_http_retries` | — | Max HTTP retries (default `5`) |
 | `connect_timeout` | — | Connect timeout in seconds (default `3.1`) |
 | `data_timeout` | — | Data timeout in seconds (default `20`) |
@@ -135,30 +137,30 @@ Settings can be provided as **environment variables** or **constructor keyword a
 
 The client supports two authentication modes:
 
-**Password grant (for developers)** — Provide `GUNDI_USERNAME` and `GUNDI_PASSWORD` along with `OAUTH_CLIENT_ID`. This is the recommended approach for external developers.
+**Password grant (for developers)** — Provide `GUNDI_USERNAME` and `GUNDI_PASSWORD` along with `GUNDI_OAUTH_CLIENT_ID`. This is the recommended approach for external developers.
 
-**Client credentials grant (for services)** — Provide `OAUTH_CLIENT_ID` and `OAUTH_CLIENT_SECRET`. This is used by internal backend services.
+**Client credentials grant (for services)** — Provide `GUNDI_OAUTH_CLIENT_ID` and `GUNDI_OAUTH_CLIENT_SECRET`. This is used by internal backend services.
 
 ### Token URL resolution
 
 The client resolves the OAuth token endpoint in this order:
 
-1. **`oauth_token_url` (kwarg) / `OAUTH_TOKEN_URL` (env)** — used as-is when set.
-2. **`oauth_issuer` (kwarg) / `OAUTH_ISSUER` (env)** — the client fetches `{issuer}/.well-known/openid-configuration` (OIDC discovery) and uses its `token_endpoint`. Result is cached for the process lifetime; call `gundi_client_v2.auth.clear_discovery_cache()` to invalidate.
+1. **`oauth_token_url` (kwarg) / `GUNDI_OAUTH_TOKEN_URL` (env)** — used as-is when set.
+2. **`oauth_issuer` (kwarg) / `GUNDI_OAUTH_ISSUER` (env)** — the client fetches `{issuer}/.well-known/openid-configuration` (OIDC discovery) and uses its `token_endpoint`. Result is cached for the process lifetime; call `gundi_client_v2.auth.clear_discovery_cache()` to invalidate.
 3. **Neither set** — `AuthenticationError("No token URL configured. Set oauth_token_url or oauth_issuer.")` is raised on the first auth attempt.
 
-OIDC discovery works for any compliant IdP (Keycloak, Auth0, Okta, …). Configure `OAUTH_ISSUER` and the token endpoint is found automatically.
+OIDC discovery works for any compliant IdP (Keycloak, Auth0, Okta, …). Configure `GUNDI_OAUTH_ISSUER` and the token endpoint is found automatically.
 
 ### Audience
 
-`OAUTH_AUDIENCE` is sent to the token endpoint when configured. Whether it is required depends on the IdP:
+`GUNDI_OAUTH_AUDIENCE` is sent to the token endpoint when configured. Whether it is required depends on the IdP:
 
 - **Auth0** — required. Without `audience`, Auth0 issues an opaque token that cannot authorize API requests.
 - **Keycloak** — optional. Both grant types this library supports (password and client_credentials) ignore it.
 
-The parameter name `audience` reflects the Auth0/Keycloak convention. The OAuth 2.0 / OIDC standard equivalent is `resource` (RFC 8707, *Resource Indicators*). If we add support for IdPs that strictly require `resource` instead, it will be introduced as a `resource` kwarg alongside `audience`, not as a rename. Existing `OAUTH_AUDIENCE` / `oauth_audience` configurations will keep working.
+The parameter name `audience` reflects the Auth0/Keycloak convention. The OAuth 2.0 / OIDC standard equivalent is `resource` (RFC 8707, *Resource Indicators*). If we add support for IdPs that strictly require `resource` instead, it will be introduced as a `resource` kwarg alongside `audience`, not as a rename. Existing `GUNDI_OAUTH_AUDIENCE` / `oauth_audience` configurations will keep working.
 
-> **Backward compatibility:** The legacy `KEYCLOAK_*` env var names (`KEYCLOAK_ISSUER`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`, `KEYCLOAK_AUDIENCE`) are still accepted as fallbacks for the corresponding `OAUTH_*` env vars. Three legacy constructor kwargs are also still accepted: `keycloak_client_id`, `keycloak_client_secret`, and `keycloak_audience`. There is no `keycloak_issuer` constructor kwarg — use `oauth_token_url` or `oauth_issuer` instead.
+> **Backward compatibility:** The un-prefixed `OAUTH_*` names (and, for the library, the legacy `KEYCLOAK_*` names) are still accepted as fallbacks. Specifically: `OAUTH_ISSUER`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, `OAUTH_AUDIENCE`, `OAUTH_TOKEN_URL`, and `OAUTH_SCOPE` all fall back for the corresponding `GUNDI_OAUTH_*` env vars, and the legacy `KEYCLOAK_ISSUER`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`, `KEYCLOAK_AUDIENCE` fall back after that. Three legacy constructor kwargs are also still accepted: `keycloak_client_id`, `keycloak_client_secret`, and `keycloak_audience`. There is no `keycloak_issuer` constructor kwarg — use `oauth_token_url` or `oauth_issuer` instead. When multiple spellings are set, the `GUNDI_`-prefixed one wins.
 
 If both are configured, password grant takes precedence. Contact the Gundi team for credentials.
 
@@ -335,15 +337,15 @@ pip install "gundi-client-v2[cli]"
 
 Authentication reuses the same environment variables as the library (see
 [Configuration](#configuration)). The CLI needs `GUNDI_API_BASE_URL`,
-`OAUTH_CLIENT_ID`, plus:
+`GUNDI_OAUTH_CLIENT_ID`, plus:
 
 - **Credentials** — either `GUNDI_USERNAME` + `GUNDI_PASSWORD` (password grant,
-  for developers) or `OAUTH_CLIENT_SECRET` (client-credentials, for services).
-- **Token endpoint** — `OAUTH_ISSUER` (preferred; resolved via OIDC discovery)
-  or an explicit `OAUTH_TOKEN_URL`.
+  for developers) or `GUNDI_OAUTH_CLIENT_SECRET` (client-credentials, for services).
+- **Token endpoint** — `GUNDI_OAUTH_ISSUER` (preferred; resolved via OIDC discovery)
+  or an explicit `GUNDI_OAUTH_TOKEN_URL`.
 
-`OAUTH_AUDIENCE` is forwarded when set. A `.env` file in the working directory
-is loaded automatically.
+`GUNDI_OAUTH_AUDIENCE` is forwarded when set. A `.env` file in the working directory
+is loaded automatically. The un-prefixed `OAUTH_*` names are still accepted as fallbacks.
 
 ```bash
 # List all integrations (table: ID, NAME, TYPE, ENABLED, STATUS)
@@ -396,7 +398,7 @@ gundi env list              # '*' marks the active one
 gundi env show prod
 
 # Authenticate once; the token is cached and reused by later commands.
-# The secret/password is read from env (OAUTH_CLIENT_SECRET / GUNDI_PASSWORD)
+# The secret/password is read from env (GUNDI_OAUTH_CLIENT_SECRET / GUNDI_PASSWORD)
 # or prompted (hidden) — and never stored.
 gundi auth login                              # grant chosen by the env's config
 gundi auth login --username me@example.com    # force the password grant
@@ -409,8 +411,8 @@ gundi auth logout
 ```
 
 **Environment selection precedence:** `--profile` flag → `GUNDI_PROFILE` env var
-→ stored active environment → raw `OAUTH_*` / `GUNDI_*` env vars (the original
-behavior, used when no environments are configured).
+→ stored active environment → raw `GUNDI_OAUTH_*` / `OAUTH_*` / `GUNDI_*` env vars
+(the original behavior, used when no environments are configured).
 
 **Token refresh:** password-grant environments refresh transparently using the
 cached refresh token. Client-credentials environments (no refresh token) require

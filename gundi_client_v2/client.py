@@ -276,28 +276,31 @@ class GundiClient:
                 setting.
 
                 * ``oauth_client_id`` / ``keycloak_client_id`` (str):
-                  OAuth client ID. Env: ``OAUTH_CLIENT_ID`` /
-                  ``KEYCLOAK_CLIENT_ID``.
+                  OAuth client ID. Env: ``GUNDI_OAUTH_CLIENT_ID`` /
+                  ``OAUTH_CLIENT_ID`` / ``KEYCLOAK_CLIENT_ID``.
                 * ``oauth_client_secret`` / ``keycloak_client_secret``
                   (str): OAuth client secret (confidential clients). Env:
-                  ``OAUTH_CLIENT_SECRET`` / ``KEYCLOAK_CLIENT_SECRET``.
+                  ``GUNDI_OAUTH_CLIENT_SECRET`` / ``OAUTH_CLIENT_SECRET`` /
+                  ``KEYCLOAK_CLIENT_SECRET``.
                 * ``username`` (str): Resource-owner username (password
                   grant). Env: ``GUNDI_USERNAME``.
                 * ``password`` (str): Resource-owner password (password
                   grant). Env: ``GUNDI_PASSWORD``.
                 * ``oauth_token_url`` (str): Direct token endpoint URL.
                   Takes precedence over ``oauth_issuer``. Env:
-                  ``OAUTH_TOKEN_URL``.
+                  ``GUNDI_OAUTH_TOKEN_URL`` / ``OAUTH_TOKEN_URL``.
                 * ``oauth_issuer`` (str): OIDC issuer URL. Used for
                   automatic token-endpoint discovery when
-                  ``oauth_token_url`` is not set. Env: ``OAUTH_ISSUER`` /
+                  ``oauth_token_url`` is not set. Env:
+                  ``GUNDI_OAUTH_ISSUER`` / ``OAUTH_ISSUER`` /
                   ``KEYCLOAK_ISSUER``.
                 * ``oauth_audience`` / ``keycloak_audience`` (str): OAuth
                   audience claim. Required by Auth0; optional for
-                  Keycloak. Env: ``OAUTH_AUDIENCE`` /
-                  ``KEYCLOAK_AUDIENCE``.
+                  Keycloak. Env: ``GUNDI_OAUTH_AUDIENCE`` /
+                  ``OAUTH_AUDIENCE`` / ``KEYCLOAK_AUDIENCE``.
                 * ``oauth_scope`` (str): Space-separated OAuth scopes.
-                  Env: ``OAUTH_SCOPE`` (default ``"openid"``).
+                  Env: ``GUNDI_OAUTH_SCOPE`` / ``OAUTH_SCOPE`` (default
+                  ``"openid"``).
 
                 **Retry / timeout settings**
 

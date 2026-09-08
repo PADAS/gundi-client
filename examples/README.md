@@ -28,16 +28,18 @@ Demonstrates:
 - `GUNDI_USERNAME` – your Gundi username
 - `GUNDI_PASSWORD` – your Gundi password
 - `GUNDI_INTEGRATION_NAME` – exact name of the integration to use for sending (e.g. the display name in the portal)
-- `OAUTH_CLIENT_ID` – OAuth client ID for the password grant
+- `GUNDI_OAUTH_CLIENT_ID` – OAuth client ID for the password grant
 - `GUNDI_API_BASE_URL` – Gundi API base URL (portal/configuration API)
 - `SENSORS_API_BASE_URL` – Sensors/ingestion API base URL (used by `GundiDataSenderClient`)
 - At least one of:
-  - `OAUTH_ISSUER` – OIDC issuer base URL (e.g. `https://auth.example.com/realms/my-realm`); the token endpoint is discovered automatically via `{OAUTH_ISSUER}/.well-known/openid-configuration`.
-  - `OAUTH_TOKEN_URL` – explicit OAuth token endpoint URL (overrides OIDC discovery when set).
+  - `GUNDI_OAUTH_ISSUER` – OIDC issuer base URL (e.g. `https://auth.example.com/realms/my-realm`); the token endpoint is discovered automatically via `{GUNDI_OAUTH_ISSUER}/.well-known/openid-configuration`.
+  - `GUNDI_OAUTH_TOKEN_URL` – explicit OAuth token endpoint URL (overrides OIDC discovery when set).
 
 **Conditional:**
 
-- `OAUTH_AUDIENCE` – OAuth audience. Required by some IdPs (e.g., Auth0 needs it to issue a usable API access token); ignored by others (Keycloak password grant). Set if your IdP requires it.
+- `GUNDI_OAUTH_AUDIENCE` – OAuth audience. Required by some IdPs (e.g., Auth0 needs it to issue a usable API access token); ignored by others (Keycloak password grant). Set if your IdP requires it.
+
+The un-prefixed `OAUTH_*` names (and, for the library, the legacy `KEYCLOAK_*` names) are still accepted as fallbacks.
 
 **Optional:**
 
@@ -76,9 +78,9 @@ in all three — the variation is purely how the client is configured.
 
 | Script | Auth path | Token URL source |
 |---|---|---|
-| `list_connections_client_credentials.py` | client_credentials grant (confidential client / M2M) | explicit `OAUTH_TOKEN_URL` |
-| `list_connections_password_grant.py` | password grant (public client / user-facing) | explicit `OAUTH_TOKEN_URL` |
-| `list_connections_discovery.py` | password grant + OIDC discovery (IdP-agnostic) | discovered from `OAUTH_ISSUER` — requires `gundi-client-v2 >= 3.0.0` |
+| `list_connections_client_credentials.py` | client_credentials grant (confidential client / M2M) | explicit `GUNDI_OAUTH_TOKEN_URL` |
+| `list_connections_password_grant.py` | password grant (public client / user-facing) | explicit `GUNDI_OAUTH_TOKEN_URL` |
+| `list_connections_discovery.py` | password grant + OIDC discovery (IdP-agnostic) | discovered from `GUNDI_OAUTH_ISSUER` — requires `gundi-client-v2 >= 3.0.0` |
 
 All three run the same way as `send_observations.py`:
 

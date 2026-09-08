@@ -15,17 +15,27 @@ else:
     # up the tree — matching how other dotenv-based tools behave.
     env.read_env(".env")
 
-# OAuth settings — OAUTH_* preferred; KEYCLOAK_* accepted for backward compatibility.
-# The token URL is either set directly via OAUTH_TOKEN_URL or discovered at runtime
-# from OAUTH_ISSUER via the OIDC discovery document.
-OAUTH_ISSUER = env.str("OAUTH_ISSUER", env.str("KEYCLOAK_ISSUER", None))
-OAUTH_TOKEN_URL = env.str("OAUTH_TOKEN_URL", None)
-OAUTH_CLIENT_ID = env.str("OAUTH_CLIENT_ID", env.str("KEYCLOAK_CLIENT_ID", None))
-OAUTH_CLIENT_SECRET = env.str(
-    "OAUTH_CLIENT_SECRET", env.str("KEYCLOAK_CLIENT_SECRET", None)
+# OAuth settings — GUNDI_OAUTH_* preferred; OAUTH_* and KEYCLOAK_* accepted for
+# backward compatibility. The token URL is either set directly via
+# GUNDI_OAUTH_TOKEN_URL or discovered at runtime from GUNDI_OAUTH_ISSUER via the
+# OIDC discovery document.
+OAUTH_ISSUER = env.str(
+    "GUNDI_OAUTH_ISSUER", env.str("OAUTH_ISSUER", env.str("KEYCLOAK_ISSUER", None))
 )
-OAUTH_AUDIENCE = env.str("OAUTH_AUDIENCE", env.str("KEYCLOAK_AUDIENCE", None))
-OAUTH_SCOPE = env.str("OAUTH_SCOPE", "openid")
+OAUTH_TOKEN_URL = env.str("GUNDI_OAUTH_TOKEN_URL", env.str("OAUTH_TOKEN_URL", None))
+OAUTH_CLIENT_ID = env.str(
+    "GUNDI_OAUTH_CLIENT_ID",
+    env.str("OAUTH_CLIENT_ID", env.str("KEYCLOAK_CLIENT_ID", None)),
+)
+OAUTH_CLIENT_SECRET = env.str(
+    "GUNDI_OAUTH_CLIENT_SECRET",
+    env.str("OAUTH_CLIENT_SECRET", env.str("KEYCLOAK_CLIENT_SECRET", None)),
+)
+OAUTH_AUDIENCE = env.str(
+    "GUNDI_OAUTH_AUDIENCE",
+    env.str("OAUTH_AUDIENCE", env.str("KEYCLOAK_AUDIENCE", None)),
+)
+OAUTH_SCOPE = env.str("GUNDI_OAUTH_SCOPE", env.str("OAUTH_SCOPE", "openid"))
 
 # Backward-compatible aliases for the pre-rename setting names. Code importing
 # gundi_client_v2.settings.KEYCLOAK_* keeps working; these mirror the OAUTH_* values.
