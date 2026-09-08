@@ -11,11 +11,12 @@ import json
 import logging
 import math
 import os
+import stat
 import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Protocol, Tuple
+from typing import Dict, Protocol
 from urllib.parse import urlparse
 
 from gundi_core.schemas import OAuthToken
@@ -42,11 +43,14 @@ def token_cache_key(
 ) -> str:
     """One key per set of credentials.
 
-    The secret is part of the hashed material so a rotated secret never reuses
-    a token minted under the old one, and two clients sharing an id with
-    different secrets never collide. SHA-256 is one-way, so the key discloses
-    nothing. ``token_url`` must be the resolved endpoint (after OIDC discovery)
-    so an issuer-configured client and a token-URL-configured one share.
+    ``username`` is always part of the material (a CLI profile restores a user's
+    token onto a client that knows the user but not the password; two users must
+    never share an entry). ``secret`` is meant for a high-entropy client secret,
+    so a rotated secret never reuses a token minted under the old one; callers
+    must NOT pass a human password here — hashed next to guessable material it
+    would make every key name an offline password verifier. ``token_url`` must
+    be the resolved endpoint (after OIDC discovery) so an issuer-configured
+    client and a token-URL-configured one share.
     """
     material = "\x1f".join(
         [
@@ -183,7 +187,12 @@ class MemoryTokenCache:
         # to the loop that first contends it, so a process that runs more than one
         # event loop over its life (a worker calling asyncio.run per job) needs a
         # fresh lock per loop; reusing one raises "bound to a different event loop".
-        self._locks: Dict[str, Tuple[asyncio.AbstractEventLoop, asyncio.Lock]] = {}
+        # key -> {event loop -> Lock}. An asyncio.Lock binds to the loop that
+        # first contends it, so each loop gets its own lock per key; entries for
+        # closed loops are pruned on access. Two loops in one process are either
+        # sequential (asyncio.run per job) or in separate threads; either way a
+        # loop only ever sees its own lock.
+        self._locks: Dict[str, Dict[asyncio.AbstractEventLoop, asyncio.Lock]] = {}
 
     async def get(self, key: str) -> "CachedToken | None":
         token = self._entries.get(key)
@@ -203,11 +212,13 @@ class MemoryTokenCache:
 
     def lock(self, key: str) -> asyncio.Lock:
         loop = asyncio.get_running_loop()  # lock() is only called from a coroutine
-        bound = self._locks.get(key)
-        if bound is None or bound[0] is not loop or bound[0].is_closed():
-            bound = (loop, asyncio.Lock())
-            self._locks[key] = bound
-        return bound[1]
+        per_loop = self._locks.setdefault(key, {})
+        for stale in [l for l in per_loop if l.is_closed()]:
+            del per_loop[stale]
+        lock = per_loop.get(loop)
+        if lock is None:
+            lock = per_loop[loop] = asyncio.Lock()
+        return lock
 
     def clear(self) -> None:
         self._entries.clear()
@@ -243,6 +254,7 @@ class FileTokenCache:
 
     def __init__(self, directory: "Path | str") -> None:
         self.directory = Path(directory)
+        self._checked_directory = False
 
     def _path(self, key: str) -> Path:
         name = key[len(KEY_PREFIX) :] if key.startswith(KEY_PREFIX) else key
@@ -262,11 +274,20 @@ class FileTokenCache:
         return token
 
     async def set(self, key: str, token: CachedToken) -> None:
-        # chmod, not mkdir(mode=...): mkdir's mode applies only when it creates the
-        # directory, so an existing world-readable one would keep serving tokens
-        # world-readable (the CLI's config_store.ensure_dir does the same).
-        self.directory.mkdir(parents=True, exist_ok=True)
-        os.chmod(self.directory, 0o700)
+        if not self.directory.exists():
+            self.directory.mkdir(parents=True, exist_ok=True)
+            os.chmod(self.directory, 0o700)
+        elif not self._checked_directory:
+            # A pre-existing directory is the operator's, not the cache's, to
+            # re-mode (file:///tmp as root would strip the sticky bit from /tmp).
+            # Warn once if it is looser than 0700; the files stay 0600 either way.
+            self._checked_directory = True
+            if stat.S_IMODE(os.stat(self.directory).st_mode) & 0o077:
+                logger.warning(
+                    "Token cache directory permissions are wider than 0700; the "
+                    "cache files stay private, but the directory should be dedicated "
+                    "to this cache and owner-only."
+                )
         path = self._path(key)
         fd, tmp = tempfile.mkstemp(
             dir=str(self.directory), prefix=f".{path.name}.", suffix=".tmp"

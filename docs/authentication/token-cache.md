@@ -24,7 +24,7 @@ or a long-running process that must drop every cached token).
 | URL | Backend | Use it for |
 |---|---|---|
 | `redis://host:port/db`, `rediss://…` | Redis (`pip install gundi-client-v2[redis]`) | Several replicas or processes sharing one Redis |
-| `file:///absolute/dir` | One private file per credential set (0700 dir, 0600 files) | Local runs, scripts, hosts without Redis |
+| `file:///absolute/dir` | One private file per credential set (0600 files in a directory dedicated to the cache; created 0700, never re-moded if it already exists) | Local runs, scripts, hosts without Redis |
 | unset | none | Tokens shared within the process only |
 
 `token_cache=` accepts any object with async `get(key)`, `set(key, token)` and
@@ -46,23 +46,32 @@ other loops.
 ## What is shared, and with whom
 
 The cache key is a SHA-256 over the resolved token endpoint, grant type, client
-id, username (password grant), audience, scope, and the secret. Two clients
-share a token exactly when all of those match. Rotating a secret produces a new
-key, so a token minted under the old secret is never reused. The key reveals
-nothing about the credentials.
+id, username, audience, scope, and, for the client-credentials grant, the client
+secret. Two clients share a token exactly when all of those match. Rotating a
+client secret produces a new key, so a token minted under the old secret is never
+reused. A password is never part of the key: hashed next to guessable material it
+would let anyone who can list the cache's keys brute-force it offline, and
+changing a password does not invalidate tokens already issued. The username is
+always in the key, so two users sharing a client id never share an entry.
 
 In Redis, entries expire with the later of the access-token and refresh-token
 lifetimes. When the API answers with its login redirect (the response it gives
 a token it no longer accepts), or when a caller passes `force_refresh_token=True`,
-the entry is evicted from every layer before the client re-authenticates, so no
-other replica keeps serving it.
+the rejected token is evicted from every layer before the client re-authenticates,
+so no other replica keeps serving it. A client whose sibling has already replaced
+the rejected token adopts the replacement instead of evicting it. When both the
+refresh grant and the full authentication fail, the refresh token is marked dead
+everywhere so the next attempt goes straight to full authentication.
 
 ## Security
 
 Access tokens are bearer credentials. Point the Redis backend at a database that
 is as protected as the rest of your service's Redis data, and treat the file
-backend's directory as you would a credentials file. The secret itself never
-leaves the process; it enters the cache key only inside a one-way hash.
+backend's directory as you would a credentials file, and give the cache a
+directory of its own: the cache creates it 0700 but never changes the mode of a
+directory that already exists (it warns once if that directory is wider than
+0700). A client secret enters the cache key only inside a one-way hash; a
+password never enters it.
 
 ## Example
 

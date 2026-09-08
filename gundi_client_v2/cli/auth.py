@@ -8,7 +8,11 @@ from typing import Optional
 import httpx
 import typer
 
-from gundi_client_v2.errors import AuthenticationError, GundiAPIError
+from gundi_client_v2.errors import (
+    AuthenticationError,
+    GundiAPIError,
+    TokenCacheConfigError,
+)
 
 from . import config_store, token_store
 from ._client import active_env_name, build_client_for_login
@@ -34,7 +38,8 @@ def login(
     env_name = active_env_name(profile)
     try:
         client = build_client_for_login(env_name, username=username)
-    except config_store.ConfigError as exc:  # e.g. env missing base_url/client_id
+    except (config_store.ConfigError, TokenCacheConfigError) as exc:
+        # e.g. env missing base_url/client_id, or a malformed GUNDI_TOKEN_CACHE_URL
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(2)
 

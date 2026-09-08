@@ -1236,3 +1236,17 @@ def test_missing_env_error_names_gundi_prefixed_vars(monkeypatch):
         "GUNDI_OAUTH_CLIENT_SECRET (or GUNDI_USERNAME + GUNDI_PASSWORD)"
         in result.output
     )
+
+
+def test_bad_token_cache_url_exits_2_with_a_clean_error(cli_env, monkeypatch):
+    """A malformed GUNDI_TOKEN_CACHE_URL is a configuration error; the CLI reports
+    it the way it reports every other config problem, not as a traceback."""
+    from gundi_client_v2 import settings
+
+    # settings reads the env at import; the CLI reads the setting at construction.
+    monkeypatch.setattr(settings, "GUNDI_TOKEN_CACHE_URL", "bogus://cache")
+    result = runner.invoke(app, ["integrations", "list"])
+    assert result.exit_code == 2, result.output
+    assert "Error:" in result.output
+    assert "bogus" in result.output
+    assert "Traceback" not in result.output

@@ -243,7 +243,7 @@ def test_memory_cache_lock_is_rebuilt_for_a_new_event_loop():
 
     async def take_lock():
         lock = cache.lock("a")
-        assert cache._locks["a"][0] is asyncio.get_running_loop()
+        assert asyncio.get_running_loop() in cache._locks["a"]
         return lock
 
     first = asyncio.run(take_lock())
@@ -274,20 +274,39 @@ async def test_file_cache_round_trip_and_layout(tmp_path, clock):
 
 
 @pytest.mark.asyncio
-async def test_file_cache_permissions(tmp_path, clock):
-    # A directory left behind by something else must not keep serving tokens
-    # world-readable: the first write tightens an existing directory to 0700.
+async def test_file_cache_permissions(tmp_path, clock, caplog):
+    # A pre-existing directory is not the cache's to re-mode: file:///tmp as
+    # root would otherwise strip the sticky bit from /tmp. The cache warns once
+    # about a loose directory and keeps its own files private.
     directory = tmp_path / "tokens"
     directory.mkdir()
     os.chmod(directory, 0o777)
     cache = FileTokenCache(directory)
     key = KEY_PREFIX + "cd" * 16
-    await cache.set(key, _token())
-    assert stat.S_IMODE(os.stat(directory).st_mode) == 0o700
+    with caplog.at_level(logging.WARNING, logger="gundi_client_v2.token_cache"):
+        await cache.set(key, _token())
+        await cache.set(key, _token(access_token="again"))
+    assert stat.S_IMODE(os.stat(directory).st_mode) == 0o777
     assert (
         stat.S_IMODE(os.stat(tmp_path / "tokens" / ("cd" * 16 + ".json")).st_mode)
         == 0o600
     )
+    warnings = [r for r in _cache_warnings(caplog)]
+    assert len(warnings) == 1
+    assert "permissions" in warnings[0].getMessage()
+    assert str(directory) not in warnings[0].getMessage()  # the path is operator input
+
+
+@pytest.mark.asyncio
+async def test_file_cache_does_not_warn_about_a_private_pre_existing_directory(
+    tmp_path, clock, caplog
+):
+    directory = tmp_path / "tokens"
+    directory.mkdir(mode=0o700)
+    cache = FileTokenCache(directory)
+    with caplog.at_level(logging.WARNING, logger="gundi_client_v2.token_cache"):
+        await cache.set(KEY_PREFIX + "ef" * 16, _token())
+    assert list(_cache_warnings(caplog)) == []
 
 
 @pytest.mark.asyncio
@@ -662,3 +681,34 @@ async def test_store_warns_again_after_the_backend_recovers_and_fails_again(
         toggle.fail = True
         await store.get("d")  # fails: warning 2
     assert len(_cache_warnings(caplog)) == 2
+
+
+def test_key_includes_the_username_even_without_a_password():
+    """Two CLI profiles restore tokens for different users onto clients that
+    carry a username but no password; they must never share a cache entry."""
+    alice = token_cache_key(**{**_KEY_ARGS, "username": "alice", "secret": None})
+    bob = token_cache_key(**{**_KEY_ARGS, "username": "bob", "secret": None})
+    assert alice != bob
+
+
+def test_memory_cache_locks_are_per_loop_under_concurrent_threads():
+    """Two threads each running their own event loop must each keep single-flight
+    for their own tasks; one loop's lock() must never clobber another's slot."""
+    import threading
+
+    cache = MemoryTokenCache()
+    seen = {}
+
+    async def in_loop_a():
+        seen["a1"] = cache.lock("shared-key")
+        other = threading.Thread(target=lambda: asyncio.run(in_loop_b()))
+        other.start()
+        other.join()
+        seen["a2"] = cache.lock("shared-key")
+
+    async def in_loop_b():
+        seen["b"] = cache.lock("shared-key")
+
+    asyncio.run(in_loop_a())
+    assert seen["a1"] is seen["a2"]  # loop A's lock survives loop B's use of the key
+    assert seen["b"] is not seen["a1"]  # loop B never receives loop A's lock

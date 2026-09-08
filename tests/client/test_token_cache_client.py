@@ -413,3 +413,138 @@ def test_public_exports_and_version():
     from gundi_client_v2 import token_cache
 
     assert token_cache.MemoryTokenCache is MemoryTokenCache
+
+
+def test_cache_key_separates_users_and_ignores_the_password(client_settings):
+    """The password never enters the key: a human password hashed next to
+    guessable material would make every key an offline password verifier. The
+    username always does, even when no password is present (CLI profiles
+    restore a token onto a client that knows the user but not the password)."""
+    base = {k: v for k, v in client_settings.items() if k != "keycloak_client_secret"}
+    url = client_settings["oauth_token_url"]
+    alice_p1 = GundiClient(**base, username="alice", password="p1")._token_cache_key(
+        url
+    )
+    alice_p2 = GundiClient(**base, username="alice", password="p2")._token_cache_key(
+        url
+    )
+    bob_p1 = GundiClient(**base, username="bob", password="p1")._token_cache_key(url)
+    alice_profile = GundiClient(**base, username="alice")._token_cache_key(url)
+    bob_profile = GundiClient(**base, username="bob")._token_cache_key(url)
+    assert alice_p1 == alice_p2
+    assert alice_p1 != bob_p1
+    assert alice_profile != bob_profile
+    # client_credentials keeps the (high-entropy) secret in the key: rotation invalidates.
+    cc1 = GundiClient(**client_settings)._token_cache_key(url)
+    cc2 = GundiClient(
+        **{**client_settings, "keycloak_client_secret": "rotated"}
+    )._token_cache_key(url)
+    assert cc1 != cc2
+
+
+@pytest.mark.asyncio
+async def test_force_refresh_adopts_a_siblings_replacement_instead_of_evicting_it(
+    client_settings, auth_token_response
+):
+    """Two clients hold the same rejected token. The first evicts it and refreshes;
+    the second must adopt that replacement, not evict it and replay the same
+    refresh token (a replay is invalid_grant on rotating IdPs and can revoke the
+    sibling's fresh token too)."""
+    from urllib.parse import parse_qs
+
+    responses = iter(["first", "second", "third"])
+
+    def issue(request):
+        return httpx.Response(
+            200, json={**auth_token_response, "access_token": next(responses)}
+        )
+
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).mock(side_effect=issue)
+        a = GundiClient(**client_settings)
+        b = GundiClient(**client_settings)
+        assert (await a.get_auth_header())["authorization"] == "Bearer first"
+        assert (await b.get_auth_header())["authorization"] == "Bearer first"
+        assert (await a.get_auth_header(force_refresh_token=True))[
+            "authorization"
+        ] == "Bearer second"
+        assert (await b.get_auth_header(force_refresh_token=True))[
+            "authorization"
+        ] == "Bearer second"
+    grants = [
+        parse_qs(c.request.content.decode())["grant_type"][0] for c in route.calls
+    ]
+    assert grants == ["client_credentials", "refresh_token"]
+
+
+@pytest.mark.asyncio
+async def test_refresh_lifetime_is_carried_when_the_idp_omits_refresh_expires_in(
+    client_settings, auth_token_response, monkeypatch
+):
+    """A rotating IdP that omits refresh_expires_in must not shave the buffer off
+    the refresh lifetime on every refresh (15 s per cycle compounds)."""
+    from datetime import timedelta
+    from gundi_client_v2 import token_cache as tc
+
+    base = tc._now()
+    clock = {"now": base}
+    monkeypatch.setattr(tc, "_now", lambda: clock["now"])
+    rotated = {
+        k: v for k, v in auth_token_response.items() if k != "refresh_expires_in"
+    }
+
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).respond(200, json=auth_token_response)
+        client = GundiClient(**client_settings)
+        await client.get_auth_header()
+        original = client.cached_token_refresh_expires_at
+        route.respond(200, json={**rotated, "refresh_token": "rotated-refresh"})
+        for _ in range(5):
+            clock["now"] += timedelta(seconds=auth_token_response["expires_in"] + 60)
+            await client.get_auth_header()
+    assert client.cached_token_refresh_expires_at == original
+
+
+@pytest.mark.asyncio
+async def test_a_failed_refresh_marks_the_refresh_token_dead(
+    client_settings, auth_token_response, monkeypatch
+):
+    """When the refresh grant is rejected and the full authentication also fails,
+    the next call must not retry the dead refresh token first (2N requests
+    during an outage); it goes straight to full authentication."""
+    from datetime import timedelta
+    from urllib.parse import parse_qs
+    from gundi_client_v2 import token_cache as tc
+    from gundi_client_v2.errors import AuthenticationError
+
+    base = tc._now()
+    clock = {"now": base}
+    monkeypatch.setattr(tc, "_now", lambda: clock["now"])
+
+    calls = []
+
+    def respond(request):
+        calls.append(parse_qs(request.content.decode())["grant_type"][0])
+        if (
+            len(calls) == 1
+        ):  # the initial authentication succeeds; the IdP then rejects everything
+            return httpx.Response(200, json=auth_token_response)
+        return httpx.Response(400, json={"error": "invalid_grant"})
+
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).mock(side_effect=respond)
+        client = GundiClient(**client_settings)
+        await client.get_auth_header()
+        clock["now"] += timedelta(seconds=auth_token_response["expires_in"] + 60)
+        for _ in range(2):
+            with pytest.raises(AuthenticationError):
+                await client.get_auth_header()
+    grants = [
+        parse_qs(c.request.content.decode())["grant_type"][0] for c in route.calls
+    ]
+    assert grants == [
+        "client_credentials",
+        "refresh_token",
+        "client_credentials",
+        "client_credentials",
+    ]

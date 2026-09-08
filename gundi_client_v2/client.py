@@ -506,15 +506,22 @@ class GundiClient:
         return "password" if (self.username and self.password) else "client_credentials"
 
     def _token_cache_key(self, token_url: str) -> str:
+        # The username always scopes the key (a CLI profile restores a user's
+        # token onto a client with a username and no password). The password
+        # never enters it: a human password hashed next to guessable material
+        # would make the key name an offline password verifier, and a changed
+        # password does not invalidate tokens already issued. The client secret
+        # does enter it: it is high-entropy, and a rotation must not reuse a
+        # token minted under the old one.
         grant = self._grant_type()
         return _token_cache.token_cache_key(
             token_url=token_url,
             grant_type=grant,
             client_id=self.client_id,
-            username=self.username if grant == "password" else None,
+            username=self.username,
             audience=self.audience,
             scope=self.scope,
-            secret=(self.password if grant == "password" else self.client_secret),
+            secret=None if grant == "password" else self.client_secret,
         )
 
     def _current_entry(self) -> "_token_cache.CachedToken | None":
@@ -573,13 +580,14 @@ class GundiClient:
         now = _token_cache._now()
         # 1. Prefer the refresh-token grant when we hold a live refresh token.
         if prior is not None and prior.refresh_is_live(now):
+            fallback = prior.to_oauth_token(now)
             try:
                 token, refresh_rotated = await auth.refresh_access_token(
                     session=self._session,
                     oauth_token_url=token_url,
                     client_id=self.client_id,
                     refresh_token=prior.refresh_token,
-                    fallback=prior.to_oauth_token(),
+                    fallback=fallback,
                     # Public/password clients must not send a secret on refresh.
                     client_secret=(
                         None
@@ -588,8 +596,13 @@ class GundiClient:
                     ),
                     scope=self.scope,
                 )
+                # An IdP that rotates the refresh token but omits refresh_expires_in
+                # gets the fallback's remaining seconds backfilled; re-buffering that
+                # would shave 15 s off the lifetime on every refresh. Carry the
+                # prior absolute expiry instead.
+                carried = token.refresh_expires_in == fallback.refresh_expires_in
                 return self._to_cached(
-                    token, refresh_rotated=refresh_rotated, prior=prior
+                    token, refresh_rotated=refresh_rotated and not carried, prior=prior
                 )
             except errors.AuthenticationError:
                 logger.info(
@@ -675,18 +688,46 @@ class GundiClient:
         key = self._token_cache_key(token_url)
         async with self._token_store.lock(key):
             prior = self._current_entry()
+            shared = await self._token_store.get(key)
             if force_refresh_token:
+                # Evict only the token that was rejected. A sibling may already
+                # have replaced it; adopting that replacement avoids evicting a
+                # fresh token and replaying an already-exchanged refresh token.
+                if (
+                    shared is not None
+                    and shared.is_live(_token_cache._now())
+                    and (prior is None or shared.access_token != prior.access_token)
+                ):
+                    self._adopt(shared)
+                    return self.cached_token
                 await self._token_store.delete(key)
-            else:
-                shared = await self._token_store.get(key)
-                if shared is not None:
-                    if shared.is_live(_token_cache._now()):
-                        self._adopt(shared)
-                        return self.cached_token
-                    prior = (
-                        shared  # expired access token; its refresh token may still work
+            elif shared is not None:
+                if shared.is_live(_token_cache._now()):
+                    self._adopt(shared)
+                    return self.cached_token
+                prior = shared  # expired access token; its refresh token may still work
+            try:
+                entry = await self._fetch_token(token_url, prior)
+            except errors.AuthenticationError:
+                # The refresh grant (if tried) and the full authentication both
+                # failed. Mark the refresh token dead everywhere so the next call,
+                # here and in every replica, does not replay it before falling
+                # back to full authentication again.
+                if prior is not None and prior.refresh_is_live(_token_cache._now()):
+                    dead = _token_cache.CachedToken(
+                        access_token=prior.access_token,
+                        refresh_token="",
+                        token_type=prior.token_type,
+                        expires_at=prior.expires_at,
+                        refresh_expires_at=_token_cache.NO_REFRESH,
                     )
-            entry = await self._fetch_token(token_url, prior)
+                    if dead.is_live(_token_cache._now()):
+                        await self._token_store.set(key, dead)
+                    else:
+                        await self._token_store.delete(key)
+                    if self.cached_token is not None:
+                        self._adopt(dead)
+                raise
             await self._token_store.set(key, entry)
             self._adopt(entry)
             return self.cached_token
