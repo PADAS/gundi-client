@@ -94,13 +94,18 @@ are deleted when read. The URL form is `file:///absolute/dir`.
 ### Cache key
 
 `sha256` over a canonical string of: the resolved token URL, the grant type
-(`client_credentials` or `password`), client id, username (password grant), audience,
-scope, and the secret (client secret or password). The hex digest (first 32
-characters) is the key. Reasons:
+(`client_credentials` or `password`), client id, username (always), audience,
+scope, and, for `client_credentials` only, the client secret. The hex digest
+(first 32 characters) is the key. Reasons (amended 2026-09-08 after review):
 
-- Including the secret means a rotated secret never reuses a token minted under
-  the old one, and two clients sharing an id with different secrets never
-  collide.
+- Including the client secret means a rotated secret never reuses a token minted
+  under the old one, and two clients sharing an id with different secrets never
+  collide. The password is excluded: a human password hashed next to guessable
+  material would make every key name an offline password verifier, and a
+  password change does not invalidate issued tokens.
+- The username is always included: a CLI profile restores a user's token onto a
+  client that knows the username but not the password, and two such clients
+  must never share an entry.
 - The hash is one-way; the key discloses nothing about the credentials.
 - The token URL must be the resolved one (after OIDC discovery), so a client
   configured by issuer and one configured by token URL share an entry.
@@ -135,9 +140,14 @@ composed of the memory layer and the optional backend.
      `_refresh_token` logic, operating on a `CachedToken` instead of instance
      attributes); write the result to memory and the backend; adopt and return.
 4. `force_refresh_token=True` (the auth-realm redirect in `_get`, `_post`,
-   `_patch`, `_delete`, or an explicit caller) first deletes the key from
-   memory and the backend, then proceeds from step 3's fetch branch. A token
-   the server has rejected must not be served to any other client or replica.
+   `_patch`, `_delete`, or an explicit caller) first re-reads the shared entry:
+   if a sibling has already replaced the rejected token with a live one, that
+   replacement is adopted; otherwise the key is deleted from memory and the
+   backend and step 3's fetch branch runs. A token the server has rejected must
+   not be served to any other client or replica (amended 2026-09-08: evicting
+   unconditionally made N clients holding one rejected token mint N tokens and
+   replay an exchanged refresh token). When the fetch fails after a refresh grant
+   was attempted, the refresh token is marked dead in every layer.
 
 "Adopt" means setting `cached_token`, `cached_token_expires_at` and
 `cached_token_refresh_expires_at` on the instance, so the CLI's
@@ -171,9 +181,12 @@ Access tokens are bearer credentials. In the runners, Redis already holds the
 action-configuration cache, which contains integration credentials, so the token
 cache lives in the same trust domain and adds no new class of secret to it.
 Documentation states that the token cache database must be as protected as the
-config cache. The file backend applies the CLI's permissions (0700 directory,
-0600 files). The secret never leaves the process: it enters the key only as part
-of a one-way hash.
+config cache. The file backend applies the CLI's permissions (0700 directory
+when it creates one, 0600 files); it never re-modes a pre-existing directory
+(amended 2026-09-08: `file:///tmp` as root would otherwise strip the sticky bit
+from `/tmp`) and warns once if that directory is wider than 0700. The client
+secret never leaves the process: it enters the key only as part of a one-way
+hash; a password never enters it.
 
 ### Configuration reference
 
