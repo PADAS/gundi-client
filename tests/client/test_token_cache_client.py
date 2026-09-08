@@ -255,3 +255,13 @@ async def test_the_302_login_redirect_still_retries_with_a_fresh_token(
         result = await gundi_client_v2.register_integration_type(payload)
     assert result == IntegrationType.parse_obj(payload)
     assert token_route.call_count == 2
+
+
+def test_public_exports_and_version():
+    import gundi_client_v2
+
+    assert gundi_client_v2.__version__ == "3.7.0"
+    assert gundi_client_v2.TokenCacheConfigError is TokenCacheConfigError
+    from gundi_client_v2 import token_cache
+
+    assert token_cache.MemoryTokenCache is MemoryTokenCache

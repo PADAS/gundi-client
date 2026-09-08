@@ -5,8 +5,10 @@ you'll see when something goes wrong.
 
 ## Token lifecycle inside `GundiClient`
 
-The client caches the most recent `OAuthToken` in memory, along with two
-computed timestamps:
+The client keeps the most recent `OAuthToken` on the instance and in a
+process-wide cache shared by every `GundiClient` with the same credentials
+(optionally also in Redis or a file; see [Shared token cache](token-cache.md)),
+along with two computed timestamps:
 
 - `expires_at` — when the access token will become invalid
 - `refresh_expires_at` — when the refresh token will become invalid

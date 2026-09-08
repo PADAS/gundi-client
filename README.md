@@ -100,6 +100,7 @@ Settings can be provided as **environment variables** or **constructor keyword a
 | `OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. When set, overrides OIDC discovery from `OAUTH_ISSUER`. | — |
 | `OAUTH_AUDIENCE` | OAuth audience. Sent to the token endpoint when set. Required by some IdPs (e.g. Auth0 won't issue a usable API access token without it); ignored by others (Keycloak password grant). | — |
 | `OAUTH_SCOPE` | OAuth scope | `openid` |
+| `GUNDI_TOKEN_CACHE_URL` | Durable token cache shared across processes: `redis://host:port/db`, `rediss://…` (needs `gundi-client-v2[redis]`) or `file:///dir`. Unset shares tokens within the process only. See [Shared token cache](docs/authentication/token-cache.md). | — |
 | `GUNDI_API_BASE_URL` | Gundi API base URL | — |
 | `SENSORS_API_BASE_URL` | Sensors/routing API base URL (used by `GundiDataSenderClient`) | — |
 | `GUNDI_API_SSL_VERIFY` | Verify SSL certificates | `true` |
@@ -117,6 +118,7 @@ Settings can be provided as **environment variables** or **constructor keyword a
 | `oauth_client_id` | `OAUTH_CLIENT_ID` | OAuth client ID |
 | `oauth_client_secret` | `OAUTH_CLIENT_SECRET` | OAuth client secret |
 | `oauth_token_url` | `OAUTH_TOKEN_URL` | Full OAuth token endpoint URL. When set, used as-is. |
+| `token_cache_url` | `GUNDI_TOKEN_CACHE_URL` | Token cache backend URL. `token_cache=` injects a backend object instead. |
 | `oauth_issuer` | `OAUTH_ISSUER` | OIDC issuer URL. When set without `oauth_token_url`, the token endpoint is discovered via OIDC discovery. |
 | `oauth_audience` | `OAUTH_AUDIENCE` | OAuth audience. IdP-dependent — required for Auth0, optional for Keycloak password grant. |
 | `oauth_scope` | `OAUTH_SCOPE` | OAuth scope |
