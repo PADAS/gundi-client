@@ -141,3 +141,5 @@ dmypy.json
 
 # Local git worktrees (see docs/superpowers)
 .worktrees/
+# SDD scratch workspaces (ledgers, briefs, review packages)
+.superpowers/
