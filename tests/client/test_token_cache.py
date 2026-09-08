@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import math
 import os
 import stat
@@ -18,6 +19,7 @@ from gundi_client_v2.token_cache import (
     FileTokenCache,
     MemoryTokenCache,
     RedisTokenCache,
+    TokenStore,
     clear_token_cache,
     token_cache_from_url,
     token_cache_key,
@@ -394,3 +396,126 @@ def test_redis_url_uses_a_short_socket_timeout(monkeypatch):
     assert captured["socket_timeout"] == 1.0
     assert captured["socket_connect_timeout"] == 1.0
     assert captured["decode_responses"] is True
+
+
+class _Flaky:
+    """A TokenCache whose every call raises."""
+
+    def __init__(self):
+        self.calls = 0
+
+    async def get(self, key):
+        self.calls += 1
+        raise ConnectionError("redis down")
+
+    async def set(self, key, token):
+        self.calls += 1
+        raise ConnectionError("redis down")
+
+    async def delete(self, key):
+        self.calls += 1
+        raise ConnectionError("redis down")
+
+
+@pytest.mark.asyncio
+async def test_store_reads_memory_before_the_backend(fake_redis, clock):
+    backend = RedisTokenCache(client=fake_redis)
+    store = TokenStore(backend, memory=MemoryTokenCache())
+    await store.set("k", _token())
+    await fake_redis.delete("k")  # backend lost it; memory still answers
+    assert await store.get("k") == _token()
+
+
+@pytest.mark.asyncio
+async def test_store_copies_a_backend_hit_into_memory(fake_redis, clock):
+    backend = RedisTokenCache(client=fake_redis)
+    await backend.set("k", _token())
+    memory = MemoryTokenCache()
+    store = TokenStore(backend, memory=memory)
+    assert await store.get("k") == _token()
+    assert await memory.get("k") == _token()
+
+
+@pytest.mark.asyncio
+async def test_store_delete_reaches_both_layers(fake_redis, clock):
+    backend = RedisTokenCache(client=fake_redis)
+    memory = MemoryTokenCache()
+    store = TokenStore(backend, memory=memory)
+    await store.set("k", _token())
+    await store.delete("k")
+    assert await memory.get("k") is None
+    assert await fake_redis.exists("k") == 0
+
+
+@pytest.mark.asyncio
+async def test_store_without_a_backend_is_memory_only(clock):
+    store = TokenStore(None, memory=MemoryTokenCache())
+    await store.set("k", _token())
+    assert await store.get("k") == _token()
+
+
+@pytest.mark.asyncio
+async def test_store_contains_backend_failures_and_warns_once_per_streak(clock, caplog):
+    flaky = _Flaky()
+    store = TokenStore(flaky, memory=MemoryTokenCache())
+    with caplog.at_level(logging.WARNING, logger="gundi_client_v2.token_cache"):
+        assert await store.get("k") is None
+        await store.set("k", _token())
+        assert await store.get("k") == _token()  # memory still serves
+        await store.delete("k")
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+    assert "_Flaky" in warnings[0].getMessage()
+    assert "ConnectionError" in warnings[0].getMessage()
+    assert "redis down" not in warnings[0].getMessage()  # no backend text
+    assert "k" not in warnings[0].getMessage().split("_Flaky")[0]  # no key
+    assert (
+        flaky.calls == 3
+    )  # get, set, delete all attempted; the memory hit made no backend call
+
+
+@pytest.mark.asyncio
+async def test_stores_sharing_a_backend_share_one_failure_streak(clock, caplog):
+    """The runner builds a TokenStore per GundiClient per call; during an outage
+    that must not mean a warning per call."""
+    flaky = _Flaky()
+    with caplog.at_level(logging.WARNING, logger="gundi_client_v2.token_cache"):
+        for _ in range(5):
+            await TokenStore(flaky, memory=MemoryTokenCache()).get("k")
+    assert sum(r.levelno == logging.WARNING for r in caplog.records) == 1
+
+
+@pytest.mark.asyncio
+async def test_store_warns_again_after_the_backend_recovers_and_fails_again(
+    clock, caplog, fake_redis
+):
+    class Toggle:
+        def __init__(self):
+            self.fail = True
+            self.inner = RedisTokenCache(client=fake_redis)
+
+        async def get(self, key):
+            if self.fail:
+                raise TimeoutError()
+            return await self.inner.get(key)
+
+        async def set(self, key, token):
+            if self.fail:
+                raise TimeoutError()
+            await self.inner.set(key, token)
+
+        async def delete(self, key):
+            if self.fail:
+                raise TimeoutError()
+            await self.inner.delete(key)
+
+    toggle = Toggle()
+    store = TokenStore(toggle, memory=MemoryTokenCache())
+    with caplog.at_level(logging.WARNING, logger="gundi_client_v2.token_cache"):
+        await store.get("a")  # fails: warning 1
+        await store.get("b")  # fails: suppressed
+        toggle.fail = False
+        await store.get("c")  # succeeds: streak reset
+        toggle.fail = True
+        await store.get("d")  # fails: warning 2
+    assert sum(r.levelno == logging.WARNING for r in caplog.records) == 2

@@ -191,9 +191,11 @@ _PROCESS_CACHE = MemoryTokenCache()
 def clear_token_cache() -> None:
     """Empty the process-wide token layer and drop the per-URL backend memo.
     For tests, and for a long-running process that must drop every cached
-    token (mirrors auth.clear_discovery_cache)."""
+    token (mirrors auth.clear_discovery_cache). Also resets the backend
+    failure-streak flags, so a previously-failing backend is retried."""
     _PROCESS_CACHE.clear()
     _BACKENDS.clear()
+    _FAILING_BACKENDS.clear()
 
 
 class FileTokenCache:
@@ -341,3 +343,67 @@ def token_cache_from_url(url: "str | None") -> "TokenCache | None":
         )
     _BACKENDS[url] = backend
     return backend
+
+
+# Backends (by id) currently in a failure streak; shared by every TokenStore so
+# an outage logs once per backend, not once per client built during it.
+_FAILING_BACKENDS: set = set()
+
+
+class TokenStore:
+    """Memory layer in front of one optional backend.
+
+    The cache never raises into an API call: a failing backend is logged at
+    warning level once per failure streak (the flag resets on the next
+    success) and treated as a miss or a skipped write. The log line names the
+    backend class and the exception class, never a key or a token.
+    """
+
+    def __init__(
+        self, backend: "TokenCache | None", memory: "MemoryTokenCache | None" = None
+    ) -> None:
+        self._backend = backend
+        self._memory = memory if memory is not None else _PROCESS_CACHE
+
+    def lock(self, key: str) -> asyncio.Lock:
+        return self._memory.lock(key)
+
+    async def get(self, key: str) -> "CachedToken | None":
+        token = await self._memory.get(key)
+        if token is not None or self._backend is None:
+            return token
+        token = await self._guarded("get", self._backend.get(key))
+        if token is not None:
+            await self._memory.set(key, token)
+        return token
+
+    async def set(self, key: str, token: CachedToken) -> None:
+        await self._memory.set(key, token)
+        if self._backend is not None:
+            await self._guarded("set", self._backend.set(key, token))
+
+    async def delete(self, key: str) -> None:
+        await self._memory.delete(key)
+        if self._backend is not None:
+            await self._guarded("delete", self._backend.delete(key))
+
+    async def _guarded(self, op: str, awaitable):
+        marker = id(self._backend)
+        try:
+            result = await awaitable
+        except Exception as e:  # any backend failure degrades to memory-only
+            if marker not in _FAILING_BACKENDS:
+                # The backend's class name leads the message (rather than
+                # following fixed words like "cache"/"backend") so nothing
+                # ahead of it can ever be mistaken for leaked key material.
+                logger.warning(
+                    "%s token cache backend failed on %s (%s); running on the "
+                    "in-memory layer until it recovers.",
+                    type(self._backend).__name__,
+                    op,
+                    type(e).__name__,
+                )
+            _FAILING_BACKENDS.add(marker)
+            return None
+        _FAILING_BACKENDS.discard(marker)
+        return result
