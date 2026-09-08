@@ -110,8 +110,25 @@ class CachedToken:
             data = json.loads(text)
         except (TypeError, ValueError):
             return None
-        if not isinstance(data, dict) or not data.get("access_token"):
+        if not isinstance(data, dict):
             return None
+        access_token = data.get("access_token")
+        # Every field is attacker-adjacent (whoever can write the backend can write
+        # these): a non-string would reach OAuthToken as a ValidationError inside an
+        # API call, and CR/LF/NUL in an access token would be smuggled into the
+        # Authorization header the client builds from it.
+        if not isinstance(access_token, str) or not access_token:
+            return None
+        if any(c in access_token for c in ("\r", "\n", "\x00")):
+            return None
+        optional = {}
+        for field, default in (("refresh_token", ""), ("token_type", "Bearer")):
+            value = data.get(field)
+            if value is None:
+                value = default
+            elif not isinstance(value, str):
+                return None
+            optional[field] = value or default
         stamps = {}
         for field in ("expires_at", "refresh_expires_at"):
             value = data.get(field)
@@ -124,12 +141,7 @@ class CachedToken:
             if parsed.tzinfo is None:
                 return None
             stamps[field] = parsed
-        return cls(
-            access_token=data["access_token"],
-            refresh_token=data.get("refresh_token") or "",
-            token_type=data.get("token_type") or "Bearer",
-            **stamps,
-        )
+        return cls(access_token=access_token, **optional, **stamps)
 
 
 def _now() -> datetime:

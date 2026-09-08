@@ -206,6 +206,52 @@ async def test_refresh_grant_is_used_when_the_backend_holds_a_live_refresh_token
 
 
 @pytest.mark.asyncio
+async def test_a_malformed_backend_value_is_a_miss_and_is_deleted(
+    client_settings, auth_token_response
+):
+    """A Redis value whose access_token is not a string must never reach
+    OAuthToken: it is a miss, the key is deleted, and the client authenticates."""
+    import json
+    from datetime import timedelta
+
+    from gundi_client_v2 import token_cache as tc
+
+    fake = FakeAsyncRedis(decode_responses=True)
+    deleted = []
+    real_delete = fake.delete
+
+    async def tracking_delete(*keys):
+        deleted.extend(keys)
+        return await real_delete(*keys)
+
+    fake.delete = tracking_delete
+    backend = RedisTokenCache(client=fake)
+    client = GundiClient(**client_settings, token_cache=backend)
+    key = client._token_cache_key(client_settings["oauth_token_url"])
+    now = tc._now()
+    await fake.set(
+        key,
+        json.dumps(
+            {
+                "access_token": ["not", "a", "string"],
+                "refresh_token": "r",
+                "token_type": "Bearer",
+                "expires_at": (now + timedelta(hours=1)).isoformat(),
+                "refresh_expires_at": (now + timedelta(hours=10)).isoformat(),
+            }
+        ),
+    )
+    async with respx.mock as mock:
+        route = _mock_token_endpoint(mock, auth_token_response)
+        header = await client.get_auth_header()
+    assert route.call_count == 1
+    assert header["authorization"].startswith("Bearer ")
+    assert deleted == [key]  # the malformed value was removed
+    stored = await fake.get(key)  # and replaced by the freshly fetched token
+    assert json.loads(stored)["access_token"] == auth_token_response["access_token"]
+
+
+@pytest.mark.asyncio
 async def test_force_refresh_evicts_the_shared_entry_before_re_authenticating(
     client_settings, auth_token_response
 ):

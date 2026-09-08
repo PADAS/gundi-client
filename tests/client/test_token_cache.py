@@ -76,6 +76,16 @@ def test_json_round_trip():
     }
 
 
+def _stamped(**fields) -> str:
+    """A serialized token whose timestamps are valid, so only ``fields`` is at fault."""
+    payload = {
+        "expires_at": "2026-01-01T00:00:00+00:00",
+        "refresh_expires_at": "2026-01-01T00:00:00+00:00",
+    }
+    payload.update(fields)
+    return json.dumps(payload)
+
+
 @pytest.mark.parametrize(
     "text",
     [
@@ -96,6 +106,12 @@ def test_json_round_trip():
                 "refresh_expires_at": "2026-01-01T00:00:00+00:00",
             }
         ),  # naive timestamp
+        _stamped(access_token=["x"]),  # not a string
+        _stamped(access_token=12345),  # not a string
+        _stamped(access_token="a\r\nX: 1"),  # header-splitting characters
+        _stamped(access_token="a\x00b"),  # NUL
+        _stamped(access_token="a", token_type={"k": "v"}),  # not a string
+        _stamped(access_token="a", refresh_token=["r"]),  # not a string
     ],
 )
 def test_from_json_returns_none_for_malformed_input(text):
