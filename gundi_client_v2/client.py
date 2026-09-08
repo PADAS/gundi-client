@@ -583,9 +583,11 @@ class GundiClient:
         refresh token, otherwise a full authentication.
 
         When both fail, the raised AuthenticationError carries
-        ``refresh_token_rejected=True`` if the refresh grant was answered with a
-        4xx (the refresh token is dead) rather than a 5xx or a network error
-        (the refresh token may still be good)."""
+        ``refresh_token_rejected=True`` if the refresh grant was answered with
+        400 ``invalid_grant`` (the refresh token itself is dead) rather than a
+        5xx, a rate limit, another 4xx, or a network error (the refresh token
+        may still be good). Network failures surface as AuthenticationError too
+        (auth._post_token wraps them), so one except clause covers "no token"."""
         now = _token_cache._now()
         refresh_rejected = False
         # 1. Prefer the refresh-token grant when we hold a live refresh token.
@@ -615,8 +617,11 @@ class GundiClient:
                     token, refresh_rotated=refresh_rotated and not carried, prior=prior
                 )
             except errors.AuthenticationError as e:
-                refresh_rejected = (
-                    e.status_code is not None and 400 <= e.status_code < 500
+                # 400 invalid_grant is the IdP's verdict on the refresh token
+                # (RFC 6749 §5.2); everything else says nothing about it.
+                refresh_rejected = e.status_code == 400 and e.error in (
+                    None,
+                    "invalid_grant",
                 )
                 logger.info(
                     "Refresh-token grant failed; falling back to full re-authentication."
@@ -744,7 +749,7 @@ class GundiClient:
                     self.cached_token = None
                     self.cached_token_expires_at = _token_cache.NO_REFRESH
                     self.cached_token_refresh_expires_at = _token_cache.NO_REFRESH
-                elif getattr(e, "refresh_token_rejected", False):
+                elif e.refresh_token_rejected:
                     # The IdP refused the refresh token itself (4xx): drop the
                     # shared entry so no replica replays it, and stop this
                     # instance from trying it again. A 5xx or a network error

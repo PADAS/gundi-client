@@ -729,7 +729,11 @@ def test_memory_cache_lock_is_thread_safe_under_concurrent_loops():
         def worker():
             try:
                 for _ in range(300):
-                    asyncio.new_event_loop().run_until_complete(_take(cache))
+                    loop = asyncio.new_event_loop()
+                    try:
+                        loop.run_until_complete(_take(cache))
+                    finally:
+                        loop.close()
             except Exception as e:  # noqa: BLE001 — the test records any failure
                 errors.append(repr(e))
 
@@ -749,9 +753,50 @@ async def _take(cache):
 
 
 def test_memory_cache_prunes_loops_that_are_no_longer_running():
-    """A worker that builds a loop per job without closing it must not pin every
-    loop it ever used; only the running loop keeps its slot."""
+    """A worker that builds a loop per job must not pin every loop it ever used:
+    closed loops go, and so does a stopped loop whose lock nobody holds."""
     cache = MemoryTokenCache()
-    for _ in range(50):
-        asyncio.new_event_loop().run_until_complete(_take(cache))
-    assert len(cache._locks["k"]) == 1
+    for _ in range(49):
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(_take(cache))
+        loop.close()
+    stopped_open = asyncio.new_event_loop()
+    stopped_open.run_until_complete(_take(cache))  # not closed, not running, lock idle
+    final = asyncio.new_event_loop()
+    try:
+        final.run_until_complete(_take(cache))
+        assert list(cache._locks["k"]) == [final]
+    finally:
+        stopped_open.close()
+        final.close()
+
+
+def test_memory_cache_keeps_a_stopped_loops_lock_while_a_task_holds_it():
+    """A loop paused between run_until_complete calls with a task suspended inside
+    `async with lock` must get the same lock back, or two tasks in that loop
+    would fetch concurrently."""
+    cache = MemoryTokenCache()
+    loop_a = asyncio.new_event_loop()
+    release = asyncio.Event()
+    held = {}
+
+    async def holder():
+        held["lock"] = cache.lock("k")
+        async with held["lock"]:
+            await release.wait()
+
+    async def second():
+        return cache.lock("k")
+
+    loop_a.create_task(holder())
+    loop_a.run_until_complete(asyncio.sleep(0))  # holder acquires, then loop A pauses
+    other = asyncio.new_event_loop()
+    other.run_until_complete(_take(cache))  # another loop touches the key meanwhile
+    other.close()
+    try:
+        assert loop_a.run_until_complete(second()) is held["lock"]
+        assert held["lock"].locked()
+    finally:
+        loop_a.call_soon(release.set)
+        loop_a.run_until_complete(asyncio.sleep(0))
+        loop_a.close()

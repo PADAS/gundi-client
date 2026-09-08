@@ -64,12 +64,16 @@ the rejected token is evicted from every layer before the client re-authenticate
 so no other replica keeps serving it. A client whose sibling, in this process or
 another, has already replaced the rejected token adopts the replacement instead of
 evicting it; a client that holds no token of its own always goes to the IdP, so
-`gundi auth login` really validates the typed credentials. When the IdP rejects
-the refresh token (a 4xx) and the full authentication also fails, the shared
-entry is dropped and this client stops trying that refresh token; a 5xx or a
-network failure leaves the refresh token in place, since it may still be good.
-A forced refresh that fails leaves the instance with no token, so its next call
-goes to the IdP rather than serving the rejected one.
+`gundi auth login` really validates the typed credentials. If the backend is
+unreachable, the forced refresh still sees what siblings in the same process
+wrote. When the IdP answers the refresh grant with `400 invalid_grant` and the
+full authentication also fails, the shared entry is dropped and this client
+stops trying that refresh token; a 5xx, a rate limit, or a network failure
+leaves the refresh token in place, since it may still be good. A forced refresh
+that fails for any reason, network failures included, leaves the instance with
+no token, so its next call goes to the IdP rather than serving the rejected one.
+Token-endpoint failures of every kind surface as `AuthenticationError`, which
+carries the HTTP status and the OAuth error code when there was a response.
 
 ## Security
 

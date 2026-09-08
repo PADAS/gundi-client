@@ -691,3 +691,161 @@ def test_authentication_error_carries_status_and_oauth_error_code(auth_token_res
     exc = _asyncio.run(go())
     assert exc.status_code == 400
     assert exc.error == "invalid_grant"
+
+
+class _DownBackend:
+    async def get(self, key):
+        raise ConnectionError()
+
+    async def set(self, key, token):
+        raise ConnectionError()
+
+    async def delete(self, key):
+        raise ConnectionError()
+
+
+@pytest.mark.asyncio
+async def test_force_refresh_with_the_backend_down_adopts_an_in_process_sibling(
+    client_settings, auth_token_response
+):
+    """A backend outage is a miss for reading other processes, not a reason to
+    forget what a sibling in this process has already written."""
+    from urllib.parse import parse_qs
+
+    down = _DownBackend()
+    responses = iter(["first", "second", "third"])
+
+    def issue(request):
+        return httpx.Response(
+            200, json={**auth_token_response, "access_token": next(responses)}
+        )
+
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).mock(side_effect=issue)
+        a = GundiClient(**client_settings, token_cache=down)
+        b = GundiClient(**client_settings, token_cache=down)
+        await a.get_auth_header()
+        await b.get_auth_header()
+        assert (await a.get_auth_header(force_refresh_token=True))[
+            "authorization"
+        ] == "Bearer second"
+        assert (await b.get_auth_header(force_refresh_token=True))[
+            "authorization"
+        ] == "Bearer second"
+    grants = [
+        parse_qs(c.request.content.decode())["grant_type"][0] for c in route.calls
+    ]
+    assert grants == ["client_credentials", "refresh_token"]
+
+
+@pytest.mark.asyncio
+async def test_a_rejected_refresh_token_is_removed_from_the_backend(
+    client_settings, auth_token_response, monkeypatch
+):
+    from datetime import timedelta
+    from urllib.parse import parse_qs
+    from gundi_client_v2 import token_cache as tc
+    from gundi_client_v2.errors import AuthenticationError
+
+    base = tc._now()
+    clock = {"now": base}
+    monkeypatch.setattr(tc, "_now", lambda: clock["now"])
+    fake = FakeAsyncRedis(decode_responses=True)
+    backend = RedisTokenCache(client=fake)
+    calls = []
+
+    def respond(request):
+        calls.append(parse_qs(request.content.decode())["grant_type"][0])
+        if len(calls) == 1:
+            return httpx.Response(200, json=auth_token_response)
+        return httpx.Response(400, json={"error": "invalid_grant"})
+
+    async with respx.mock as mock:
+        mock.post(TOKEN_URL).mock(side_effect=respond)
+        client = _separate_process(
+            GundiClient(**client_settings, token_cache=backend), backend
+        )
+        await client.get_auth_header()
+        clock["now"] += timedelta(seconds=auth_token_response["expires_in"] + 60)
+        with pytest.raises(AuthenticationError):
+            await client.get_auth_header()
+        assert await fake.keys("gundi-client:token:*") == []
+        sibling = _separate_process(
+            GundiClient(**client_settings, token_cache=backend), backend
+        )
+        with pytest.raises(AuthenticationError):
+            await sibling.get_auth_header()
+    assert calls == [
+        "client_credentials",
+        "refresh_token",
+        "client_credentials",
+        "client_credentials",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_a_429_on_the_refresh_grant_keeps_the_refresh_token(
+    client_settings, auth_token_response, monkeypatch
+):
+    """Rate limiting is not a verdict on the refresh token."""
+    from datetime import timedelta
+    from urllib.parse import parse_qs
+    from gundi_client_v2 import token_cache as tc
+    from gundi_client_v2.errors import AuthenticationError
+
+    base = tc._now()
+    clock = {"now": base}
+    monkeypatch.setattr(tc, "_now", lambda: clock["now"])
+    fake = FakeAsyncRedis(decode_responses=True)
+    backend = RedisTokenCache(client=fake)
+    calls = []
+
+    def respond(request):
+        calls.append(parse_qs(request.content.decode())["grant_type"][0])
+        if len(calls) == 1:
+            return httpx.Response(200, json=auth_token_response)
+        return httpx.Response(429, json={"error": "slow_down"})
+
+    async with respx.mock as mock:
+        mock.post(TOKEN_URL).mock(side_effect=respond)
+        client = GundiClient(**client_settings, token_cache=backend)
+        await client.get_auth_header()
+        clock["now"] += timedelta(seconds=auth_token_response["expires_in"] + 60)
+        with pytest.raises(AuthenticationError):
+            await client.get_auth_header()
+    assert client.cached_token_refresh_expires_at > clock["now"]
+    assert await fake.keys("gundi-client:token:*") != []
+
+
+@pytest.mark.asyncio
+async def test_a_transport_error_during_a_forced_refresh_clears_the_instance_token(
+    client_settings, auth_token_response
+):
+    from gundi_client_v2.errors import AuthenticationError
+
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).respond(
+            200, json={**auth_token_response, "access_token": "rejected"}
+        )
+        client = GundiClient(**client_settings)
+        await client.get_auth_header()
+        route.mock(side_effect=httpx.ConnectError("boom"))
+        with pytest.raises(AuthenticationError):
+            await client.get_auth_header(force_refresh_token=True)
+        assert client.cached_token is None
+        route.mock(
+            return_value=httpx.Response(
+                200, json={**auth_token_response, "access_token": "fresh"}
+            )
+        )
+        assert (await client.get_auth_header())["authorization"] == "Bearer fresh"
+
+
+def test_authentication_error_declares_refresh_token_rejected():
+    from gundi_client_v2.errors import AuthenticationError
+
+    assert AuthenticationError("x").refresh_token_rejected is False
+    assert (
+        AuthenticationError("x", refresh_token_rejected=True).refresh_token_rejected
+        is True
+    )

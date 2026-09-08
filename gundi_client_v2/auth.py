@@ -43,8 +43,12 @@ def _extract_oauth_error(response: httpx.Response) -> str:
 async def _post_token(
     session: httpx.AsyncClient, oauth_token_url: str, payload: dict
 ) -> dict:
-    """POST to the token endpoint; raise AuthenticationError on non-2xx."""
-    response = await session.post(oauth_token_url, data=payload)
+    """POST to the token endpoint; raise AuthenticationError on non-2xx or on
+    a transport failure (so callers see one exception type for "no token")."""
+    try:
+        response = await session.post(oauth_token_url, data=payload)
+    except httpx.HTTPError as e:  # connect/read/timeout: no response at all
+        raise AuthenticationError(f"Token request failed: {e}") from e
     try:
         response.raise_for_status()
     except httpx.HTTPStatusError as e:

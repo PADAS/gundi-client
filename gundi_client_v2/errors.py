@@ -14,12 +14,24 @@ class AuthenticationError(GundiClientError):
             missing configuration).
         error: The RFC 6749 §5.2 ``error`` code from the response body when
             present (``invalid_grant``, ``invalid_client``, ...), else None.
+        refresh_token_rejected: True when a refresh grant preceded this failure
+            and the IdP answered it with 400 ``invalid_grant`` (the refresh token
+            itself is dead), so callers can stop retrying it. False for a 5xx,
+            a rate limit, a network failure, or when no refresh was attempted.
     """
 
-    def __init__(self, message: str = "", *, status_code=None, error=None):
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        status_code=None,
+        error=None,
+        refresh_token_rejected: bool = False,
+    ):
         super().__init__(message)
         self.status_code = status_code
         self.error = error
+        self.refresh_token_rejected = refresh_token_rejected
 
 
 class TokenCacheConfigError(GundiClientError):

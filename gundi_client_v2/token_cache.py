@@ -204,7 +204,9 @@ class MemoryTokenCache:
             return None
         now = _now()
         if not token.is_live(now) and not token.refresh_is_live(now):
-            del self._entries[key]
+            self._entries.pop(
+                key, None
+            )  # another thread's loop may have got here first
             return None
         return token
 
@@ -218,8 +220,14 @@ class MemoryTokenCache:
         loop = asyncio.get_running_loop()  # lock() is only called from a coroutine
         with self._guard:
             per_loop = self._locks.setdefault(key, {})
+            # A closed loop is gone. A stopped-but-open loop is pruned only when
+            # nobody holds its lock: a task parked inside `async with lock` while
+            # its loop is paused between run_until_complete calls must get the
+            # same lock back, or a second task in that loop would fetch too.
             for stale in [
-                l for l in list(per_loop) if l.is_closed() or not l.is_running()
+                l
+                for l, lk in list(per_loop.items())
+                if l.is_closed() or (not l.is_running() and not lk.locked())
             ]:
                 per_loop.pop(stale, None)
             lock = per_loop.get(loop)
@@ -455,7 +463,11 @@ class TokenStore:
         replaced it since."""
         if self._backend is None:
             return await self._memory.get(key)
-        from_backend = await self._guarded("get", self._backend.get(key))
+        ok, from_backend = await self._guarded("get", self._backend.get(key))
+        if not ok:
+            # Outage: the backend is a miss for other processes' writes, not a
+            # reason to forget what a sibling in this process has written.
+            return await self._memory.get(key)
         if from_backend is not None:
             await self._memory.set(key, from_backend)
             return from_backend
@@ -469,7 +481,7 @@ class TokenStore:
         # Memory has nothing, or an entry whose access token is dead: another
         # replica may have refreshed it since, so ask the backend before falling
         # back on what memory holds (whose refresh token may still be usable).
-        from_backend = await self._guarded("get", self._backend.get(key))
+        _, from_backend = await self._guarded("get", self._backend.get(key))
         if from_backend is not None and (token is None or from_backend.is_live(_now())):
             await self._memory.set(key, from_backend)
             return from_backend
@@ -486,6 +498,8 @@ class TokenStore:
             await self._guarded("delete", self._backend.delete(key))
 
     async def _guarded(self, op: str, awaitable):
+        """Run one backend operation; returns (ok, result). ``ok`` is False when
+        the backend raised, so a caller can tell an outage from a miss."""
         marker = id(self._backend)
         try:
             result = await awaitable
@@ -499,6 +513,6 @@ class TokenStore:
                     type(e).__name__,
                 )
             _FAILING_BACKENDS.add(marker)
-            return None
+            return False, None
         _FAILING_BACKENDS.discard(marker)
-        return result
+        return True, result

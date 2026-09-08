@@ -151,12 +151,17 @@ composed of the memory layer and the optional backend.
    replay an exchanged refresh token). The re-read consults the backend when
    there is one, since memory may hold the rejected token itself; an instance
    with no token of its own never adopts (`gundi auth login` must reach the
-   IdP). When the fetch fails: after a forced refresh the instance drops its
-   token entirely; after a refresh grant the IdP answered with a 4xx, the shared
-   entry is deleted and the instance stops trying that refresh token; a 5xx or
-   a network failure leaves everything in place (amended 2026-09-08, second
-   review: a dead-token marker had republished the rejected access token, and
-   a 5xx had discarded a valid refresh token).
+   IdP). A backend outage during that re-read falls back to memory rather than
+   discarding an in-process sibling's replacement. When the fetch fails: after a
+   forced refresh the instance drops its token entirely; after a refresh grant
+   the IdP answered with `400 invalid_grant`, the shared entry is deleted and
+   the instance stops trying that refresh token; a 5xx, a rate limit, another
+   4xx, or a network failure leaves everything in place (amended 2026-09-08,
+   second and third reviews: a dead-token marker had republished the rejected
+   access token, a 5xx had discarded a valid refresh token, and a transport
+   error escaped as a raw httpx exception). `auth._post_token` wraps transport
+   errors into `AuthenticationError`, which carries `status_code`, `error` and
+   `refresh_token_rejected`.
 
 "Adopt" means setting `cached_token`, `cached_token_expires_at` and
 `cached_token_refresh_expires_at` on the instance, so the CLI's
