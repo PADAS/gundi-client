@@ -506,13 +506,17 @@ class GundiClient:
         return "password" if (self.username and self.password) else "client_credentials"
 
     def _token_cache_key(self, token_url: str) -> str:
-        # The username always scopes the key (a CLI profile restores a user's
-        # token onto a client with a username and no password). The password
-        # never enters it: a human password hashed next to guessable material
-        # would make the key name an offline password verifier, and a changed
-        # password does not invalidate tokens already issued. The client secret
-        # does enter it: it is high-entropy, and a rotation must not reuse a
-        # token minted under the old one.
+        # The username always scopes the key: a CLI profile client carries a
+        # username and a restored token but no password, so several such
+        # clients under one client id would otherwise share an entry and adopt
+        # each other's tokens. (A client_credentials replica with an incidental
+        # GUNDI_USERNAME therefore keys apart from one without; sharing across
+        # replicas needs identical settings.) The password never enters the
+        # key: a human password hashed next to guessable material would make
+        # the key name an offline password verifier, and a changed password
+        # does not invalidate tokens already issued. The client secret does
+        # enter it: it is high-entropy, and a rotation must not reuse a token
+        # minted under the old one.
         grant = self._grant_type()
         return _token_cache.token_cache_key(
             token_url=token_url,
@@ -576,8 +580,14 @@ class GundiClient:
 
     async def _fetch_token(self, token_url: str, prior) -> "_token_cache.CachedToken":
         """Get a token from the IdP: the refresh grant when ``prior`` holds a live
-        refresh token, otherwise a full authentication."""
+        refresh token, otherwise a full authentication.
+
+        When both fail, the raised AuthenticationError carries
+        ``refresh_token_rejected=True`` if the refresh grant was answered with a
+        4xx (the refresh token is dead) rather than a 5xx or a network error
+        (the refresh token may still be good)."""
         now = _token_cache._now()
+        refresh_rejected = False
         # 1. Prefer the refresh-token grant when we hold a live refresh token.
         if prior is not None and prior.refresh_is_live(now):
             fallback = prior.to_oauth_token(now)
@@ -604,10 +614,21 @@ class GundiClient:
                 return self._to_cached(
                     token, refresh_rotated=refresh_rotated and not carried, prior=prior
                 )
-            except errors.AuthenticationError:
+            except errors.AuthenticationError as e:
+                refresh_rejected = (
+                    e.status_code is not None and 400 <= e.status_code < 500
+                )
                 logger.info(
                     "Refresh-token grant failed; falling back to full re-authentication."
                 )
+        try:
+            return await self._authenticate(token_url)
+        except errors.AuthenticationError as e:
+            e.refresh_token_rejected = refresh_rejected
+            raise
+
+    async def _authenticate(self, token_url: str) -> "_token_cache.CachedToken":
+        """Full authentication with the configured grant."""
         # 2. Full authentication. Password grant wins when user credentials are present.
         # A client_id is required for every grant we support, so guard the password
         # branch on it too — otherwise we'd send a half-formed request and let the IdP
@@ -688,45 +709,49 @@ class GundiClient:
         key = self._token_cache_key(token_url)
         async with self._token_store.lock(key):
             prior = self._current_entry()
-            shared = await self._token_store.get(key)
             if force_refresh_token:
-                # Evict only the token that was rejected. A sibling may already
-                # have replaced it; adopting that replacement avoids evicting a
-                # fresh token and replaying an already-exchanged refresh token.
+                # Evict only the token this instance was rejected on. A sibling
+                # (in this process or another) may already have replaced it;
+                # adopting that replacement avoids evicting a fresh token and
+                # replaying an already-exchanged refresh token. An instance with
+                # no token of its own (`gundi auth login` validating typed
+                # credentials) always goes to the IdP.
+                shared = await self._token_store.reload(key)
                 if (
-                    shared is not None
+                    prior is not None
+                    and shared is not None
                     and shared.is_live(_token_cache._now())
-                    and (prior is None or shared.access_token != prior.access_token)
+                    and shared.access_token != prior.access_token
                 ):
                     self._adopt(shared)
                     return self.cached_token
                 await self._token_store.delete(key)
-            elif shared is not None:
-                if shared.is_live(_token_cache._now()):
-                    self._adopt(shared)
-                    return self.cached_token
-                prior = shared  # expired access token; its refresh token may still work
+            else:
+                shared = await self._token_store.get(key)
+                if shared is not None:
+                    if shared.is_live(_token_cache._now()):
+                        self._adopt(shared)
+                        return self.cached_token
+                    prior = (
+                        shared  # expired access token; its refresh token may still work
+                    )
             try:
                 entry = await self._fetch_token(token_url, prior)
-            except errors.AuthenticationError:
-                # The refresh grant (if tried) and the full authentication both
-                # failed. Mark the refresh token dead everywhere so the next call,
-                # here and in every replica, does not replay it before falling
-                # back to full authentication again.
-                if prior is not None and prior.refresh_is_live(_token_cache._now()):
-                    dead = _token_cache.CachedToken(
-                        access_token=prior.access_token,
-                        refresh_token="",
-                        token_type=prior.token_type,
-                        expires_at=prior.expires_at,
-                        refresh_expires_at=_token_cache.NO_REFRESH,
-                    )
-                    if dead.is_live(_token_cache._now()):
-                        await self._token_store.set(key, dead)
-                    else:
-                        await self._token_store.delete(key)
+            except errors.AuthenticationError as e:
+                if force_refresh_token:
+                    # The instance's token was rejected and could not be
+                    # replaced: nothing about it may be served again.
+                    self.cached_token = None
+                    self.cached_token_expires_at = _token_cache.NO_REFRESH
+                    self.cached_token_refresh_expires_at = _token_cache.NO_REFRESH
+                elif getattr(e, "refresh_token_rejected", False):
+                    # The IdP refused the refresh token itself (4xx): drop the
+                    # shared entry so no replica replays it, and stop this
+                    # instance from trying it again. A 5xx or a network error
+                    # leaves everything in place; the refresh token may be fine.
+                    await self._token_store.delete(key)
                     if self.cached_token is not None:
-                        self._adopt(dead)
+                        self.cached_token_refresh_expires_at = _token_cache.NO_REFRESH
                 raise
             await self._token_store.set(key, entry)
             self._adopt(entry)

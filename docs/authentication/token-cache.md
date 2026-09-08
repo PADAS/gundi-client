@@ -52,16 +52,24 @@ client secret produces a new key, so a token minted under the old secret is neve
 reused. A password is never part of the key: hashed next to guessable material it
 would let anyone who can list the cache's keys brute-force it offline, and
 changing a password does not invalidate tokens already issued. The username is
-always in the key, so two users sharing a client id never share an entry.
+always in the key: a CLI profile client carries a username and a restored token
+but no password, and several such clients under one client id must never share
+an entry. (Replicas share only when their settings are identical, so an
+incidental `GUNDI_USERNAME` on one replica keys it apart from the others.)
 
 In Redis, entries expire with the later of the access-token and refresh-token
 lifetimes. When the API answers with its login redirect (the response it gives
 a token it no longer accepts), or when a caller passes `force_refresh_token=True`,
 the rejected token is evicted from every layer before the client re-authenticates,
-so no other replica keeps serving it. A client whose sibling has already replaced
-the rejected token adopts the replacement instead of evicting it. When both the
-refresh grant and the full authentication fail, the refresh token is marked dead
-everywhere so the next attempt goes straight to full authentication.
+so no other replica keeps serving it. A client whose sibling, in this process or
+another, has already replaced the rejected token adopts the replacement instead of
+evicting it; a client that holds no token of its own always goes to the IdP, so
+`gundi auth login` really validates the typed credentials. When the IdP rejects
+the refresh token (a 4xx) and the full authentication also fails, the shared
+entry is dropped and this client stops trying that refresh token; a 5xx or a
+network failure leaves the refresh token in place, since it may still be good.
+A forced refresh that fails leaves the instance with no token, so its next call
+goes to the IdP rather than serving the rejected one.
 
 ## Security
 

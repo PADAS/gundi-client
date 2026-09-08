@@ -9,6 +9,18 @@ from .errors import AuthenticationError
 logger = logging.getLogger(__name__)
 
 
+def _oauth_error_code(response: httpx.Response) -> "str | None":
+    """The RFC 6749 §5.2 ``error`` code of a token-error response, if any."""
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    if not isinstance(body, dict):
+        return None
+    error = body.get("error")
+    return error if isinstance(error, str) else None
+
+
 def _extract_oauth_error(response: httpx.Response) -> str:
     """Build a detail string from an RFC 6749 §5.2 token-error response."""
     status = response.status_code
@@ -36,7 +48,11 @@ async def _post_token(
     try:
         response.raise_for_status()
     except httpx.HTTPStatusError as e:
-        raise AuthenticationError(_extract_oauth_error(e.response)) from e
+        raise AuthenticationError(
+            _extract_oauth_error(e.response),
+            status_code=e.response.status_code,
+            error=_oauth_error_code(e.response),
+        ) from e
     try:
         body = response.json()
     except ValueError as e:  # 2xx with a non-JSON body (e.g. a captive portal)

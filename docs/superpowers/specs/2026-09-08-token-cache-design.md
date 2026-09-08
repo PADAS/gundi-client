@@ -103,9 +103,11 @@ scope, and, for `client_credentials` only, the client secret. The hex digest
   collide. The password is excluded: a human password hashed next to guessable
   material would make every key name an offline password verifier, and a
   password change does not invalidate issued tokens.
-- The username is always included: a CLI profile restores a user's token onto a
-  client that knows the username but not the password, and two such clients
-  must never share an entry.
+- The username is always included: a CLI profile client carries a username and
+  a restored token but no password, so several such clients under one client id
+  would otherwise share an entry and adopt each other's tokens. (The CLI login
+  itself uses the password grant, so its key never coincides with a profile
+  client's; the point is isolating profile clients from each other.)
 - The hash is one-way; the key discloses nothing about the credentials.
 - The token URL must be the resolved one (after OIDC discovery), so a client
   configured by issuer and one configured by token URL share an entry.
@@ -146,8 +148,15 @@ composed of the memory layer and the optional backend.
    backend and step 3's fetch branch runs. A token the server has rejected must
    not be served to any other client or replica (amended 2026-09-08: evicting
    unconditionally made N clients holding one rejected token mint N tokens and
-   replay an exchanged refresh token). When the fetch fails after a refresh grant
-   was attempted, the refresh token is marked dead in every layer.
+   replay an exchanged refresh token). The re-read consults the backend when
+   there is one, since memory may hold the rejected token itself; an instance
+   with no token of its own never adopts (`gundi auth login` must reach the
+   IdP). When the fetch fails: after a forced refresh the instance drops its
+   token entirely; after a refresh grant the IdP answered with a 4xx, the shared
+   entry is deleted and the instance stops trying that refresh token; a 5xx or
+   a network failure leaves everything in place (amended 2026-09-08, second
+   review: a dead-token marker had republished the rejected access token, and
+   a 5xx had discarded a valid refresh token).
 
 "Adopt" means setting `cached_token`, `cached_token_expires_at` and
 `cached_token_refresh_expires_at` on the instance, so the CLI's

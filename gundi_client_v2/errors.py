@@ -6,7 +6,20 @@ class GundiClientError(Exception):
 
 
 class AuthenticationError(GundiClientError):
-    """Raised when OAuth token retrieval or authentication fails."""
+    """Raised when OAuth token retrieval or authentication fails.
+
+    Attributes:
+        status_code: The token endpoint's HTTP status when the failure was a
+            non-2xx response, else None (network failure, malformed body,
+            missing configuration).
+        error: The RFC 6749 §5.2 ``error`` code from the response body when
+            present (``invalid_grant``, ``invalid_client``, ...), else None.
+    """
+
+    def __init__(self, message: str = "", *, status_code=None, error=None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.error = error
 
 
 class TokenCacheConfigError(GundiClientError):

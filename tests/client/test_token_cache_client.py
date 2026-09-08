@@ -548,3 +548,146 @@ async def test_a_failed_refresh_marks_the_refresh_token_dead(
         "client_credentials",
         "client_credentials",
     ]
+
+
+def _separate_process(client, backend):
+    """Give `client` its own memory layer, as a second process would have."""
+    client._token_store = TokenStore(backend, memory=MemoryTokenCache())
+    return client
+
+
+@pytest.mark.asyncio
+async def test_force_refresh_adopts_a_replacement_made_in_another_process(
+    client_settings, auth_token_response
+):
+    """Across processes the memory layer holds the rejected token; the forced
+    path must look past it at the backend before deciding to evict."""
+    from urllib.parse import parse_qs
+
+    backend = RedisTokenCache(client=FakeAsyncRedis(decode_responses=True))
+    responses = iter(["first", "second", "third"])
+
+    def issue(request):
+        return httpx.Response(
+            200, json={**auth_token_response, "access_token": next(responses)}
+        )
+
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).mock(side_effect=issue)
+        a = _separate_process(
+            GundiClient(**client_settings, token_cache=backend), backend
+        )
+        b = _separate_process(
+            GundiClient(**client_settings, token_cache=backend), backend
+        )
+        assert (await a.get_auth_header())["authorization"] == "Bearer first"
+        assert (await b.get_auth_header())["authorization"] == "Bearer first"
+        assert (await a.get_auth_header(force_refresh_token=True))[
+            "authorization"
+        ] == "Bearer second"
+        assert (await b.get_auth_header(force_refresh_token=True))[
+            "authorization"
+        ] == "Bearer second"
+    grants = [
+        parse_qs(c.request.content.decode())["grant_type"][0] for c in route.calls
+    ]
+    assert grants == ["client_credentials", "refresh_token"]
+
+
+@pytest.mark.asyncio
+async def test_a_forced_refresh_that_fails_does_not_republish_the_rejected_token(
+    client_settings, auth_token_response
+):
+    fake = FakeAsyncRedis(decode_responses=True)
+    backend = RedisTokenCache(client=fake)
+    from gundi_client_v2.errors import AuthenticationError
+
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).respond(200, json=auth_token_response)
+        client = GundiClient(**client_settings, token_cache=backend)
+        await client.get_auth_header()
+        route.respond(503, json={"error": "temporarily_unavailable"})
+        with pytest.raises(AuthenticationError):
+            await client.get_auth_header(force_refresh_token=True)
+        assert await fake.keys("gundi-client:token:*") == []
+        assert client.cached_token is None
+        route.respond(200, json={**auth_token_response, "access_token": "fresh"})
+        assert (await client.get_auth_header())["authorization"] == "Bearer fresh"
+
+
+@pytest.mark.asyncio
+async def test_a_fresh_instance_forcing_a_refresh_goes_to_the_idp(
+    client_settings, auth_token_response
+):
+    """`gundi auth login` builds a new client and forces a refresh to validate the
+    typed credentials; adopting a shared token would skip that validation."""
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL).respond(200, json=auth_token_response)
+        await GundiClient(**client_settings).get_auth_header()
+        await GundiClient(**client_settings).get_auth_header(force_refresh_token=True)
+    assert route.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_a_5xx_on_the_refresh_grant_keeps_the_refresh_token(
+    client_settings, auth_token_response, monkeypatch
+):
+    """Only a rejection (4xx) means the refresh token is dead; an IdP outage
+    must not discard a still-valid refresh token from the instance or the store."""
+    from datetime import timedelta
+    from urllib.parse import parse_qs
+    from gundi_client_v2 import token_cache as tc
+    from gundi_client_v2.errors import AuthenticationError
+
+    base = tc._now()
+    clock = {"now": base}
+    monkeypatch.setattr(tc, "_now", lambda: clock["now"])
+    fake = FakeAsyncRedis(decode_responses=True)
+    backend = RedisTokenCache(client=fake)
+    calls = []
+
+    def respond(request):
+        calls.append(parse_qs(request.content.decode())["grant_type"][0])
+        if len(calls) == 1:
+            return httpx.Response(200, json=auth_token_response)
+        return httpx.Response(503, json={"error": "temporarily_unavailable"})
+
+    async with respx.mock as mock:
+        mock.post(TOKEN_URL).mock(side_effect=respond)
+        client = GundiClient(**client_settings, token_cache=backend)
+        await client.get_auth_header()
+        clock["now"] += timedelta(seconds=auth_token_response["expires_in"] + 60)
+        for _ in range(2):
+            with pytest.raises(AuthenticationError):
+                await client.get_auth_header()
+    assert calls == [
+        "client_credentials",
+        "refresh_token",
+        "client_credentials",
+        "refresh_token",
+        "client_credentials",
+    ]
+    assert client.cached_token_refresh_expires_at > clock["now"]
+    assert await fake.keys("gundi-client:token:*") != []
+
+
+def test_authentication_error_carries_status_and_oauth_error_code(auth_token_response):
+    import asyncio as _asyncio
+    from gundi_client_v2 import auth
+    from gundi_client_v2.errors import AuthenticationError
+
+    async def go():
+        async with respx.mock as mock:
+            mock.post(TOKEN_URL).respond(
+                400, json={"error": "invalid_grant", "error_description": "stale"}
+            )
+            async with httpx.AsyncClient() as session:
+                with pytest.raises(AuthenticationError) as info:
+                    await auth.get_access_token_client_credentials(
+                        session, TOKEN_URL, "c", "s"
+                    )
+        return info.value
+
+    exc = _asyncio.run(go())
+    assert exc.status_code == 400
+    assert exc.error == "invalid_grant"

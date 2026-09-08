@@ -712,3 +712,46 @@ def test_memory_cache_locks_are_per_loop_under_concurrent_threads():
     asyncio.run(in_loop_a())
     assert seen["a1"] is seen["a2"]  # loop A's lock survives loop B's use of the key
     assert seen["b"] is not seen["a1"]  # loop B never receives loop A's lock
+
+
+def test_memory_cache_lock_is_thread_safe_under_concurrent_loops():
+    """_PROCESS_CACHE is process-global; two threads each running a loop may call
+    lock() at the same instant. The dict mutation must not raise."""
+    import sys
+    import threading
+
+    cache = MemoryTokenCache()
+    errors = []
+    old = sys.getswitchinterval()
+    sys.setswitchinterval(1e-6)
+    try:
+
+        def worker():
+            try:
+                for _ in range(300):
+                    asyncio.new_event_loop().run_until_complete(_take(cache))
+            except Exception as e:  # noqa: BLE001 — the test records any failure
+                errors.append(repr(e))
+
+        threads = [threading.Thread(target=worker) for _ in range(6)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+    finally:
+        sys.setswitchinterval(old)
+    assert errors == []
+
+
+async def _take(cache):
+    async with cache.lock("k"):
+        pass
+
+
+def test_memory_cache_prunes_loops_that_are_no_longer_running():
+    """A worker that builds a loop per job without closing it must not pin every
+    loop it ever used; only the running loop keeps its slot."""
+    cache = MemoryTokenCache()
+    for _ in range(50):
+        asyncio.new_event_loop().run_until_complete(_take(cache))
+    assert len(cache._locks["k"]) == 1

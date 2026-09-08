@@ -13,6 +13,7 @@ import math
 import os
 import stat
 import tempfile
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,9 +44,10 @@ def token_cache_key(
 ) -> str:
     """One key per set of credentials.
 
-    ``username`` is always part of the material (a CLI profile restores a user's
-    token onto a client that knows the user but not the password; two users must
-    never share an entry). ``secret`` is meant for a high-entropy client secret,
+    ``username`` is always part of the material: a CLI profile client carries a
+    username and a restored token but no password, so several such clients under
+    one client id would otherwise share one entry and adopt each other's tokens.
+    ``secret`` is meant for a high-entropy client secret,
     so a rotated secret never reuses a token minted under the old one; callers
     must NOT pass a human password here — hashed next to guessable material it
     would make every key name an offline password verifier. ``token_url`` must
@@ -188,11 +190,13 @@ class MemoryTokenCache:
         # event loop over its life (a worker calling asyncio.run per job) needs a
         # fresh lock per loop; reusing one raises "bound to a different event loop".
         # key -> {event loop -> Lock}. An asyncio.Lock binds to the loop that
-        # first contends it, so each loop gets its own lock per key; entries for
-        # closed loops are pruned on access. Two loops in one process are either
-        # sequential (asyncio.run per job) or in separate threads; either way a
-        # loop only ever sees its own lock.
+        # first contends it, so each loop gets its own lock per key. Loops that
+        # are closed or no longer running are pruned when the key is next
+        # touched (a worker that builds a loop per job must not pin them all).
+        # This dict is process-global and two threads may each run a loop, so
+        # every mutation happens under _guard.
         self._locks: Dict[str, Dict[asyncio.AbstractEventLoop, asyncio.Lock]] = {}
+        self._guard = threading.Lock()
 
     async def get(self, key: str) -> "CachedToken | None":
         token = self._entries.get(key)
@@ -212,17 +216,21 @@ class MemoryTokenCache:
 
     def lock(self, key: str) -> asyncio.Lock:
         loop = asyncio.get_running_loop()  # lock() is only called from a coroutine
-        per_loop = self._locks.setdefault(key, {})
-        for stale in [l for l in per_loop if l.is_closed()]:
-            del per_loop[stale]
-        lock = per_loop.get(loop)
-        if lock is None:
-            lock = per_loop[loop] = asyncio.Lock()
-        return lock
+        with self._guard:
+            per_loop = self._locks.setdefault(key, {})
+            for stale in [
+                l for l in list(per_loop) if l.is_closed() or not l.is_running()
+            ]:
+                per_loop.pop(stale, None)
+            lock = per_loop.get(loop)
+            if lock is None:
+                lock = per_loop[loop] = asyncio.Lock()
+            return lock
 
     def clear(self) -> None:
-        self._entries.clear()
-        self._locks.clear()
+        with self._guard:
+            self._entries.clear()
+            self._locks.clear()
 
 
 _PROCESS_CACHE = MemoryTokenCache()
@@ -274,20 +282,25 @@ class FileTokenCache:
         return token
 
     async def set(self, key: str, token: CachedToken) -> None:
-        if not self.directory.exists():
-            self.directory.mkdir(parents=True, exist_ok=True)
-            os.chmod(self.directory, 0o700)
-        elif not self._checked_directory:
+        try:
+            # No exist_ok: the chmod must apply only to a directory this call
+            # created, never to one that appeared between a check and the mkdir.
+            self.directory.mkdir(parents=True)
+        except FileExistsError:
             # A pre-existing directory is the operator's, not the cache's, to
             # re-mode (file:///tmp as root would strip the sticky bit from /tmp).
             # Warn once if it is looser than 0700; the files stay 0600 either way.
-            self._checked_directory = True
-            if stat.S_IMODE(os.stat(self.directory).st_mode) & 0o077:
-                logger.warning(
-                    "Token cache directory permissions are wider than 0700; the "
-                    "cache files stay private, but the directory should be dedicated "
-                    "to this cache and owner-only."
-                )
+            if not self._checked_directory:
+                mode = stat.S_IMODE(os.stat(self.directory).st_mode)
+                self._checked_directory = True  # only after the stat succeeded
+                if mode & 0o077:
+                    logger.warning(
+                        "Token cache directory permissions are wider than 0700; the "
+                        "cache files stay private, but the directory should be dedicated "
+                        "to this cache and owner-only."
+                    )
+        else:
+            os.chmod(self.directory, 0o700)
         path = self._path(key)
         fd, tmp = tempfile.mkstemp(
             dir=str(self.directory), prefix=f".{path.name}.", suffix=".tmp"
@@ -433,6 +446,21 @@ class TokenStore:
 
     def lock(self, key: str) -> asyncio.Lock:
         return self._memory.lock(key)
+
+    async def reload(self, key: str) -> "CachedToken | None":
+        """What every other client has written for ``key``: the backend's view
+        when there is one (in-process siblings write there too), else memory's.
+        For the forced-refresh path, where memory may hold the very token this
+        instance was just rejected on and the question is whether someone has
+        replaced it since."""
+        if self._backend is None:
+            return await self._memory.get(key)
+        from_backend = await self._guarded("get", self._backend.get(key))
+        if from_backend is not None:
+            await self._memory.set(key, from_backend)
+            return from_backend
+        await self._memory.delete(key)
+        return None
 
     async def get(self, key: str) -> "CachedToken | None":
         token = await self._memory.get(key)
