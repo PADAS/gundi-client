@@ -53,12 +53,27 @@ def test_no_refresh_token_is_never_refresh_live():
     assert not token.refresh_is_live(NOW)
 
 
-def test_to_oauth_token_zeroes_relative_lifetimes():
+def test_to_oauth_token_reports_remaining_lifetimes(clock):
     oauth = _token().to_oauth_token()
     assert oauth.access_token == "access-1"
     assert oauth.refresh_token == "refresh-1"
     assert oauth.token_type == "Bearer"
-    assert oauth.expires_in == 0
+    # Relative to the moment it is read, not to the moment it was issued.
+    assert oauth.expires_in == 3600
+    assert oauth.refresh_expires_in == 36000
+
+    clock["now"] = NOW + timedelta(hours=2)  # access dead, refresh still live
+    later = _token().to_oauth_token()
+    assert later.expires_in == 0
+    assert later.refresh_expires_in == 8 * 3600
+
+    # An explicit ``now`` wins over the module clock.
+    assert _token().to_oauth_token(NOW).expires_in == 3600
+
+
+def test_to_oauth_token_reports_no_refresh_lifetime_without_a_refresh_token(clock):
+    oauth = _token(refresh_token="", refresh_expires_at=NO_REFRESH).to_oauth_token()
+    assert oauth.refresh_token == ""
     assert oauth.refresh_expires_in == 0
 
 

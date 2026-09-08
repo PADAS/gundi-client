@@ -67,8 +67,8 @@ class CachedToken:
     """A token plus the absolute moments it stops being usable.
 
     The same payload the CLI token store writes; ``expires_in`` and
-    ``refresh_expires_in`` are not kept because they are relative to a moment
-    the reader does not know.
+    ``refresh_expires_in`` are not stored because they are relative to a moment
+    the reader does not know. ``to_oauth_token`` recomputes them on read.
     """
 
     access_token: str
@@ -83,13 +83,23 @@ class CachedToken:
     def refresh_is_live(self, now: datetime) -> bool:
         return bool(self.refresh_token) and self.refresh_expires_at > now
 
-    def to_oauth_token(self) -> OAuthToken:
+    def to_oauth_token(self, now: "datetime | None" = None) -> OAuthToken:
+        """The OAuthToken form, with the lifetimes left as of ``now``.
+
+        Callers read ``expires_in`` to decide how long the token is good for,
+        and ``refresh_access_token`` backfills a refresh response that omits
+        ``refresh_expires_in`` from it, so both must be the remaining lifetime
+        rather than the (unknown) value the IdP originally sent. Never negative.
+        """
+        now = now or _now()
         return OAuthToken(
             access_token=self.access_token,
             refresh_token=self.refresh_token,
             token_type=self.token_type,
-            expires_in=0,
-            refresh_expires_in=0,
+            expires_in=max(0, int((self.expires_at - now).total_seconds())),
+            refresh_expires_in=max(
+                0, int((self.refresh_expires_at - now).total_seconds())
+            ),
         )
 
     def to_json(self) -> str:

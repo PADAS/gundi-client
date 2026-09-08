@@ -130,6 +130,26 @@ async def test_different_secret_gets_its_own_token(
 
 
 @pytest.mark.asyncio
+async def test_the_cached_token_carries_its_remaining_lifetime(
+    client_settings, auth_token_response
+):
+    """``client.cached_token.expires_in`` is what callers read to decide how long
+    a token is good for; it must be the time left, not zero."""
+    buffered = auth_token_response["expires_in"] - 15  # the clock-skew buffer
+    async with respx.mock as mock:
+        route = _mock_token_endpoint(mock, auth_token_response)
+        first = GundiClient(**client_settings)
+        await first.get_auth_header()
+        assert buffered - 5 <= first.cached_token.expires_in <= buffered
+        assert first.cached_token.refresh_expires_in > 0
+        second = GundiClient(**client_settings)  # served from the shared cache
+        await second.get_auth_header()
+    assert route.call_count == 1
+    assert buffered - 5 <= second.cached_token.expires_in <= buffered
+    assert second.cached_token.refresh_expires_in > 0
+
+
+@pytest.mark.asyncio
 async def test_a_fresh_process_finds_the_token_in_the_backend(
     client_settings, auth_token_response
 ):

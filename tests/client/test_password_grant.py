@@ -277,6 +277,38 @@ async def test_refresh_preserves_cached_refresh_token_when_omitted(auth_token_re
 
 
 @pytest.mark.asyncio
+async def test_rotated_refresh_token_without_refresh_expires_in_stays_live(
+    auth_token_response,
+):
+    # A rotating IdP may return a new refresh_token and omit refresh_expires_in.
+    # The prior entry's remaining refresh lifetime backfills it, so the new token
+    # is still tracked as refreshable instead of being stored as "no refresh".
+    client = _public_password_client()
+    rotated_response = {
+        "access_token": "rotated-access-token",
+        "expires_in": auth_token_response["expires_in"],
+        "refresh_token": "rotated-refresh-token",
+        "token_type": "Bearer",
+        # NO refresh_expires_in
+    }
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL)
+        route.side_effect = [
+            httpx.Response(httpx.codes.OK, json=auth_token_response),
+            httpx.Response(httpx.codes.OK, json=rotated_response),
+        ]
+        await client.get_access_token()
+        await client.get_access_token(force_refresh_token=True)
+
+    assert _body(route, 1)["grant_type"] == ["refresh_token"]
+    assert client.cached_token.refresh_token == "rotated-refresh-token"
+    assert client.cached_token_refresh_expires_at != datetime.min.replace(
+        tzinfo=timezone.utc
+    )
+    assert client.cached_token_refresh_expires_at > datetime.now(tz=timezone.utc)
+
+
+@pytest.mark.asyncio
 async def test_password_grant_requires_client_id():
     # username/password without a client_id must fail locally with a clear configuration
     # error rather than firing a half-formed token request the IdP would reject.
