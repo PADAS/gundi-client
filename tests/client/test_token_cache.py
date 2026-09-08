@@ -1,12 +1,16 @@
+import asyncio
 import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from gundi_client_v2 import token_cache as tc
 from gundi_client_v2.token_cache import (
     KEY_PREFIX,
     NO_REFRESH,
     CachedToken,
+    MemoryTokenCache,
+    clear_token_cache,
     token_cache_key,
 )
 
@@ -144,3 +148,52 @@ def test_key_treats_none_and_empty_alike():
     assert token_cache_key(**{**_KEY_ARGS, "audience": None}) == token_cache_key(
         **{**_KEY_ARGS, "audience": ""}
     )
+
+
+@pytest.fixture
+def clock(monkeypatch):
+    state = {"now": NOW}
+    monkeypatch.setattr(tc, "_now", lambda: state["now"])
+    return state
+
+
+@pytest.mark.asyncio
+async def test_memory_cache_round_trip(clock):
+    cache = MemoryTokenCache()
+    assert await cache.get("k") is None
+    await cache.set("k", _token())
+    assert await cache.get("k") == _token()
+    await cache.delete("k")
+    assert await cache.get("k") is None
+
+
+@pytest.mark.asyncio
+async def test_memory_cache_keeps_an_entry_whose_refresh_token_is_still_live(clock):
+    cache = MemoryTokenCache()
+    await cache.set("k", _token())
+    clock["now"] = NOW + timedelta(hours=2)  # access expired, refresh live
+    assert await cache.get("k") == _token()
+
+
+@pytest.mark.asyncio
+async def test_memory_cache_drops_an_entry_whose_tokens_have_both_expired(clock):
+    cache = MemoryTokenCache()
+    await cache.set("k", _token())
+    clock["now"] = NOW + timedelta(hours=11)
+    assert await cache.get("k") is None
+    assert "k" not in cache._entries
+
+
+def test_memory_cache_lock_is_per_key():
+    cache = MemoryTokenCache()
+    assert cache.lock("a") is cache.lock("a")
+    assert cache.lock("a") is not cache.lock("b")
+    assert isinstance(cache.lock("a"), asyncio.Lock)
+
+
+@pytest.mark.asyncio
+async def test_clear_token_cache_empties_the_process_layer():
+    await tc._PROCESS_CACHE.set("k", _token())
+    clear_token_cache()
+    assert await tc._PROCESS_CACHE.get("k") is None
+    assert tc._PROCESS_CACHE._locks == {}

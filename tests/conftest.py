@@ -26,6 +26,16 @@ def _clear_oidc_discovery_cache():
     _auth.clear_discovery_cache()
 
 
+@pytest.fixture(autouse=True)
+def _clear_process_token_cache():
+    """Keep the process-wide token cache test-isolated."""
+    from gundi_client_v2 import token_cache as _token_cache
+
+    _token_cache.clear_token_cache()
+    yield
+    _token_cache.clear_token_cache()
+
+
 @pytest.fixture
 def sender_settings():
     return {

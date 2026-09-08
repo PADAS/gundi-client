@@ -5,11 +5,13 @@ or a directory of files) sits behind it so replicas and restarts reuse a token
 for as long as it is valid. See docs/superpowers/specs/2026-09-08-token-cache-design.md.
 """
 
+import asyncio
 import hashlib
 import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Dict, Protocol
 
 from gundi_core.schemas import OAuthToken
 
@@ -121,3 +123,65 @@ class CachedToken:
             token_type=data.get("token_type") or "Bearer",
             **stamps,
         )
+
+
+def _now() -> datetime:
+    """The module's clock; tests replace it."""
+    return datetime.now(tz=timezone.utc)
+
+
+class TokenCache(Protocol):
+    """A durable token store. Implementations may raise; TokenStore contains it."""
+
+    async def get(self, key: str) -> "CachedToken | None": ...
+
+    async def set(self, key: str, token: CachedToken) -> None: ...
+
+    async def delete(self, key: str) -> None: ...
+
+
+class MemoryTokenCache:
+    """Process-wide in-memory layer.
+
+    Entries whose access and refresh tokens have both expired are dropped on
+    read. A per-key asyncio.Lock lets concurrent clients that miss at the same
+    moment wait for one fetch instead of each making their own.
+    """
+
+    def __init__(self) -> None:
+        self._entries: Dict[str, CachedToken] = {}
+        self._locks: Dict[str, asyncio.Lock] = {}
+
+    async def get(self, key: str) -> "CachedToken | None":
+        token = self._entries.get(key)
+        if token is None:
+            return None
+        now = _now()
+        if not token.is_live(now) and not token.refresh_is_live(now):
+            del self._entries[key]
+            return None
+        return token
+
+    async def set(self, key: str, token: CachedToken) -> None:
+        self._entries[key] = token
+
+    async def delete(self, key: str) -> None:
+        self._entries.pop(key, None)
+
+    def lock(self, key: str) -> asyncio.Lock:
+        # setdefault is atomic enough: asyncio is single-threaded and there is
+        # no await between the lookup and the insert.
+        return self._locks.setdefault(key, asyncio.Lock())
+
+    def clear(self) -> None:
+        self._entries.clear()
+        self._locks.clear()
+
+
+_PROCESS_CACHE = MemoryTokenCache()
+
+
+def clear_token_cache() -> None:
+    """Empty the process-wide token layer. For tests, and for a long-running
+    process that must drop every cached token (mirrors auth.clear_discovery_cache)."""
+    _PROCESS_CACHE.clear()
