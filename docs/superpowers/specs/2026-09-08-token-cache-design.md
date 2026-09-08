@@ -1,7 +1,7 @@
 # Shared OAuth token cache for `GundiClient`
 
 **Date:** 2026-09-08
-**Status:** approved design, awaiting implementation plan
+**Status:** implemented on branch `cd/token-cache` (Part A); amended 2026-09-08 after the whole-branch review: `to_oauth_token` reports remaining lifetimes instead of zeros, `redis` extra pinned `<9`, per-key locks are bound to the running event loop
 **Release:** gundi-client-v2 3.7.0
 
 ## Problem
@@ -52,7 +52,7 @@ class CachedToken:
     expires_at: datetime        # tz-aware, absolute
     refresh_expires_at: datetime  # tz-aware; datetime.min (UTC) when no refresh token
 
-    def to_oauth_token(self) -> OAuthToken   # expires_in / refresh_expires_in = 0, as the CLI store does
+    def to_oauth_token(self, now=None) -> OAuthToken   # expires_in / refresh_expires_in = remaining seconds (0 once expired)
     def is_live(self, now) -> bool           # expires_at > now
     def refresh_is_live(self, now) -> bool   # refresh_token and refresh_expires_at > now
 
@@ -182,7 +182,7 @@ of a one-way hash.
 | Backend URL | `token_cache_url` | `GUNDI_TOKEN_CACHE_URL` | `redis://host:port/db`, `rediss://…`, `file:///dir`; unset = memory only |
 | Injected backend | `token_cache` | — | any `TokenCache`; overrides the URL |
 
-The `redis` extra: `pip install gundi-client-v2[redis]` adds `redis>=5,<7`.
+The `redis` extra: `pip install gundi-client-v2[redis]` adds `redis>=5,<9` (the surface used is get/set/delete with EX; the lockfile resolves redis 8.x).
 
 ### Template changes (separate PR in gundi-integration-action-runner)
 
