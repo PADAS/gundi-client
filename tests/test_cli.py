@@ -39,6 +39,7 @@ def _clear_auth_env(monkeypatch):
     leak username/password/issuer into a test and change the selected grant.
     """
     for var in (
+        "OAUTH_CLIENT_ID",
         "OAUTH_CLIENT_SECRET",
         "OAUTH_TOKEN_URL",
         "OAUTH_ISSUER",
@@ -47,6 +48,7 @@ def _clear_auth_env(monkeypatch):
         "GUNDI_PASSWORD",
     ):
         monkeypatch.delenv(var, raising=False)
+        monkeypatch.delenv(f"GUNDI_{var}", raising=False)
 
 
 @pytest.fixture
@@ -334,14 +336,8 @@ def test_disable_patches_enabled_false(
 
 def test_missing_env_var_exits_2(monkeypatch):
     # No auth env vars set at all.
-    for var in (
-        "GUNDI_API_BASE_URL",
-        "OAUTH_CLIENT_ID",
-        "OAUTH_CLIENT_SECRET",
-        "OAUTH_TOKEN_URL",
-        "OAUTH_ISSUER",
-    ):
-        monkeypatch.delenv(var, raising=False)
+    _clear_auth_env(monkeypatch)
+    monkeypatch.delenv("GUNDI_API_BASE_URL", raising=False)
 
     result = runner.invoke(app, ["integrations", "list"])
 
@@ -353,6 +349,7 @@ def test_missing_env_var_exits_2(monkeypatch):
 
 def test_missing_token_endpoint_exits_2(monkeypatch):
     # Base creds present, but neither OAUTH_ISSUER nor OAUTH_TOKEN_URL is set.
+    _clear_auth_env(monkeypatch)
     monkeypatch.setenv("GUNDI_API_BASE_URL", BASE_URL)
     monkeypatch.setenv("OAUTH_CLIENT_ID", "confidential-client")
     monkeypatch.setenv("OAUTH_CLIENT_SECRET", "shhh")
@@ -1176,4 +1173,66 @@ def test_logs_by_type_slug_is_lowercased(cli_env, auth_token_response):
     assert result.exit_code == 0, result.output
     assert (
         logs_route.calls.last.request.url.params["integration_type"] == "earth_ranger"
+    )
+
+
+@pytest.fixture
+def cli_env_gundi_prefixed(monkeypatch):
+    """Client-credentials configured entirely via the new GUNDI_OAUTH_* names."""
+    _clear_auth_env(monkeypatch)
+    monkeypatch.setenv("GUNDI_API_BASE_URL", BASE_URL)
+    monkeypatch.setenv("GUNDI_OAUTH_CLIENT_ID", "confidential-client")
+    monkeypatch.setenv("GUNDI_OAUTH_CLIENT_SECRET", "shhh")
+    monkeypatch.setenv("GUNDI_OAUTH_TOKEN_URL", TOKEN_URL)
+
+
+def test_list_with_gundi_prefixed_env(
+    cli_env_gundi_prefixed, auth_token_response, destination_integration_details
+):
+    with respx.mock(assert_all_called=False) as mock:
+        _mock_auth(mock, auth_token_response)
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 0, result.output
+    assert destination_integration_details["id"] in result.output
+
+
+def test_gundi_prefixed_wins_over_bare_name(
+    cli_env, auth_token_response, destination_integration_details, monkeypatch
+):
+    # cli_env sets the bare OAUTH_* names; the GUNDI_ spelling must win.
+    monkeypatch.setenv("OAUTH_CLIENT_SECRET", "wrong-secret")
+    monkeypatch.setenv("GUNDI_OAUTH_CLIENT_SECRET", "shhh")
+    with respx.mock(assert_all_called=False) as mock:
+        token_route = mock.post(TOKEN_URL).respond(
+            status_code=httpx.codes.OK, json=auth_token_response
+        )
+        mock.get(INTEGRATIONS_URL).respond(
+            status_code=httpx.codes.OK,
+            json={"results": [destination_integration_details], "next": None},
+        )
+
+        result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 0, result.output
+    assert b"client_secret=shhh" in token_route.calls.last.request.content
+
+
+def test_missing_env_error_names_gundi_prefixed_vars(monkeypatch):
+    _clear_auth_env(monkeypatch)
+    monkeypatch.delenv("GUNDI_API_BASE_URL", raising=False)
+
+    result = runner.invoke(app, ["integrations", "list"])
+
+    assert result.exit_code == 2, result.output
+    assert "GUNDI_OAUTH_CLIENT_ID" in result.output
+    assert "GUNDI_OAUTH_ISSUER (or GUNDI_OAUTH_TOKEN_URL)" in result.output
+    assert (
+        "GUNDI_OAUTH_CLIENT_SECRET (or GUNDI_USERNAME + GUNDI_PASSWORD)"
+        in result.output
     )

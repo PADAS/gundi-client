@@ -20,7 +20,7 @@ detailed coverage of each grant type, see the
 | Use this | When |
 |---|---|
 | `client_credentials` | Server-to-server, no user identity involved. Your client is confidential (has a secret). |
-| `password` | Acting on behalf of a known user with their username and password. `OAUTH_CLIENT_SECRET` is not used by this grant. |
+| `password` | Acting on behalf of a known user with their username and password. `GUNDI_OAUTH_CLIENT_SECRET` is not used by this grant. |
 
 If unsure, ask your Gundi administrator which grant your client is configured
 for.
@@ -34,36 +34,39 @@ shell:
 
     ```env
     GUNDI_API_BASE_URL=https://api.gundiservice.org
-    OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
-    OAUTH_CLIENT_ID=your-client-id
-    OAUTH_CLIENT_SECRET=your-client-secret
-    # OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
+    GUNDI_OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
+    GUNDI_OAUTH_CLIENT_ID=your-client-id
+    GUNDI_OAUTH_CLIENT_SECRET=your-client-secret
+    # GUNDI_OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
     ```
 
 === "password grant"
 
     ```env
     GUNDI_API_BASE_URL=https://api.gundiservice.org
-    OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
-    OAUTH_CLIENT_ID=your-client-id
+    GUNDI_OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
+    GUNDI_OAUTH_CLIENT_ID=your-client-id
     GUNDI_USERNAME=your-username
     GUNDI_PASSWORD=your-password
-    # OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
+    # GUNDI_OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
     ```
+
+The un-prefixed `OAUTH_*` names (and, for the library, the legacy `KEYCLOAK_*`
+names) are still accepted as fallbacks.
 
 ## How the library uses these
 
 When you create a `GundiClient()` with no arguments, it reads these env vars
-through `gundi_client_v2.settings`. Setting `OAUTH_ISSUER` triggers **OIDC
+through `gundi_client_v2.settings`. Setting `GUNDI_OAUTH_ISSUER` triggers **OIDC
 discovery**: the library fetches the IdP's
 `/.well-known/openid-configuration` document on the first auth attempt and
 caches the resolved token endpoint for the process lifetime.
 
-If your IdP doesn't expose discovery, set `OAUTH_TOKEN_URL` directly instead
-of `OAUTH_ISSUER`.
+If your IdP doesn't expose discovery, set `GUNDI_OAUTH_TOKEN_URL` directly instead
+of `GUNDI_OAUTH_ISSUER`.
 
 !!! tip "Audience parameter"
-    `OAUTH_AUDIENCE` is required by some IdPs (notably Auth0 won't issue a
+    `GUNDI_OAUTH_AUDIENCE` is required by some IdPs (notably Auth0 won't issue a
     usable API access token without it) and ignored by others (Keycloak
     password grant). Set it if your IdP requires it; leave it unset
     otherwise.

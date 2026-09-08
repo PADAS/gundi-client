@@ -7,13 +7,14 @@ Set credentials via environment variables (recommended) or pass them in code.
 # Required:
 #   GUNDI_USERNAME, GUNDI_PASSWORD,
 #   GUNDI_API_BASE_URL, SENSORS_API_BASE_URL,
-#   OAUTH_CLIENT_ID,
-#   one of OAUTH_ISSUER (library discovers the token endpoint via OIDC discovery)
-#   or OAUTH_TOKEN_URL (used as-is when set).
+#   GUNDI_OAUTH_CLIENT_ID,
+#   one of GUNDI_OAUTH_ISSUER (library discovers the token endpoint via OIDC
+#   discovery) or GUNDI_OAUTH_TOKEN_URL (used as-is when set).
 # Conditional:
-#   OAUTH_AUDIENCE  — required by some IdPs (e.g., Auth0 won't issue a usable
+#   GUNDI_OAUTH_AUDIENCE  — required by some IdPs (e.g., Auth0 won't issue a usable
 #                     API access token without it); ignored by others (Keycloak
 #                     password grant). Set it if your IdP requires it.
+# Legacy un-prefixed OAUTH_* spellings are also accepted (prefixed wins).
 # Optional:
 #   GUNDI_API_SSL_VERIFY
 
@@ -34,6 +35,11 @@ from datetime import datetime, timezone
 from gundi_client_v2 import GundiClient, GundiDataSenderClient
 
 
+def _env(name):
+    """Prefer the GUNDI_-prefixed spelling; fall back to the legacy bare name."""
+    return os.environ.get(f"GUNDI_{name}") or os.environ.get(name)
+
+
 def get_client_kwargs():
     """Build GundiClient kwargs from environment, validating required settings."""
     username = os.environ.get("GUNDI_USERNAME")
@@ -43,16 +49,16 @@ def get_client_kwargs():
             "Set GUNDI_USERNAME and GUNDI_PASSWORD in the environment, or pass them in code."
         )
 
-    oauth_client_id = os.environ.get("OAUTH_CLIENT_ID")
-    oauth_token_url = os.environ.get("OAUTH_TOKEN_URL")
-    oauth_issuer = os.environ.get("OAUTH_ISSUER")
+    oauth_client_id = _env("OAUTH_CLIENT_ID")
+    oauth_token_url = _env("OAUTH_TOKEN_URL")
+    oauth_issuer = _env("OAUTH_ISSUER")
     gundi_api_base_url = os.environ.get("GUNDI_API_BASE_URL")
 
     missing = []
     if not oauth_client_id:
-        missing.append("OAUTH_CLIENT_ID")
+        missing.append("GUNDI_OAUTH_CLIENT_ID")
     if not oauth_token_url and not oauth_issuer:
-        missing.append("OAUTH_TOKEN_URL (or OAUTH_ISSUER)")
+        missing.append("GUNDI_OAUTH_TOKEN_URL (or GUNDI_OAUTH_ISSUER)")
     if not gundi_api_base_url:
         missing.append("GUNDI_API_BASE_URL")
     if missing:
@@ -69,8 +75,8 @@ def get_client_kwargs():
         kwargs["oauth_issuer"] = oauth_issuer
     kwargs["oauth_client_id"] = oauth_client_id
     kwargs["base_url"] = gundi_api_base_url
-    if os.environ.get("OAUTH_AUDIENCE"):
-        kwargs["oauth_audience"] = os.environ["OAUTH_AUDIENCE"]
+    if audience := _env("OAUTH_AUDIENCE"):
+        kwargs["oauth_audience"] = audience
     return kwargs
 
 

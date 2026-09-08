@@ -3,10 +3,12 @@ Example: list Gundi connections using the OAuth2 client_credentials grant
 (confidential client / service-to-service auth).
 
 # Required env vars:
-#   GUNDI_API_BASE_URL, OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_TOKEN_URL
+#   GUNDI_API_BASE_URL, GUNDI_OAUTH_CLIENT_ID, GUNDI_OAUTH_CLIENT_SECRET,
+#   GUNDI_OAUTH_TOKEN_URL
 # Conditional:
-#   OAUTH_AUDIENCE  — required by some IdPs (e.g. Auth0 won't issue a usable
+#   GUNDI_OAUTH_AUDIENCE  — required by some IdPs (e.g. Auth0 won't issue a usable
 #                     API access token without it); ignored by Keycloak.
+# Legacy un-prefixed OAUTH_* spellings are also accepted (prefixed wins).
 
 Run from the examples/ directory (so the local .env is loaded):
 
@@ -21,6 +23,11 @@ import os
 from gundi_client_v2 import GundiClient
 
 
+def _env(name: str):
+    """Prefer the GUNDI_-prefixed spelling; fall back to the legacy bare name."""
+    return os.environ.get(f"GUNDI_{name}") or os.environ.get(name)
+
+
 def _get_kwargs() -> dict:
     """Validate required env vars; raise ValueError listing any that are missing."""
     missing = []
@@ -31,23 +38,23 @@ def _get_kwargs() -> dict:
     else:
         missing.append("GUNDI_API_BASE_URL")
 
-    if client_id := os.environ.get("OAUTH_CLIENT_ID"):
+    if client_id := _env("OAUTH_CLIENT_ID"):
         kwargs["oauth_client_id"] = client_id
     else:
-        missing.append("OAUTH_CLIENT_ID")
+        missing.append("GUNDI_OAUTH_CLIENT_ID")
 
-    if client_secret := os.environ.get("OAUTH_CLIENT_SECRET"):
+    if client_secret := _env("OAUTH_CLIENT_SECRET"):
         kwargs["oauth_client_secret"] = client_secret
     else:
-        missing.append("OAUTH_CLIENT_SECRET")
+        missing.append("GUNDI_OAUTH_CLIENT_SECRET")
 
-    if token_url := os.environ.get("OAUTH_TOKEN_URL"):
+    if token_url := _env("OAUTH_TOKEN_URL"):
         kwargs["oauth_token_url"] = token_url
     else:
-        missing.append("OAUTH_TOKEN_URL")
+        missing.append("GUNDI_OAUTH_TOKEN_URL")
 
     # Conditional — sent to the token endpoint when set; some IdPs require it.
-    if audience := os.environ.get("OAUTH_AUDIENCE"):
+    if audience := _env("OAUTH_AUDIENCE"):
         kwargs["oauth_audience"] = audience
 
     if missing:

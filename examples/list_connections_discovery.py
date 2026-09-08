@@ -1,21 +1,22 @@
 """
 Example: list Gundi connections using the OAuth2 password grant with OIDC
 discovery — the library finds the token endpoint at
-{OAUTH_ISSUER}/.well-known/openid-configuration instead of needing
-OAUTH_TOKEN_URL configured explicitly.
+{GUNDI_OAUTH_ISSUER}/.well-known/openid-configuration instead of needing
+GUNDI_OAUTH_TOKEN_URL configured explicitly.
 
 This is the IdP-agnostic path: it works against Keycloak, Auth0, Okta, and
-any other OIDC-compliant IdP with no code change — only OAUTH_ISSUER
-differs per deployment. After the Auth0 migration, point OAUTH_ISSUER at
+any other OIDC-compliant IdP with no code change — only GUNDI_OAUTH_ISSUER
+differs per deployment. After the Auth0 migration, point GUNDI_OAUTH_ISSUER at
 the Auth0 tenant and this same script keeps working.
 
 # Required env vars:
-#   GUNDI_API_BASE_URL, OAUTH_CLIENT_ID,
+#   GUNDI_API_BASE_URL, GUNDI_OAUTH_CLIENT_ID,
 #   GUNDI_USERNAME, GUNDI_PASSWORD,
-#   OAUTH_ISSUER
+#   GUNDI_OAUTH_ISSUER
 # Conditional:
-#   OAUTH_AUDIENCE  — required by some IdPs (e.g. Auth0 won't issue a usable
+#   GUNDI_OAUTH_AUDIENCE  — required by some IdPs (e.g. Auth0 won't issue a usable
 #                     API access token without it); ignored by Keycloak.
+# Legacy un-prefixed OAUTH_* spellings are also accepted (prefixed wins).
 
 # Requires gundi-client-v2 >= 3.0.0 (OIDC discovery support).
 
@@ -36,6 +37,11 @@ import os
 from gundi_client_v2 import GundiClient
 
 
+def _env(name: str):
+    """Prefer the GUNDI_-prefixed spelling; fall back to the legacy bare name."""
+    return os.environ.get(f"GUNDI_{name}") or os.environ.get(name)
+
+
 def _get_kwargs() -> dict:
     """Validate required env vars; raise ValueError listing any that are missing."""
     missing = []
@@ -46,10 +52,10 @@ def _get_kwargs() -> dict:
     else:
         missing.append("GUNDI_API_BASE_URL")
 
-    if client_id := os.environ.get("OAUTH_CLIENT_ID"):
+    if client_id := _env("OAUTH_CLIENT_ID"):
         kwargs["oauth_client_id"] = client_id
     else:
-        missing.append("OAUTH_CLIENT_ID")
+        missing.append("GUNDI_OAUTH_CLIENT_ID")
 
     if username := os.environ.get("GUNDI_USERNAME"):
         kwargs["username"] = username
@@ -63,13 +69,13 @@ def _get_kwargs() -> dict:
 
     # NOTE: oauth_issuer (NOT oauth_token_url) — the library will resolve the
     # token endpoint via OIDC discovery at runtime.
-    if issuer := os.environ.get("OAUTH_ISSUER"):
+    if issuer := _env("OAUTH_ISSUER"):
         kwargs["oauth_issuer"] = issuer
     else:
-        missing.append("OAUTH_ISSUER")
+        missing.append("GUNDI_OAUTH_ISSUER")
 
     # Conditional — sent to the token endpoint when set; some IdPs require it.
-    if audience := os.environ.get("OAUTH_AUDIENCE"):
+    if audience := _env("OAUTH_AUDIENCE"):
         kwargs["oauth_audience"] = audience
 
     if missing:
