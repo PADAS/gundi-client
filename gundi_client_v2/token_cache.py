@@ -9,8 +9,11 @@ import asyncio
 import hashlib
 import json
 import logging
+import os
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Dict, Protocol
 
 from gundi_core.schemas import OAuthToken
@@ -185,3 +188,62 @@ def clear_token_cache() -> None:
     """Empty the process-wide token layer. For tests, and for a long-running
     process that must drop every cached token (mirrors auth.clear_discovery_cache)."""
     _PROCESS_CACHE.clear()
+
+
+class FileTokenCache:
+    """One file per key under a private directory, for processes without Redis.
+
+    Copies the CLI token store's conventions (gundi_client_v2/cli/token_store.py,
+    config_store.write_private) rather than importing them, so the core library
+    stays independent of the CLI package: 0700 directory, 0600 files, written to
+    a temp name in the same directory and renamed into place so a reader never
+    sees a partial file.
+    """
+
+    def __init__(self, directory: "Path | str") -> None:
+        self.directory = Path(directory)
+
+    def _path(self, key: str) -> Path:
+        name = key[len(KEY_PREFIX) :] if key.startswith(KEY_PREFIX) else key
+        return self.directory / f"{name}.json"
+
+    async def get(self, key: str) -> "CachedToken | None":
+        path = self._path(key)
+        try:
+            text = path.read_text()
+        except FileNotFoundError:
+            return None
+        token = CachedToken.from_json(text)
+        now = _now()
+        if token is None or (not token.is_live(now) and not token.refresh_is_live(now)):
+            self._unlink(path)
+            return None
+        return token
+
+    async def set(self, key: str, token: CachedToken) -> None:
+        self.directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        path = self._path(key)
+        fd, tmp = tempfile.mkstemp(
+            dir=str(self.directory), prefix=f".{path.name}.", suffix=".tmp"
+        )
+        try:
+            if hasattr(os, "fchmod"):
+                os.fchmod(
+                    fd, 0o600
+                )  # mkstemp already creates 0600; belt and suspenders
+            with os.fdopen(fd, "w") as f:
+                f.write(token.to_json())
+            os.replace(tmp, path)
+        except OSError:
+            self._unlink(Path(tmp))
+            raise
+
+    async def delete(self, key: str) -> None:
+        self._unlink(self._path(key))
+
+    @staticmethod
+    def _unlink(path: Path) -> None:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass

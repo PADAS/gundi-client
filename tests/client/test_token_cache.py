@@ -1,6 +1,9 @@
 import asyncio
 import json
+import os
+import stat
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
@@ -9,6 +12,7 @@ from gundi_client_v2.token_cache import (
     KEY_PREFIX,
     NO_REFRESH,
     CachedToken,
+    FileTokenCache,
     MemoryTokenCache,
     clear_token_cache,
     token_cache_key,
@@ -197,3 +201,71 @@ async def test_clear_token_cache_empties_the_process_layer():
     clear_token_cache()
     assert await tc._PROCESS_CACHE.get("k") is None
     assert tc._PROCESS_CACHE._locks == {}
+
+
+@pytest.mark.asyncio
+async def test_file_cache_round_trip_and_layout(tmp_path, clock):
+    cache = FileTokenCache(tmp_path / "tokens")
+    key = KEY_PREFIX + "ab" * 16
+    assert await cache.get(key) is None
+    await cache.set(key, _token())
+    assert await cache.get(key) == _token()
+    files = list((tmp_path / "tokens").iterdir())
+    assert [f.name for f in files] == ["ab" * 16 + ".json"]
+    await cache.delete(key)
+    assert await cache.get(key) is None
+    await cache.delete(key)  # deleting a missing entry is not an error
+
+
+@pytest.mark.asyncio
+async def test_file_cache_permissions(tmp_path, clock):
+    cache = FileTokenCache(tmp_path / "tokens")
+    key = KEY_PREFIX + "cd" * 16
+    await cache.set(key, _token())
+    assert stat.S_IMODE(os.stat(tmp_path / "tokens").st_mode) == 0o700
+    assert (
+        stat.S_IMODE(os.stat(tmp_path / "tokens" / ("cd" * 16 + ".json")).st_mode)
+        == 0o600
+    )
+
+
+@pytest.mark.asyncio
+async def test_file_cache_write_is_atomic_and_leaves_no_temp_file(
+    tmp_path, clock, monkeypatch
+):
+    cache = FileTokenCache(tmp_path / "tokens")
+    key = KEY_PREFIX + "ef" * 16
+    await cache.set(key, _token(access_token="first"))
+
+    def broken_replace(src, dst):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(os, "replace", broken_replace)
+    with pytest.raises(OSError):
+        await cache.set(key, _token(access_token="second"))
+    monkeypatch.undo()
+    assert (await cache.get(key)).access_token == "first"
+    assert [f.name for f in (tmp_path / "tokens").iterdir()] == ["ef" * 16 + ".json"]
+
+
+@pytest.mark.asyncio
+async def test_file_cache_treats_corrupt_and_expired_files_as_misses_and_removes_them(
+    tmp_path, clock
+):
+    cache = FileTokenCache(tmp_path / "tokens")
+    key = KEY_PREFIX + "01" * 16
+    await cache.set(key, _token())
+    path = tmp_path / "tokens" / ("01" * 16 + ".json")
+    path.write_text("{not json")
+    assert await cache.get(key) is None
+    assert not path.exists()
+
+    await cache.set(key, _token())
+    clock["now"] = NOW + timedelta(hours=11)
+    assert await cache.get(key) is None
+    assert not path.exists()
+
+
+def test_file_cache_accepts_a_string_directory(tmp_path):
+    cache = FileTokenCache(str(tmp_path / "tokens"))
+    assert cache.directory == tmp_path / "tokens"
