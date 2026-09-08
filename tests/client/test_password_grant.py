@@ -163,6 +163,8 @@ async def test_no_credentials_raises():
 
 @pytest.mark.asyncio
 async def test_full_auth_when_token_and_refresh_expired(auth_token_response):
+    from gundi_client_v2.token_cache import clear_token_cache
+
     client = _public_password_client()
     async with respx.mock as mock:
         route = mock.post(TOKEN_URL).respond(
@@ -174,6 +176,9 @@ async def test_full_auth_when_token_and_refresh_expired(auth_token_response):
         client.cached_token_refresh_expires_at = datetime.min.replace(
             tzinfo=timezone.utc
         )
+        # The shared cache still holds the live entry this client just wrote; drop it
+        # too so the lookup can't hand it back in place of the "expired" instance state.
+        clear_token_cache()
         await client.get_access_token()  # must skip refresh and do a full password grant
         assert route.call_count == 2
         assert _body(route, 1)["grant_type"] == ["password"]
@@ -269,6 +274,38 @@ async def test_refresh_preserves_cached_refresh_token_when_omitted(auth_token_re
         # Cached refresh token + its expiry are preserved across the partial refresh.
         assert client.cached_token.refresh_token == original_refresh_token
         assert client.cached_token_refresh_expires_at == original_refresh_expires_at
+
+
+@pytest.mark.asyncio
+async def test_rotated_refresh_token_without_refresh_expires_in_stays_live(
+    auth_token_response,
+):
+    # A rotating IdP may return a new refresh_token and omit refresh_expires_in.
+    # The prior entry's remaining refresh lifetime backfills it, so the new token
+    # is still tracked as refreshable instead of being stored as "no refresh".
+    client = _public_password_client()
+    rotated_response = {
+        "access_token": "rotated-access-token",
+        "expires_in": auth_token_response["expires_in"],
+        "refresh_token": "rotated-refresh-token",
+        "token_type": "Bearer",
+        # NO refresh_expires_in
+    }
+    async with respx.mock as mock:
+        route = mock.post(TOKEN_URL)
+        route.side_effect = [
+            httpx.Response(httpx.codes.OK, json=auth_token_response),
+            httpx.Response(httpx.codes.OK, json=rotated_response),
+        ]
+        await client.get_access_token()
+        await client.get_access_token(force_refresh_token=True)
+
+    assert _body(route, 1)["grant_type"] == ["refresh_token"]
+    assert client.cached_token.refresh_token == "rotated-refresh-token"
+    assert client.cached_token_refresh_expires_at != datetime.min.replace(
+        tzinfo=timezone.utc
+    )
+    assert client.cached_token_refresh_expires_at > datetime.now(tz=timezone.utc)
 
 
 @pytest.mark.asyncio
@@ -419,6 +456,21 @@ def test_store_token_refresh_not_rotated_preserves_existing_expiry():
     must never touch cached_token_refresh_expires_at, even when the token's own refresh
     fields are empty. Locks in the no-touch semantics from PR #38."""
     client = _confidential_client()
+    # An existing cached token is required so _store_token has a "prior" entry to
+    # carry the refresh expiry forward from (mirrors the real refresh-grant flow,
+    # where refresh_rotated=False only ever follows an already-cached token).
+    client.cached_token = OAuthToken.parse_obj(
+        {
+            "access_token": "old-access",
+            "refresh_token": "old-refresh",
+            "expires_in": 1800,
+            "refresh_expires_in": 43200,
+            "token_type": "Bearer",
+        }
+    )
+    client.cached_token_expires_at = datetime.now(tz=timezone.utc) + timedelta(
+        minutes=10
+    )
     sentinel = datetime.now(tz=timezone.utc) + timedelta(hours=12)
     client.cached_token_refresh_expires_at = sentinel
     partial = OAuthToken.parse_obj(

@@ -37,6 +37,10 @@ OAUTH_AUDIENCE = env.str(
 )
 OAUTH_SCOPE = env.str("GUNDI_OAUTH_SCOPE", env.str("OAUTH_SCOPE", "openid"))
 
+# Shared OAuth token cache backend: redis://host:port/db, rediss://..., or
+# file:///dir. Unset means tokens are shared only within the process.
+GUNDI_TOKEN_CACHE_URL = env.str("GUNDI_TOKEN_CACHE_URL", None)
+
 # Backward-compatible aliases for the pre-rename setting names. Code importing
 # gundi_client_v2.settings.KEYCLOAK_* keeps working; these mirror the OAUTH_* values.
 KEYCLOAK_ISSUER = OAUTH_ISSUER

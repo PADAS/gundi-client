@@ -15,7 +15,11 @@ import typer
 from pydantic import ValidationError
 
 from gundi_client_v2 import GundiClient
-from gundi_client_v2.errors import AuthenticationError, GundiAPIError
+from gundi_client_v2.errors import (
+    AuthenticationError,
+    GundiAPIError,
+    TokenCacheConfigError,
+)
 
 from . import config_store, token_store
 
@@ -86,7 +90,11 @@ def build_client() -> GundiClient:
         raise typer.Exit(2)
     if audience := _getenv("OAUTH_AUDIENCE"):
         kwargs["oauth_audience"] = audience
-    return GundiClient(**kwargs)
+    try:
+        return GundiClient(**kwargs)
+    except TokenCacheConfigError as exc:  # e.g. a malformed GUNDI_TOKEN_CACHE_URL
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2)
 
 
 def run_with_client(async_fn: Callable[[GundiClient], Awaitable[T]]) -> T:
@@ -233,7 +241,8 @@ def run_command(
 
     try:
         client = _build_profile_client(config_store.get_environment(env_name))
-    except config_store.ConfigError as exc:  # e.g. env missing base_url/client_id
+    except (config_store.ConfigError, TokenCacheConfigError) as exc:
+        # e.g. env missing base_url/client_id, or a malformed GUNDI_TOKEN_CACHE_URL
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(2)
     cached = token_store.load_token(env_name)
@@ -271,6 +280,17 @@ def run_command(
     try:
         result = asyncio.run(_runner())
     except AuthenticationError as exc:
+        if exc.transport:
+            # The token endpoint never answered: logging in cannot fix that.
+            typer.echo(f"Error: request failed: {exc}", err=True)
+            raise typer.Exit(1)
+        if exc.status_code is not None and exc.status_code >= 500:
+            typer.echo(
+                f"Error: the identity provider returned HTTP {exc.status_code}; "
+                "try again later.",
+                err=True,
+            )
+            raise typer.Exit(1)
         suffix = f" --profile {env_name}" if profile else ""
         detail = f" ({exc})" if str(exc) else ""
         typer.echo(
