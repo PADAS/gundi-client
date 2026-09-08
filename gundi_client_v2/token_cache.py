@@ -184,6 +184,7 @@ class MemoryTokenCache:
     """
 
     def __init__(self) -> None:
+        self._guard = threading.Lock()
         self._entries: Dict[str, CachedToken] = {}
         # key -> (the loop the lock is bound to, the lock). An asyncio.Lock binds
         # to the loop that first contends it, so a process that runs more than one
@@ -196,26 +197,28 @@ class MemoryTokenCache:
         # This dict is process-global and two threads may each run a loop, so
         # every mutation happens under _guard.
         self._locks: Dict[str, Dict[asyncio.AbstractEventLoop, asyncio.Lock]] = {}
-        self._guard = threading.Lock()
 
     async def get(self, key: str) -> "CachedToken | None":
-        token = self._entries.get(key)
-        if token is None:
-            return None
-        now = _now()
-        if not token.is_live(now) and not token.refresh_is_live(now):
-            # Drop only the entry we judged dead; another thread's loop may have
-            # replaced it since the read above.
-            if self._entries.get(key) is token:
-                self._entries.pop(key, None)
-            return None
-        return token
+        # No await between the read and the pop, and the guard makes the
+        # compare-and-pop atomic against another thread's loop writing the key.
+        with self._guard:
+            token = self._entries.get(key)
+            if token is None:
+                return None
+            now = _now()
+            if not token.is_live(now) and not token.refresh_is_live(now):
+                if self._entries.get(key) is token:
+                    self._entries.pop(key, None)
+                return None
+            return token
 
     async def set(self, key: str, token: CachedToken) -> None:
-        self._entries[key] = token
+        with self._guard:
+            self._entries[key] = token
 
     async def delete(self, key: str) -> None:
-        self._entries.pop(key, None)
+        with self._guard:
+            self._entries.pop(key, None)
 
     def lock(self, key: str) -> asyncio.Lock:
         loop = asyncio.get_running_loop()  # lock() is only called from a coroutine

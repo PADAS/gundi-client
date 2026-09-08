@@ -48,7 +48,7 @@ async def _post_token(
     try:
         response = await session.post(oauth_token_url, data=payload)
     except httpx.HTTPError as e:  # connect/read/timeout: no response at all
-        raise AuthenticationError(f"Token request failed: {e}") from e
+        raise AuthenticationError(f"Token request failed: {e}", transport=True) from e
     try:
         response.raise_for_status()
     except httpx.HTTPStatusError as e:
@@ -245,7 +245,12 @@ async def get_access_token_client_credentials(
     # Treat missing OR explicit-null refresh fields as 'no refresh available'.
     body["refresh_token"] = body.get("refresh_token") or ""
     body["refresh_expires_in"] = body.get("refresh_expires_in") or 0
-    return OAuthToken.parse_obj(body)
+    try:
+        return OAuthToken.parse_obj(body)
+    except ValidationError as e:  # 2xx JSON missing the expected token fields
+        raise AuthenticationError(
+            f"Token endpoint {oauth_token_url} returned an unexpected response: {e}"
+        ) from e
 
 
 _DISCOVERY_CACHE: dict[str, str] = {}

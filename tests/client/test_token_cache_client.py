@@ -917,3 +917,128 @@ async def test_a_transport_error_on_the_refresh_grant_does_not_retry_with_full_a
     assert (
         client.cached_token_refresh_expires_at > clock["now"]
     )  # the refresh token is kept
+
+
+def _expired(clock, auth_token_response):
+    from datetime import timedelta
+
+    clock["now"] += timedelta(seconds=auth_token_response["expires_in"] + 60)
+
+
+@pytest.fixture
+def refresh_scenario(client_settings, auth_token_response, monkeypatch):
+    """A client holding a live refresh token whose access token has expired,
+    plus a hook to script how the IdP answers the next grants."""
+    from urllib.parse import parse_qs
+    from gundi_client_v2 import token_cache as tc
+
+    clock = {"now": tc._now()}
+    monkeypatch.setattr(tc, "_now", lambda: clock["now"])
+    calls = []
+    script = {}
+
+    def respond(request):
+        grant = parse_qs(request.content.decode())["grant_type"][0]
+        calls.append(grant)
+        if len(calls) == 1:
+            return httpx.Response(200, json=auth_token_response)
+        answer = script.get(grant) or script["*"]
+        return answer() if callable(answer) else answer
+
+    async def run(expect_error=True):
+        from gundi_client_v2.errors import AuthenticationError
+
+        async with respx.mock as mock:
+            mock.post(TOKEN_URL).mock(side_effect=respond)
+            client = GundiClient(**client_settings)
+            await client.get_auth_header()
+            _expired(clock, auth_token_response)
+            if expect_error:
+                with pytest.raises(AuthenticationError) as info:
+                    await client.get_auth_header()
+                return client, calls, info.value
+            await client.get_auth_header()
+            return client, calls, None
+
+    return script, run, clock
+
+
+@pytest.mark.asyncio
+async def test_a_401_invalid_client_on_the_refresh_grant_keeps_the_refresh_token(
+    refresh_scenario,
+):
+    script, run, clock = refresh_scenario
+    script["*"] = httpx.Response(401, json={"error": "invalid_client"})
+    client, calls, exc = await run()
+    assert calls == ["client_credentials", "refresh_token", "client_credentials"]
+    assert exc.refresh_token_rejected is False
+    assert client.cached_token_refresh_expires_at > clock["now"]
+
+
+@pytest.mark.asyncio
+async def test_a_5xx_body_that_says_invalid_grant_is_not_a_verdict(refresh_scenario):
+    """A gateway that rewrites the status but forwards a body is not the IdP
+    rejecting the refresh token; only 400 or 403 carry that verdict."""
+    script, run, clock = refresh_scenario
+    script["*"] = httpx.Response(502, json={"error": "invalid_grant"})
+    client, calls, exc = await run()
+    assert exc.refresh_token_rejected is False
+    assert client.cached_token_refresh_expires_at > clock["now"]
+
+
+@pytest.mark.asyncio
+async def test_a_non_json_5xx_on_the_refresh_grant_still_falls_back_to_full_authentication(
+    refresh_scenario, auth_token_response
+):
+    script, run, clock = refresh_scenario
+    script["refresh_token"] = httpx.Response(503, text="<html>gateway timeout</html>")
+    script["client_credentials"] = httpx.Response(
+        200, json={**auth_token_response, "access_token": "recovered"}
+    )
+    client, calls, _ = await run(expect_error=False)
+    assert calls == ["client_credentials", "refresh_token", "client_credentials"]
+    assert client.cached_token.access_token == "recovered"
+
+
+@pytest.mark.asyncio
+async def test_a_malformed_2xx_refresh_body_falls_back_to_full_authentication(
+    refresh_scenario, auth_token_response
+):
+    """Only a transport failure skips the full grant; a broken 200 body is a
+    response and the full grant may well succeed."""
+    script, run, clock = refresh_scenario
+    script["refresh_token"] = httpx.Response(200, text="<html>captive portal</html>")
+    script["client_credentials"] = httpx.Response(
+        200, json={**auth_token_response, "access_token": "recovered"}
+    )
+    client, calls, _ = await run(expect_error=False)
+    assert calls == ["client_credentials", "refresh_token", "client_credentials"]
+
+
+@pytest.mark.asyncio
+async def test_a_transport_error_is_flagged_on_the_exception(refresh_scenario):
+    script, run, clock = refresh_scenario
+    script["*"] = lambda: (_ for _ in ()).throw(httpx.ConnectError("down"))
+    client, calls, exc = await run()
+    assert exc.transport is True
+    assert exc.status_code is None
+    assert calls == ["client_credentials", "refresh_token"]
+
+
+def test_a_malformed_client_credentials_token_body_is_an_authentication_error():
+    import asyncio as _asyncio
+    from gundi_client_v2 import auth
+    from gundi_client_v2.errors import AuthenticationError
+
+    async def go():
+        async with respx.mock as mock:
+            mock.post(TOKEN_URL).respond(200, json={"access_token": "x"})
+            async with httpx.AsyncClient() as session:
+                with pytest.raises(AuthenticationError) as info:
+                    await auth.get_access_token_client_credentials(
+                        session, TOKEN_URL, "c", "s"
+                    )
+        return info.value
+
+    exc = _asyncio.run(go())
+    assert exc.transport is False and exc.status_code is None

@@ -14,10 +14,15 @@ class AuthenticationError(GundiClientError):
             missing configuration).
         error: The RFC 6749 §5.2 ``error`` code from the response body when
             present (``invalid_grant``, ``invalid_client``, ...), else None.
+        transport: True when the token endpoint never answered (connection,
+            read or timeout failure); ``status_code`` is then None. Retrying
+            later may help; logging in again cannot.
         refresh_token_rejected: True when a refresh grant preceded this failure
-            and the IdP answered it with 400 ``invalid_grant`` (the refresh token
-            itself is dead), so callers can stop retrying it. False for a 5xx,
-            a rate limit, a network failure, or when no refresh was attempted.
+            and the IdP answered it with ``invalid_grant`` on a 400 (Keycloak) or
+            a 403 (Auth0), or with a bare 400 carrying no error code: the refresh
+            token itself is dead and callers can stop retrying it. False for a
+            5xx, a rate limit, any other 4xx, a transport failure, or when no
+            refresh was attempted.
     """
 
     def __init__(
@@ -26,11 +31,13 @@ class AuthenticationError(GundiClientError):
         *,
         status_code=None,
         error=None,
+        transport: bool = False,
         refresh_token_rejected: bool = False,
     ):
         super().__init__(message)
         self.status_code = status_code
         self.error = error
+        self.transport = transport
         self.refresh_token_rejected = refresh_token_rejected
 
 

@@ -584,13 +584,13 @@ class GundiClient:
 
         When both fail, the raised AuthenticationError carries
         ``refresh_token_rejected=True`` if the refresh grant was answered with
-        ``invalid_grant`` (400 on Keycloak, 403 on Auth0) or a bare 400 (the
-        refresh token itself is dead), rather than a 5xx, a rate limit, another
-        4xx, or a network error (the refresh token may still be good). A network
-        failure on the refresh grant is raised at once, without trying the full
-        authentication on the same broken network; it surfaces as
-        AuthenticationError with ``status_code`` None (auth._post_token wraps
-        transport errors), so one except clause covers "no token"."""
+        ``invalid_grant`` on a 400 (Keycloak) or a 403 (Auth0), or with a bare
+        400 (the refresh token itself is dead), rather than any other status
+        (the refresh token may still be good). A transport failure on the
+        refresh grant (``AuthenticationError.transport``, set by
+        auth._post_token) is raised at once, without trying the full
+        authentication on the same broken network; a malformed response body
+        is not a transport failure and falls back like any other error."""
         now = _token_cache._now()
         refresh_rejected = False
         # 1. Prefer the refresh-token grant when we hold a live refresh token.
@@ -620,18 +620,19 @@ class GundiClient:
                     token, refresh_rotated=refresh_rotated and not carried, prior=prior
                 )
             except errors.AuthenticationError as e:
-                if e.status_code is None:
+                if e.transport:
                     # No response at all: the network that just failed would
                     # fail the full authentication too, and the credentials
-                    # should not go down a broken connection. One attempt.
+                    # should not go down a broken connection. One attempt. (A
+                    # malformed 2xx body is a response; the full grant may work.)
                     raise
-                # `invalid_grant` is the IdP's verdict on the refresh token (RFC
-                # 6749 §5.2; Keycloak sends it with 400, Auth0 with 403). A 400
-                # with no error code at all is taken the same way. Any other
-                # response says nothing about the refresh token.
-                refresh_rejected = e.error == "invalid_grant" or (
-                    e.status_code == 400 and e.error is None
-                )
+                # `invalid_grant` on a 400 (Keycloak) or 403 (Auth0) is the IdP's
+                # verdict on the refresh token (RFC 6749 §5.2); a bare 400 with
+                # no error code is taken the same way. Any other status, whatever
+                # its body says, is not a verdict on the refresh token.
+                refresh_rejected = (
+                    e.status_code == 400 and e.error in (None, "invalid_grant")
+                ) or (e.status_code == 403 and e.error == "invalid_grant")
                 logger.info(
                     "Refresh-token grant failed; falling back to full re-authentication."
                 )

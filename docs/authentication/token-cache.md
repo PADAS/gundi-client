@@ -69,10 +69,11 @@ unreachable, the forced refresh still sees what siblings in the same process
 wrote. When the IdP answers the refresh grant with `invalid_grant` (400 on
 Keycloak, 403 on Auth0), or with a bare 400 carrying no error code, and the full
 authentication also fails, the shared entry is dropped and this client stops
-trying that refresh token; a 5xx, a rate limit, any other 4xx, or a network
-failure leaves the refresh token in place, since it may still be good. A network
-failure on the refresh grant is raised at once rather than retried with the full
-authentication on the same broken network. A forced refresh that fails for any
+trying that refresh token; any other status, whatever its body says, leaves the
+refresh token in place, since it may still be good. A transport failure on the
+refresh grant (`AuthenticationError.transport`) is raised at once rather than
+retried with the full authentication on the same broken network; a malformed
+response body is not a transport failure and falls back like any other error. A forced refresh that fails for any
 reason, network failures included, leaves the instance with no token, so its
 next call goes to the IdP rather than serving the rejected one.
 Token-endpoint failures of every kind surface as `AuthenticationError`, which

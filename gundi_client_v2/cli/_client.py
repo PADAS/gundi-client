@@ -280,10 +280,16 @@ def run_command(
     try:
         result = asyncio.run(_runner())
     except AuthenticationError as exc:
-        if exc.status_code is None and exc.__cause__ is not None:
-            # The token endpoint never answered (network failure): logging in
-            # again cannot fix that, so no login hint.
+        if exc.transport:
+            # The token endpoint never answered: logging in cannot fix that.
             typer.echo(f"Error: request failed: {exc}", err=True)
+            raise typer.Exit(1)
+        if exc.status_code is not None and exc.status_code >= 500:
+            typer.echo(
+                f"Error: the identity provider returned HTTP {exc.status_code}; "
+                "try again later.",
+                err=True,
+            )
             raise typer.Exit(1)
         suffix = f" --profile {env_name}" if profile else ""
         detail = f" ({exc})" if str(exc) else ""
