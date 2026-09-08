@@ -258,14 +258,28 @@ async def test_file_cache_round_trip_and_layout(tmp_path, clock):
 
 @pytest.mark.asyncio
 async def test_file_cache_permissions(tmp_path, clock):
-    cache = FileTokenCache(tmp_path / "tokens")
+    # A directory left behind by something else must not keep serving tokens
+    # world-readable: the first write tightens an existing directory to 0700.
+    directory = tmp_path / "tokens"
+    directory.mkdir()
+    os.chmod(directory, 0o777)
+    cache = FileTokenCache(directory)
     key = KEY_PREFIX + "cd" * 16
     await cache.set(key, _token())
-    assert stat.S_IMODE(os.stat(tmp_path / "tokens").st_mode) == 0o700
+    assert stat.S_IMODE(os.stat(directory).st_mode) == 0o700
     assert (
         stat.S_IMODE(os.stat(tmp_path / "tokens" / ("cd" * 16 + ".json")).st_mode)
         == 0o600
     )
+
+
+@pytest.mark.asyncio
+async def test_file_cache_creates_a_private_directory(tmp_path, clock):
+    """The directory the first write creates is 0700 from the start."""
+    directory = tmp_path / "tokens"
+    cache = FileTokenCache(directory)
+    await cache.set(KEY_PREFIX + "12" * 16, _token())
+    assert stat.S_IMODE(os.stat(directory).st_mode) == 0o700
 
 
 @pytest.mark.asyncio

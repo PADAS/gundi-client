@@ -248,7 +248,11 @@ class FileTokenCache:
         return token
 
     async def set(self, key: str, token: CachedToken) -> None:
-        self.directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        # chmod, not mkdir(mode=...): mkdir's mode applies only when it creates the
+        # directory, so an existing world-readable one would keep serving tokens
+        # world-readable (the CLI's config_store.ensure_dir does the same).
+        self.directory.mkdir(parents=True, exist_ok=True)
+        os.chmod(self.directory, 0o700)
         path = self._path(key)
         fd, tmp = tempfile.mkstemp(
             dir=str(self.directory), prefix=f".{path.name}.", suffix=".tmp"
