@@ -163,6 +163,8 @@ async def test_no_credentials_raises():
 
 @pytest.mark.asyncio
 async def test_full_auth_when_token_and_refresh_expired(auth_token_response):
+    from gundi_client_v2.token_cache import clear_token_cache
+
     client = _public_password_client()
     async with respx.mock as mock:
         route = mock.post(TOKEN_URL).respond(
@@ -174,6 +176,9 @@ async def test_full_auth_when_token_and_refresh_expired(auth_token_response):
         client.cached_token_refresh_expires_at = datetime.min.replace(
             tzinfo=timezone.utc
         )
+        # The shared cache still holds the live entry this client just wrote; drop it
+        # too so the lookup can't hand it back in place of the "expired" instance state.
+        clear_token_cache()
         await client.get_access_token()  # must skip refresh and do a full password grant
         assert route.call_count == 2
         assert _body(route, 1)["grant_type"] == ["password"]
@@ -419,6 +424,21 @@ def test_store_token_refresh_not_rotated_preserves_existing_expiry():
     must never touch cached_token_refresh_expires_at, even when the token's own refresh
     fields are empty. Locks in the no-touch semantics from PR #38."""
     client = _confidential_client()
+    # An existing cached token is required so _store_token has a "prior" entry to
+    # carry the refresh expiry forward from (mirrors the real refresh-grant flow,
+    # where refresh_rotated=False only ever follows an already-cached token).
+    client.cached_token = OAuthToken.parse_obj(
+        {
+            "access_token": "old-access",
+            "refresh_token": "old-refresh",
+            "expires_in": 1800,
+            "refresh_expires_in": 43200,
+            "token_type": "Bearer",
+        }
+    )
+    client.cached_token_expires_at = datetime.now(tz=timezone.utc) + timedelta(
+        minutes=10
+    )
     sentinel = datetime.now(tz=timezone.utc) + timedelta(hours=12)
     client.cached_token_refresh_expires_at = sentinel
     partial = OAuthToken.parse_obj(
