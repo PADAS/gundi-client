@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2091,10 +2091,10 @@ for <strong>server-to-server</strong> authentication. There is no user identity 
 </ul>
 <h2 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GUNDI_API_BASE_URL=https://api.gundiservice.org
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>OAUTH_CLIENT_ID=your-client-id
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>OAUTH_CLIENT_SECRET=your-client-secret
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a># OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>GUNDI_OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>GUNDI_OAUTH_CLIENT_ID=your-client-id
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>GUNDI_OAUTH_CLIENT_SECRET=your-client-secret
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a># GUNDI_OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
 </code></pre></div>
 <h2 id="minimal-example">Minimal example<a class="headerlink" href="#minimal-example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
@@ -2104,7 +2104,7 @@ for <strong>server-to-server</strong> authentication. There is no user identity 
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">async</span> <span class="k">with</span> <span class="n">GundiClient</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="n">connections</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_connections</span><span class="p">()</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">connections</span><span class="p">)</span><span class="si">}</span><span class="s2"> connections accessible to this client&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">connections</span><span class="p">)</span><span class="si">}</span><span class="s2"> connections accessible to this client"</span><span class="p">)</span>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
@@ -2115,13 +2115,13 @@ reuse the cached token until it expires.</p>
 <h2 id="whats-on-the-wire">What's on the wire<a class="headerlink" href="#whats-on-the-wire" title="Permanent link">&para;</a></h2>
 <p>The library POSTs to the token endpoint with:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>grant_type=client_credentials
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>client_id=&lt;OAUTH_CLIENT_ID&gt;
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>client_secret=&lt;OAUTH_CLIENT_SECRET&gt;
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>client_id=&lt;GUNDI_OAUTH_CLIENT_ID&gt;
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>client_secret=&lt;GUNDI_OAUTH_CLIENT_SECRET&gt;
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>scope=openid
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>audience=&lt;OAUTH_AUDIENCE&gt;     # only if set
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>audience=&lt;GUNDI_OAUTH_AUDIENCE&gt;     # only if set
 </code></pre></div>
-<p>The token endpoint is either <code>OAUTH_TOKEN_URL</code> directly, or resolved via
-OIDC discovery from <code>OAUTH_ISSUER</code>.</p>
+<p>The token endpoint is either <code>GUNDI_OAUTH_TOKEN_URL</code> directly, or resolved via
+OIDC discovery from <code>GUNDI_OAUTH_ISSUER</code>.</p>
 <h2 id="refresh-behavior">Refresh behavior<a class="headerlink" href="#refresh-behavior" title="Permanent link">&para;</a></h2>
 <p>Per RFC 6749 §4.4.3, the server <strong>SHOULD NOT</strong> return a refresh token for a
 <code>client_credentials</code> response. The library handles this:</p>
@@ -2136,11 +2136,11 @@ OIDC discovery from <code>OAUTH_ISSUER</code>.</p>
 <h2 id="constructing-the-client-explicitly">Constructing the client explicitly<a class="headerlink" href="#constructing-the-client-explicitly" title="Permanent link">&para;</a></h2>
 <p>If you'd rather not use env vars, pass the values as kwargs:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">client</span> <span class="o">=</span> <span class="n">GundiClient</span><span class="p">(</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">base_url</span><span class="o">=</span><span class="s2">&quot;https://api.gundiservice.org&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">oauth_issuer</span><span class="o">=</span><span class="s2">&quot;https://auth.gundiservice.org/realms/your-realm&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">oauth_client_id</span><span class="o">=</span><span class="s2">&quot;your-client-id&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">oauth_client_secret</span><span class="o">=</span><span class="s2">&quot;your-client-secret&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="c1"># oauth_audience=&quot;your-api-audience&quot;,</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.gundiservice.org"</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">oauth_issuer</span><span class="o">=</span><span class="s2">"https://auth.gundiservice.org/realms/your-realm"</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">oauth_client_id</span><span class="o">=</span><span class="s2">"your-client-id"</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">oauth_client_secret</span><span class="o">=</span><span class="s2">"your-client-secret"</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="c1"># oauth_audience="your-api-audience",</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
 </code></pre></div>
 <p>The kwargs win over env vars.</p>
@@ -2208,7 +2208,7 @@ OIDC discovery from <code>OAUTH_ISSUER</code>.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

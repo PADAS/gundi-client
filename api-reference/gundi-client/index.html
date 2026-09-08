@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2556,28 +2556,31 @@ backward compatibility and is silently mapped to the same
 setting.</p>
 <ul>
 <li><code>oauth_client_id</code> / <code>keycloak_client_id</code> (str):
-  OAuth client ID. Env: <code>OAUTH_CLIENT_ID</code> /
-  <code>KEYCLOAK_CLIENT_ID</code>.</li>
+  OAuth client ID. Env: <code>GUNDI_OAUTH_CLIENT_ID</code> /
+  <code>OAUTH_CLIENT_ID</code> / <code>KEYCLOAK_CLIENT_ID</code>.</li>
 <li><code>oauth_client_secret</code> / <code>keycloak_client_secret</code>
   (str): OAuth client secret (confidential clients). Env:
-  <code>OAUTH_CLIENT_SECRET</code> / <code>KEYCLOAK_CLIENT_SECRET</code>.</li>
+  <code>GUNDI_OAUTH_CLIENT_SECRET</code> / <code>OAUTH_CLIENT_SECRET</code> /
+  <code>KEYCLOAK_CLIENT_SECRET</code>.</li>
 <li><code>username</code> (str): Resource-owner username (password
   grant). Env: <code>GUNDI_USERNAME</code>.</li>
 <li><code>password</code> (str): Resource-owner password (password
   grant). Env: <code>GUNDI_PASSWORD</code>.</li>
 <li><code>oauth_token_url</code> (str): Direct token endpoint URL.
   Takes precedence over <code>oauth_issuer</code>. Env:
-  <code>OAUTH_TOKEN_URL</code>.</li>
+  <code>GUNDI_OAUTH_TOKEN_URL</code> / <code>OAUTH_TOKEN_URL</code>.</li>
 <li><code>oauth_issuer</code> (str): OIDC issuer URL. Used for
   automatic token-endpoint discovery when
-  <code>oauth_token_url</code> is not set. Env: <code>OAUTH_ISSUER</code> /
+  <code>oauth_token_url</code> is not set. Env:
+  <code>GUNDI_OAUTH_ISSUER</code> / <code>OAUTH_ISSUER</code> /
   <code>KEYCLOAK_ISSUER</code>.</li>
 <li><code>oauth_audience</code> / <code>keycloak_audience</code> (str): OAuth
   audience claim. Required by Auth0; optional for
-  Keycloak. Env: <code>OAUTH_AUDIENCE</code> /
-  <code>KEYCLOAK_AUDIENCE</code>.</li>
+  Keycloak. Env: <code>GUNDI_OAUTH_AUDIENCE</code> /
+  <code>OAUTH_AUDIENCE</code> / <code>KEYCLOAK_AUDIENCE</code>.</li>
 <li><code>oauth_scope</code> (str): Space-separated OAuth scopes.
-  Env: <code>OAUTH_SCOPE</code> (default <code>"openid"</code>).</li>
+  Env: <code>GUNDI_OAUTH_SCOPE</code> / <code>OAUTH_SCOPE</code> (default
+  <code>"openid"</code>).</li>
 </ul>
 <p><strong>Retry / timeout settings</strong></p>
 <ul>
@@ -4163,8 +4166,8 @@ page request.</p>
 <code>gundi_core</code> has no ActivityLog schema, so each entry is yielded as a
 raw <code>dict</code> rather than a parsed model.</p>
 <p>Usage::</p>
-<div class="highlight"><pre><span></span><code>async for log in client.get_activity_logs(params={&quot;integration&quot;: id}):
-    print(log[&quot;created_at&quot;], log[&quot;value&quot;])
+<div class="highlight"><pre><span></span><code>async for log in client.get_activity_logs(params={"integration": id}):
+    print(log["created_at"], log["value"])
 </code></pre></div>
 
 
@@ -4402,7 +4405,7 @@ semantics).</p>
 whose entries carry the configuration <code>id</code> and the new <code>data</code>::</p>
 <div class="highlight"><pre><span></span><code>await client.update_integration(
     integration_id,
-    {&quot;configurations&quot;: [{&quot;id&quot;: config_id, &quot;data&quot;: {...}}]},
+    {"configurations": [{"id": config_id, "data": {...}}]},
 )
 </code></pre></div>
 <p>See <code>update_integration_configuration()</code> for a convenience wrapper
@@ -5169,7 +5172,7 @@ API documentation for the full schema; commonly includes
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

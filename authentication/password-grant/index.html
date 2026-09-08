@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2099,11 +2099,11 @@ flows aren't practical.</p>
 </ul>
 <h2 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GUNDI_API_BASE_URL=https://api.gundiservice.org
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>OAUTH_CLIENT_ID=your-client-id
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>GUNDI_OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>GUNDI_OAUTH_CLIENT_ID=your-client-id
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>GUNDI_USERNAME=your-username
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>GUNDI_PASSWORD=your-password
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a># OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a># GUNDI_OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
 </code></pre></div>
 <h2 id="minimal-example">Minimal example<a class="headerlink" href="#minimal-example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
@@ -2115,18 +2115,18 @@ flows aren't practical.</p>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="n">integrations</span> <span class="o">=</span> <span class="p">[]</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="k">async</span> <span class="k">for</span> <span class="n">integration</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">get_integrations</span><span class="p">():</span>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>            <span class="n">integrations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">integration</span><span class="p">)</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User has access to </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">integrations</span><span class="p">)</span><span class="si">}</span><span class="s2"> integrations&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"User has access to </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">integrations</span><span class="p">)</span><span class="si">}</span><span class="s2"> integrations"</span><span class="p">)</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </code></pre></div>
 <h2 id="whats-on-the-wire">What's on the wire<a class="headerlink" href="#whats-on-the-wire" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>grant_type=password
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>client_id=&lt;OAUTH_CLIENT_ID&gt;
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>client_id=&lt;GUNDI_OAUTH_CLIENT_ID&gt;
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>username=&lt;GUNDI_USERNAME&gt;
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>password=&lt;GUNDI_PASSWORD&gt;
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>scope=openid
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>audience=&lt;OAUTH_AUDIENCE&gt;     # only if set
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>audience=&lt;GUNDI_OAUTH_AUDIENCE&gt;     # only if set
 </code></pre></div>
 <p>No <code>client_secret</code> — public clients don't have one.</p>
 <h2 id="refresh-behavior">Refresh behavior<a class="headerlink" href="#refresh-behavior" title="Permanent link">&para;</a></h2>
@@ -2142,11 +2142,11 @@ password grant — provided <code>GUNDI_USERNAME</code> and <code>GUNDI_PASSWORD
 in the env. If they've been unset, you'll see an <code>AuthenticationError</code>.</p>
 <h2 id="constructing-the-client-explicitly">Constructing the client explicitly<a class="headerlink" href="#constructing-the-client-explicitly" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">client</span> <span class="o">=</span> <span class="n">GundiClient</span><span class="p">(</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">base_url</span><span class="o">=</span><span class="s2">&quot;https://api.gundiservice.org&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">oauth_issuer</span><span class="o">=</span><span class="s2">&quot;https://auth.gundiservice.org/realms/your-realm&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">oauth_client_id</span><span class="o">=</span><span class="s2">&quot;your-client-id&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your-username&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">password</span><span class="o">=</span><span class="s2">&quot;your-password&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.gundiservice.org"</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">oauth_issuer</span><span class="o">=</span><span class="s2">"https://auth.gundiservice.org/realms/your-realm"</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">oauth_client_id</span><span class="o">=</span><span class="s2">"your-client-id"</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">username</span><span class="o">=</span><span class="s2">"your-username"</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">password</span><span class="o">=</span><span class="s2">"your-password"</span><span class="p">,</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
 </code></pre></div>
 <h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
@@ -2213,7 +2213,7 @@ in the env. If they've been unset, you'll see an <code>AuthenticationError</code
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

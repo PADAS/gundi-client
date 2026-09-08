@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2086,7 +2086,7 @@ detailed coverage of each grant type, see the
 </tr>
 <tr>
 <td><code>password</code></td>
-<td>Acting on behalf of a known user with their username and password. <code>OAUTH_CLIENT_SECRET</code> is not used by this grant.</td>
+<td>Acting on behalf of a known user with their username and password. <code>GUNDI_OAUTH_CLIENT_SECRET</code> is not used by this grant.</td>
 </tr>
 </tbody>
 </table>
@@ -2099,34 +2099,36 @@ shell:</p>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GUNDI_API_BASE_URL=https://api.gundiservice.org
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>OAUTH_CLIENT_ID=your-client-id
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>OAUTH_CLIENT_SECRET=your-client-secret
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a># OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>GUNDI_OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>GUNDI_OAUTH_CLIENT_ID=your-client-id
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>GUNDI_OAUTH_CLIENT_SECRET=your-client-secret
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a># GUNDI_OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>GUNDI_API_BASE_URL=https://api.gundiservice.org
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>OAUTH_CLIENT_ID=your-client-id
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>GUNDI_OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>GUNDI_OAUTH_CLIENT_ID=your-client-id
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>GUNDI_USERNAME=your-username
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>GUNDI_PASSWORD=your-password
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a># OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a># GUNDI_OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
 </code></pre></div>
 </div>
 </div>
 </div>
+<p>The un-prefixed <code>OAUTH_*</code> names (and, for the library, the legacy <code>KEYCLOAK_*</code>
+names) are still accepted as fallbacks.</p>
 <h2 id="how-the-library-uses-these">How the library uses these<a class="headerlink" href="#how-the-library-uses-these" title="Permanent link">&para;</a></h2>
 <p>When you create a <code>GundiClient()</code> with no arguments, it reads these env vars
-through <code>gundi_client_v2.settings</code>. Setting <code>OAUTH_ISSUER</code> triggers <strong>OIDC
+through <code>gundi_client_v2.settings</code>. Setting <code>GUNDI_OAUTH_ISSUER</code> triggers <strong>OIDC
 discovery</strong>: the library fetches the IdP's
 <code>/.well-known/openid-configuration</code> document on the first auth attempt and
 caches the resolved token endpoint for the process lifetime.</p>
-<p>If your IdP doesn't expose discovery, set <code>OAUTH_TOKEN_URL</code> directly instead
-of <code>OAUTH_ISSUER</code>.</p>
+<p>If your IdP doesn't expose discovery, set <code>GUNDI_OAUTH_TOKEN_URL</code> directly instead
+of <code>GUNDI_OAUTH_ISSUER</code>.</p>
 <div class="admonition tip">
 <p class="admonition-title">Audience parameter</p>
-<p><code>OAUTH_AUDIENCE</code> is required by some IdPs (notably Auth0 won't issue a
+<p><code>GUNDI_OAUTH_AUDIENCE</code> is required by some IdPs (notably Auth0 won't issue a
 usable API access token without it) and ignored by others (Keycloak
 password grant). Set it if your IdP requires it; leave it unset
 otherwise.</p>
@@ -2198,7 +2200,7 @@ to verify everything works.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

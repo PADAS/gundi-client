@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2084,7 +2084,7 @@ metadata document at <code>{issuer}/.well-known/openid-configuration</code>. Tha
 document includes the <code>token_endpoint</code>, <code>authorization_endpoint</code>, supported
 scopes, and other configuration.</p>
 <p><code>gundi-client-v2</code> uses this to <strong>avoid hard-coding</strong> the token endpoint URL.
-Set <code>OAUTH_ISSUER</code> to the IdP's issuer base URL, and the library fetches and
+Set <code>GUNDI_OAUTH_ISSUER</code> to the IdP's issuer base URL, and the library fetches and
 caches the resolved token endpoint at runtime.</p>
 <h2 id="when-to-use-it">When to use it<a class="headerlink" href="#when-to-use-it" title="Permanent link">&para;</a></h2>
 <ul>
@@ -2095,7 +2095,7 @@ caches the resolved token endpoint at runtime.</p>
   path (rare, but possible).</li>
 </ul>
 <h2 id="environment-variable">Environment variable<a class="headerlink" href="#environment-variable" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GUNDI_OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
 </code></pre></div>
 <p>Combine with the credentials for your chosen grant
 (<a href="../client-credentials/">client_credentials</a> or
@@ -2124,9 +2124,9 @@ authentication. Subsequent requests in the same process do no additional
 network I/O for discovery.</p>
 <h2 id="skipping-discovery">Skipping discovery<a class="headerlink" href="#skipping-discovery" title="Permanent link">&para;</a></h2>
 <p>If your IdP doesn't expose a discovery document, or you want to skip the
-extra request, set <code>OAUTH_TOKEN_URL</code> directly instead. When both are set,
-<code>OAUTH_TOKEN_URL</code> wins:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>OAUTH_TOKEN_URL=https://auth.example.com/realms/myrealm/protocol/openid-connect/token
+extra request, set <code>GUNDI_OAUTH_TOKEN_URL</code> directly instead. When both are set,
+<code>GUNDI_OAUTH_TOKEN_URL</code> wins:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>GUNDI_OAUTH_TOKEN_URL=https://auth.example.com/realms/myrealm/protocol/openid-connect/token
 </code></pre></div>
 <h2 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">&para;</a></h2>
 <table>
@@ -2222,7 +2222,7 @@ extra request, set <code>OAUTH_TOKEN_URL</code> directly instead. When both are 
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

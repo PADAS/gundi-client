@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2071,8 +2071,10 @@ outgoing request — but they differ in how that token is obtained.</p>
 </table>
 <p>OIDC discovery is <strong>not a separate grant type</strong> — it's a mechanism for the
 library to discover the IdP's token endpoint at runtime from
-<code>{OAUTH_ISSUER}/.well-known/openid-configuration</code>. You combine it with one of
+<code>{GUNDI_OAUTH_ISSUER}/.well-known/openid-configuration</code>. You combine it with one of
 the other two grants.</p>
+<p>The un-prefixed <code>OAUTH_*</code> names (and, for the library, the legacy <code>KEYCLOAK_*</code>
+names) are still accepted as fallbacks.</p>
 <h2 id="how-the-client-picks-a-grant">How the client picks a grant<a class="headerlink" href="#how-the-client-picks-a-grant" title="Permanent link">&para;</a></h2>
 <p>When you call any method on <code>GundiClient</code> that requires authentication, it
 chooses a grant in this priority order:</p>
@@ -2097,10 +2099,10 @@ need fine-grained control:</p>
 <p>The library needs to know <strong>where</strong> to POST the token request. Two ways to
 configure this, in priority order:</p>
 <ol>
-<li><strong><code>OAUTH_TOKEN_URL</code></strong> (or the <code>oauth_token_url</code> kwarg) — set this
+<li><strong><code>GUNDI_OAUTH_TOKEN_URL</code></strong> (or the <code>oauth_token_url</code> kwarg) — set this
    directly to a fully-qualified URL like
    <code>https://auth.example.com/realms/myrealm/protocol/openid-connect/token</code>.</li>
-<li><strong><code>OAUTH_ISSUER</code></strong> (or the <code>oauth_issuer</code> kwarg) — set this to the
+<li><strong><code>GUNDI_OAUTH_ISSUER</code></strong> (or the <code>oauth_issuer</code> kwarg) — set this to the
    issuer base URL; the library performs OIDC discovery to resolve the token
    endpoint. The result is cached for the process lifetime; call
    <code>auth.clear_discovery_cache()</code> to invalidate.</li>
@@ -2200,7 +2202,7 @@ configure this, in priority order:</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
