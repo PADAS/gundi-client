@@ -4,6 +4,8 @@ import logging
 import math
 import os
 import stat
+import subprocess
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -407,6 +409,23 @@ def test_redis_cache_without_the_redis_package_fails_at_construction(monkeypatch
         RedisTokenCache(url="redis://localhost:6379/2")
 
 
+def test_importing_the_module_never_imports_redis():
+    """The redis extra is optional: importing the library (and this module) in a
+    fresh interpreter must not pull redis in."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys, gundi_client_v2, gundi_client_v2.token_cache; "
+            "print('redis' in sys.modules)",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "False", result.stdout
+
+
 def test_token_cache_config_error_is_a_client_error():
     assert issubclass(TokenCacheConfigError, GundiClientError)
 
@@ -431,7 +450,7 @@ def test_token_cache_from_url_rejects_unsupported_urls(url):
 
 @pytest.mark.parametrize("url", ["file://mydir/sub", "file://./rel"])
 def test_file_url_with_a_host_is_rejected(url):
-    """file://mydir/sub means host "mydir", path "/sub" - silently the wrong
+    """file://mydir/sub means host "mydir", path "/sub": silently the wrong
     directory. Say so instead of caching tokens somewhere unintended."""
     with pytest.raises(TokenCacheConfigError, match="must not have a host"):
         token_cache_from_url(url)
@@ -479,6 +498,15 @@ def test_redis_url_uses_a_short_socket_timeout(monkeypatch):
     assert captured["decode_responses"] is True
 
 
+def _cache_warnings(caplog):
+    """Warning records from this module only: caplog collects every logger's."""
+    return [
+        r
+        for r in caplog.records
+        if r.levelno == logging.WARNING and r.name == "gundi_client_v2.token_cache"
+    ]
+
+
 class _Flaky:
     """A TokenCache whose every call raises."""
 
@@ -518,6 +546,36 @@ async def test_store_copies_a_backend_hit_into_memory(fake_redis, clock):
 
 
 @pytest.mark.asyncio
+async def test_store_prefers_a_live_backend_entry_over_a_dead_memory_entry(
+    fake_redis, clock
+):
+    """A memory entry whose access token has expired must not shadow a fresher
+    one another replica already put in the backend."""
+    backend = RedisTokenCache(client=fake_redis)
+    memory = MemoryTokenCache()
+    store = TokenStore(backend, memory=memory)
+    dead = _token(access_token="dead", expires_at=NOW - timedelta(minutes=1))
+    await memory.set("k", dead)  # access expired, refresh still live
+    fresh = _token(access_token="fresh")
+    await backend.set("k", fresh)
+    assert await store.get("k") == fresh
+    assert await memory.get("k") == fresh  # and memory caught up
+
+
+@pytest.mark.asyncio
+async def test_store_keeps_a_dead_memory_entry_when_the_backend_has_nothing_better(
+    fake_redis, clock
+):
+    """Its refresh token may still be usable, so it is still the best ``prior``."""
+    backend = RedisTokenCache(client=fake_redis)
+    memory = MemoryTokenCache()
+    store = TokenStore(backend, memory=memory)
+    dead = _token(access_token="dead", expires_at=NOW - timedelta(minutes=1))
+    await memory.set("k", dead)
+    assert await store.get("k") == dead
+
+
+@pytest.mark.asyncio
 async def test_store_delete_reaches_both_layers(fake_redis, clock):
     backend = RedisTokenCache(client=fake_redis)
     memory = MemoryTokenCache()
@@ -546,7 +604,7 @@ async def test_store_contains_backend_failures_and_warns_once_per_streak(clock, 
         await store.set(key, token)
         assert await store.get(key) == token  # memory still serves
         await store.delete(key)
-    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    warnings = _cache_warnings(caplog)
     assert len(warnings) == 1
     message = warnings[0].getMessage()
     assert "_Flaky" in message
@@ -567,7 +625,7 @@ async def test_stores_sharing_a_backend_share_one_failure_streak(clock, caplog):
     with caplog.at_level(logging.WARNING, logger="gundi_client_v2.token_cache"):
         for _ in range(5):
             await TokenStore(flaky, memory=MemoryTokenCache()).get("k")
-    assert sum(r.levelno == logging.WARNING for r in caplog.records) == 1
+    assert len(_cache_warnings(caplog)) == 1
 
 
 @pytest.mark.asyncio
@@ -603,4 +661,4 @@ async def test_store_warns_again_after_the_backend_recovers_and_fails_again(
         await store.get("c")  # succeeds: streak reset
         toggle.fail = True
         await store.get("d")  # fails: warning 2
-    assert sum(r.levelno == logging.WARNING for r in caplog.records) == 2
+    assert len(_cache_warnings(caplog)) == 2

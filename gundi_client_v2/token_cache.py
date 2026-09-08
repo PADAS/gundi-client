@@ -221,7 +221,11 @@ def clear_token_cache() -> None:
     """Empty the process-wide token layer and drop the per-URL backend memo.
     For tests, and for a long-running process that must drop every cached
     token (mirrors auth.clear_discovery_cache). Also resets the backend
-    failure-streak flags, so a previously-failing backend is retried."""
+    failure-streak flags, so a previously-failing backend is retried.
+
+    Memoized Redis backends are dropped without closing their connection pools,
+    so this is for tests and rare manual resets, not something to run on a
+    timer: that would leak a pool per call."""
     _PROCESS_CACHE.clear()
     _BACKENDS.clear()
     _FAILING_BACKENDS.clear()
@@ -370,7 +374,7 @@ def token_cache_from_url(url: "str | None") -> "TokenCache | None":
         # file://localhost/dir) names a local absolute path.
         if parsed.netloc not in ("", "localhost"):
             raise TokenCacheConfigError(
-                f"file:// token cache URL must not have a host; "
+                "file:// token cache URL must not have a host; "
                 f"use file:///{parsed.netloc}{parsed.path}"
             )
         if not parsed.path.startswith("/"):
@@ -411,11 +415,15 @@ class TokenStore:
 
     async def get(self, key: str) -> "CachedToken | None":
         token = await self._memory.get(key)
-        if token is not None or self._backend is None:
+        if self._backend is None or (token is not None and token.is_live(_now())):
             return token
-        token = await self._guarded("get", self._backend.get(key))
-        if token is not None:
-            await self._memory.set(key, token)
+        # Memory has nothing, or an entry whose access token is dead: another
+        # replica may have refreshed it since, so ask the backend before falling
+        # back on what memory holds (whose refresh token may still be usable).
+        from_backend = await self._guarded("get", self._backend.get(key))
+        if from_backend is not None and (token is None or from_backend.is_live(_now())):
+            await self._memory.set(key, from_backend)
+            return from_backend
         return token
 
     async def set(self, key: str, token: CachedToken) -> None:

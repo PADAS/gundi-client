@@ -2008,6 +2008,13 @@ git commit -m "chore: gundi-client-v2 3.7 with the redis extra; fastapi 0.115 / 
 **Interfaces:**
 - Produces: `settings.REDIS_TOKEN_CACHE_DB: int` (default 2), `settings.GUNDI_TOKEN_CACHE_URL: str` (default `redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_TOKEN_CACHE_DB}`), `app.services.gundi_client.new_gundi_client(**kwargs) -> GundiClient`
 
+**Ship Tasks 10 and 11 in the same template PR.** The `gundi-client-v2[redis]`
+requirement (Task 10) and the `GUNDI_TOKEN_CACHE_URL` default (Task 11) are one
+change: a `redis://` URL without the extra installed raises
+`TokenCacheConfigError` in `GundiClient.__init__`, so splitting them would break
+client construction on every replica at startup, not just on the first token
+request.
+
 - [ ] **Step 1: Write the failing tests**
 
 ```python
@@ -2126,6 +2133,12 @@ def _memory_only_token_cache(mocker):
 ```
 
 Note: `_portal` is built at import time with the default Redis URL; `redis.asyncio.Redis.from_url` does not connect until the first command, and no test drives `_portal` against a real endpoint, so this is safe. The fixture covers every client built during a test.
+
+The `clear_token_cache()` calls in that fixture are required, not optional: the
+library's memory layer is always on and process-wide, so without them a token
+cached by one test leaks into the next. Any test that counts token requests, or
+that runs concurrent fetches (per-test event loops each need their own per-key
+lock), depends on starting from an empty layer.
 
 - [ ] **Step 7: Run the suite**
 

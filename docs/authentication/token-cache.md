@@ -30,6 +30,10 @@ or a long-running process that must drop every cached token).
 `token_cache=` accepts any object with async `get(key)`, `set(key, token)` and
 `delete(key)` and takes precedence over the URL.
 
+The file backend is for local disk only: it does blocking file I/O on the event
+loop, so a network filesystem (NFS, SMB, a mounted bucket) is not a supported
+target; point those deployments at Redis.
+
 There is no fallback chain. When the backend is unreachable the client logs one
 warning per outage and runs on the memory layer until it recovers; the cache
 never raises into an API call. A bad URL, or `redis://` without the `redis`

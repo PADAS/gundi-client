@@ -503,18 +503,15 @@ class GundiClient:
         return "password" if (self.username and self.password) else "client_credentials"
 
     def _token_cache_key(self, token_url: str) -> str:
+        grant = self._grant_type()
         return _token_cache.token_cache_key(
             token_url=token_url,
-            grant_type=self._grant_type(),
+            grant_type=grant,
             client_id=self.client_id,
-            username=self.username if self._grant_type() == "password" else None,
+            username=self.username if grant == "password" else None,
             audience=self.audience,
             scope=self.scope,
-            secret=(
-                self.password
-                if self._grant_type() == "password"
-                else self.client_secret
-            ),
+            secret=(self.password if grant == "password" else self.client_secret),
         )
 
     def _current_entry(self) -> "_token_cache.CachedToken | None":

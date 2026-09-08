@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 
 import httpx
 import pytest
@@ -51,6 +52,15 @@ def test_bad_url_fails_at_construction(client_settings):
 
 
 TOKEN_URL = "https://fakeauth.com/auth/realms/dev/protocol/openid-connect/token"
+
+
+def _cache_warnings(caplog):
+    """Warning records from this module only: caplog collects every logger's."""
+    return [
+        r
+        for r in caplog.records
+        if r.levelno == logging.WARNING and r.name == "gundi_client_v2.token_cache"
+    ]
 
 
 def _mock_token_endpoint(mock, auth_token_response):
@@ -321,7 +331,45 @@ async def test_unreachable_backend_degrades_to_memory_with_one_warning(
             await GundiClient(**client_settings, token_cache=down).get_auth_header()
             await GundiClient(**client_settings, token_cache=down).get_auth_header()
     assert route.call_count == 1  # memory still shared the token
-    assert sum(r.levelno == logging.WARNING for r in caplog.records) == 1
+    assert len(_cache_warnings(caplog)) == 1
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX directory modes")
+@pytest.mark.skipif(
+    hasattr(os, "geteuid") and os.geteuid() == 0,
+    reason="root ignores directory permissions",
+)
+@pytest.mark.asyncio
+async def test_a_read_only_file_directory_degrades_to_memory_with_one_warning(
+    client_settings, auth_token_response, tmp_path, caplog
+):
+    """The spec's file-backend counterpart to an unreachable Redis: the call
+    succeeds, one warning is logged, and the token is shared in memory only.
+
+    The unwritable directory is the *parent*: FileTokenCache.set chmods its own
+    directory to 0700 on every write (it must tighten a directory left behind
+    with looser bits), which would undo a mode set on the directory itself.
+    """
+    read_only = tmp_path / "ro"
+    read_only.mkdir()
+    os.chmod(read_only, 0o500)
+    url = f"file://{read_only}/tokens"
+    try:
+        async with respx.mock as mock:
+            route = _mock_token_endpoint(mock, auth_token_response)
+            with caplog.at_level(logging.WARNING, logger="gundi_client_v2.token_cache"):
+                first = await GundiClient(
+                    **client_settings, token_cache_url=url
+                ).get_auth_header()
+                second = await GundiClient(
+                    **client_settings, token_cache_url=url
+                ).get_auth_header()
+        assert first == second
+        assert route.call_count == 1  # the memory layer still shared the token
+        assert not (read_only / "tokens").exists()
+        assert len(_cache_warnings(caplog)) == 1
+    finally:
+        os.chmod(read_only, 0o700)  # let tmp_path cleanup remove it
 
 
 @pytest.mark.asyncio
