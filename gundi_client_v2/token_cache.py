@@ -393,12 +393,9 @@ class TokenStore:
             result = await awaitable
         except Exception as e:  # any backend failure degrades to memory-only
             if marker not in _FAILING_BACKENDS:
-                # The backend's class name leads the message (rather than
-                # following fixed words like "cache"/"backend") so nothing
-                # ahead of it can ever be mistaken for leaked key material.
                 logger.warning(
-                    "%s token cache backend failed on %s (%s); running on the "
-                    "in-memory layer until it recovers.",
+                    "Token cache backend %s failed on %s (%s); running on the in-memory "
+                    "layer until it recovers.",
                     type(self._backend).__name__,
                     op,
                     type(e).__name__,

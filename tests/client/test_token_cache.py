@@ -458,17 +458,21 @@ async def test_store_without_a_backend_is_memory_only(clock):
 async def test_store_contains_backend_failures_and_warns_once_per_streak(clock, caplog):
     flaky = _Flaky()
     store = TokenStore(flaky, memory=MemoryTokenCache())
+    key = KEY_PREFIX + "ab" * 16
+    token = _token(access_token="access-secret-value")
     with caplog.at_level(logging.WARNING, logger="gundi_client_v2.token_cache"):
-        assert await store.get("k") is None
-        await store.set("k", _token())
-        assert await store.get("k") == _token()  # memory still serves
-        await store.delete("k")
+        assert await store.get(key) is None
+        await store.set(key, token)
+        assert await store.get(key) == token  # memory still serves
+        await store.delete(key)
     warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
     assert len(warnings) == 1
-    assert "_Flaky" in warnings[0].getMessage()
-    assert "ConnectionError" in warnings[0].getMessage()
-    assert "redis down" not in warnings[0].getMessage()  # no backend text
-    assert "k" not in warnings[0].getMessage().split("_Flaky")[0]  # no key
+    message = warnings[0].getMessage()
+    assert "_Flaky" in message
+    assert "ConnectionError" in message
+    assert "redis down" not in message  # no exception text
+    assert "ab" * 16 not in message  # no key
+    assert "access-secret-value" not in message  # no token
     assert (
         flaky.calls == 3
     )  # get, set, delete all attempted; the memory hit made no backend call
