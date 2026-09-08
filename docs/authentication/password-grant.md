@@ -22,11 +22,11 @@ to the IdP.
 
 ```env
 GUNDI_API_BASE_URL=https://api.gundiservice.org
-OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
-OAUTH_CLIENT_ID=your-client-id
+GUNDI_OAUTH_ISSUER=https://auth.gundiservice.org/realms/your-realm
+GUNDI_OAUTH_CLIENT_ID=your-client-id
 GUNDI_USERNAME=your-username
 GUNDI_PASSWORD=your-password
-# OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
+# GUNDI_OAUTH_AUDIENCE=your-api-audience   # required by some IdPs (e.g. Auth0)
 ```
 
 ## Minimal example
@@ -51,11 +51,11 @@ asyncio.run(main())
 
 ```
 grant_type=password
-client_id=<OAUTH_CLIENT_ID>
+client_id=<GUNDI_OAUTH_CLIENT_ID>
 username=<GUNDI_USERNAME>
 password=<GUNDI_PASSWORD>
 scope=openid
-audience=<OAUTH_AUDIENCE>     # only if set
+audience=<GUNDI_OAUTH_AUDIENCE>     # only if set
 ```
 
 No `client_secret` — public clients don't have one.

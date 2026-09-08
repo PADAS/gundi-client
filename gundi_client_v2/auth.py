@@ -9,6 +9,18 @@ from .errors import AuthenticationError
 logger = logging.getLogger(__name__)
 
 
+def _oauth_error_code(response: httpx.Response) -> "str | None":
+    """The RFC 6749 §5.2 ``error`` code of a token-error response, if any."""
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    if not isinstance(body, dict):
+        return None
+    error = body.get("error")
+    return error if isinstance(error, str) else None
+
+
 def _extract_oauth_error(response: httpx.Response) -> str:
     """Build a detail string from an RFC 6749 §5.2 token-error response."""
     status = response.status_code
@@ -31,12 +43,20 @@ def _extract_oauth_error(response: httpx.Response) -> str:
 async def _post_token(
     session: httpx.AsyncClient, oauth_token_url: str, payload: dict
 ) -> dict:
-    """POST to the token endpoint; raise AuthenticationError on non-2xx."""
-    response = await session.post(oauth_token_url, data=payload)
+    """POST to the token endpoint; raise AuthenticationError on non-2xx or on
+    a transport failure (so callers see one exception type for "no token")."""
+    try:
+        response = await session.post(oauth_token_url, data=payload)
+    except httpx.HTTPError as e:  # connect/read/timeout: no response at all
+        raise AuthenticationError(f"Token request failed: {e}", transport=True) from e
     try:
         response.raise_for_status()
     except httpx.HTTPStatusError as e:
-        raise AuthenticationError(_extract_oauth_error(e.response)) from e
+        raise AuthenticationError(
+            _extract_oauth_error(e.response),
+            status_code=e.response.status_code,
+            error=_oauth_error_code(e.response),
+        ) from e
     try:
         body = response.json()
     except ValueError as e:  # 2xx with a non-JSON body (e.g. a captive portal)
@@ -225,7 +245,12 @@ async def get_access_token_client_credentials(
     # Treat missing OR explicit-null refresh fields as 'no refresh available'.
     body["refresh_token"] = body.get("refresh_token") or ""
     body["refresh_expires_in"] = body.get("refresh_expires_in") or 0
-    return OAuthToken.parse_obj(body)
+    try:
+        return OAuthToken.parse_obj(body)
+    except ValidationError as e:  # 2xx JSON missing the expected token fields
+        raise AuthenticationError(
+            f"Token endpoint {oauth_token_url} returned an unexpected response: {e}"
+        ) from e
 
 
 _DISCOVERY_CACHE: dict[str, str] = {}

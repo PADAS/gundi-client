@@ -15,7 +15,12 @@ TOKEN_URL = f"{ISSUER}/protocol/openid-connect/token"
 def isolated_config(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     monkeypatch.delenv("GUNDI_PROFILE", raising=False)
-    for var in ("OAUTH_CLIENT_SECRET", "GUNDI_PASSWORD", "GUNDI_USERNAME"):
+    for var in (
+        "OAUTH_CLIENT_SECRET",
+        "GUNDI_OAUTH_CLIENT_SECRET",
+        "GUNDI_PASSWORD",
+        "GUNDI_USERNAME",
+    ):
         monkeypatch.delenv(var, raising=False)
     return tmp_path
 

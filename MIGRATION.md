@@ -1,5 +1,43 @@
 # Migration guide
 
+## 3.7.0 — `GUNDI_OAUTH_*` env var names
+
+The preferred env var names for OAuth configuration are now prefixed with
+`GUNDI_` to avoid collisions with other tools sharing an environment:
+
+| Old (still accepted) | New (preferred) |
+|---|---|
+| `OAUTH_ISSUER` | `GUNDI_OAUTH_ISSUER` |
+| `OAUTH_TOKEN_URL` | `GUNDI_OAUTH_TOKEN_URL` |
+| `OAUTH_CLIENT_ID` | `GUNDI_OAUTH_CLIENT_ID` |
+| `OAUTH_CLIENT_SECRET` | `GUNDI_OAUTH_CLIENT_SECRET` |
+| `OAUTH_AUDIENCE` | `GUNDI_OAUTH_AUDIENCE` |
+| `OAUTH_SCOPE` | `GUNDI_OAUTH_SCOPE` |
+
+No action is required: the old `OAUTH_*` names (and the pre-3.0 `KEYCLOAK_*`
+names, for the library) keep working as silent fallbacks. When both spellings
+are set, the `GUNDI_`-prefixed one wins.
+
+## 3.7.0 — shared OAuth token cache
+
+Every `GundiClient` in a process now shares one token per set of credentials,
+and an optional backend (`GUNDI_TOKEN_CACHE_URL` = `redis://…`, `rediss://…` or
+`file:///dir`) shares it across processes. See
+[Shared token cache](docs/authentication/token-cache.md).
+
+What to check when upgrading:
+
+- **Tests that count token requests** or construct several clients expecting
+  isolation: add an autouse fixture calling
+  `gundi_client_v2.token_cache.clear_token_cache()` (this repo's
+  `tests/conftest.py` shows the pattern).
+- **A Redis URL needs the extra:** `pip install gundi-client-v2[redis]`.
+  Without it, a `redis://` URL raises `TokenCacheConfigError` when the client
+  is constructed. Land the extra and the URL in the same change.
+- `client.cached_token.expires_in` / `refresh_expires_in` now report the
+  remaining lifetime (recomputed on cache hits) instead of the IdP's raw value.
+- The CLI's per-environment token store is unchanged.
+
 ## Upgrading to 3.0 from 2.x
 
 This release modernizes the OAuth2 implementation, bumps the `httpx` runtime

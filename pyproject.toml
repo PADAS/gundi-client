@@ -35,6 +35,11 @@ cli = [
     "typer>=0.12",
 ]
 
+# Redis-backed token cache (RedisTokenCache / GUNDI_TOKEN_CACHE_URL=redis://...).
+redis = [
+    "redis>=5,<9",
+]
+
 # Console entry point for the optional CLI (requires the `cli` extra).
 [project.scripts]
 gundi = "gundi_client_v2.cli:app"
@@ -46,6 +51,8 @@ dev = [
     "pytest>=7.2",
     "pytest-asyncio>=0.20",
     "typer>=0.12",
+    "fakeredis>=2.20",
+    "redis>=5,<9",
 ]
 
 [tool.hatch.version]

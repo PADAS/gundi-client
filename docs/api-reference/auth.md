@@ -12,3 +12,18 @@ fine-grained control.
         - refresh_access_token
         - discover_token_endpoint
         - clear_discovery_cache
+
+## `gundi_client_v2.token_cache`
+
+::: gundi_client_v2.token_cache
+    options:
+      members:
+        - CachedToken
+        - TokenCache
+        - MemoryTokenCache
+        - RedisTokenCache
+        - FileTokenCache
+        - TokenStore
+        - token_cache_from_url
+        - token_cache_key
+        - clear_token_cache

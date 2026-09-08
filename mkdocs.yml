@@ -91,6 +91,7 @@ nav:
     - Password grant: authentication/password-grant.md
     - OIDC discovery: authentication/oidc-discovery.md
     - Refresh and errors: authentication/refresh-and-errors.md
+    - Shared token cache: authentication/token-cache.md
   - Reading data:
     - Connections: reading-data/connections.md
     - Integrations: reading-data/integrations.md

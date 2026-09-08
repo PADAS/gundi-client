@@ -138,3 +138,8 @@ dmypy.json
 # OS / editor junk
 .DS_Store
 .vscode/
+
+# Local git worktrees (see docs/superpowers)
+.worktrees/
+# SDD scratch workspaces (ledgers, briefs, review packages)
+.superpowers/

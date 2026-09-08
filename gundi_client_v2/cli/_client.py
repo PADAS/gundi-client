@@ -15,17 +15,21 @@ import typer
 from pydantic import ValidationError
 
 from gundi_client_v2 import GundiClient
-from gundi_client_v2.errors import AuthenticationError, GundiAPIError
+from gundi_client_v2.errors import (
+    AuthenticationError,
+    GundiAPIError,
+    TokenCacheConfigError,
+)
 
 from . import config_store, token_store
 
 T = TypeVar("T")
 
-# env var -> GundiClient kwarg. Always required.
-_REQUIRED_ENV = {
-    "GUNDI_API_BASE_URL": "base_url",
-    "OAUTH_CLIENT_ID": "oauth_client_id",
-}
+
+def _getenv(name: str) -> Optional[str]:
+    """Resolve an OAuth env var, preferring the GUNDI_-prefixed spelling
+    (``GUNDI_OAUTH_X``) over the bare ``OAUTH_X`` kept for backward compatibility."""
+    return os.environ.get(f"GUNDI_{name}") or os.environ.get(name)
 
 
 def build_client() -> GundiClient:
@@ -34,29 +38,34 @@ def build_client() -> GundiClient:
     Mirrors the library's auth rules. A ``client_id`` is always required, plus:
 
     - **Credentials** — either ``GUNDI_USERNAME`` + ``GUNDI_PASSWORD`` (password
-      grant, public client) or ``OAUTH_CLIENT_SECRET`` (client-credentials,
+      grant, public client) or ``GUNDI_OAUTH_CLIENT_SECRET`` (client-credentials,
       confidential client). When both are present the client uses the password
       grant.
-    - **Token endpoint** — ``OAUTH_ISSUER`` (preferred; resolved via OIDC
-      discovery, IdP-agnostic) or an explicit ``OAUTH_TOKEN_URL``. When both are
-      set, the explicit URL wins.
+    - **Token endpoint** — ``GUNDI_OAUTH_ISSUER`` (preferred; resolved via OIDC
+      discovery, IdP-agnostic) or an explicit ``GUNDI_OAUTH_TOKEN_URL``. When
+      both are set, the explicit URL wins.
 
-    ``OAUTH_AUDIENCE`` is forwarded when set (some IdPs require it). Exits with
-    code 2, listing what's missing, when required configuration is absent.
+    ``GUNDI_OAUTH_AUDIENCE`` is forwarded when set (some IdPs require it). Each
+    ``GUNDI_OAUTH_*`` var also accepts its bare ``OAUTH_*`` spelling for backward
+    compatibility. Exits with code 2, listing what's missing, when required
+    configuration is absent.
     """
     kwargs = {}
     missing = []
-    for env_name, kwarg in _REQUIRED_ENV.items():
-        if value := os.environ.get(env_name):
-            kwargs[kwarg] = value
-        else:
-            missing.append(env_name)
+    if base_url := os.environ.get("GUNDI_API_BASE_URL"):
+        kwargs["base_url"] = base_url
+    else:
+        missing.append("GUNDI_API_BASE_URL")
+    if client_id := _getenv("OAUTH_CLIENT_ID"):
+        kwargs["oauth_client_id"] = client_id
+    else:
+        missing.append("GUNDI_OAUTH_CLIENT_ID")
 
     # Credentials: password grant (username + password) or client-credentials
     # (client_secret). At least one full set is required.
     username = os.environ.get("GUNDI_USERNAME")
     password = os.environ.get("GUNDI_PASSWORD")
-    client_secret = os.environ.get("OAUTH_CLIENT_SECRET")
+    client_secret = _getenv("OAUTH_CLIENT_SECRET")
     if username:
         kwargs["username"] = username
     if password:
@@ -64,23 +73,28 @@ def build_client() -> GundiClient:
     if client_secret:
         kwargs["oauth_client_secret"] = client_secret
     if not (username and password) and not client_secret:
-        missing.append("OAUTH_CLIENT_SECRET (or GUNDI_USERNAME + GUNDI_PASSWORD)")
+        missing.append("GUNDI_OAUTH_CLIENT_SECRET (or GUNDI_USERNAME + GUNDI_PASSWORD)")
 
-    # Token endpoint: discovery via OAUTH_ISSUER preferred, OAUTH_TOKEN_URL is
-    # the explicit fallback. The client prefers oauth_token_url when both exist.
-    if issuer := os.environ.get("OAUTH_ISSUER"):
+    # Token endpoint: discovery via GUNDI_OAUTH_ISSUER preferred,
+    # GUNDI_OAUTH_TOKEN_URL is the explicit fallback. The client prefers
+    # oauth_token_url when both exist.
+    if issuer := _getenv("OAUTH_ISSUER"):
         kwargs["oauth_issuer"] = issuer
-    if token_url := os.environ.get("OAUTH_TOKEN_URL"):
+    if token_url := _getenv("OAUTH_TOKEN_URL"):
         kwargs["oauth_token_url"] = token_url
     if not issuer and not token_url:
-        missing.append("OAUTH_ISSUER (or OAUTH_TOKEN_URL)")
+        missing.append("GUNDI_OAUTH_ISSUER (or GUNDI_OAUTH_TOKEN_URL)")
 
     if missing:
         typer.echo(f"Error: missing required env vars: {', '.join(missing)}", err=True)
         raise typer.Exit(2)
-    if audience := os.environ.get("OAUTH_AUDIENCE"):
+    if audience := _getenv("OAUTH_AUDIENCE"):
         kwargs["oauth_audience"] = audience
-    return GundiClient(**kwargs)
+    try:
+        return GundiClient(**kwargs)
+    except TokenCacheConfigError as exc:  # e.g. a malformed GUNDI_TOKEN_CACHE_URL
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2)
 
 
 def run_with_client(async_fn: Callable[[GundiClient], Awaitable[T]]) -> T:
@@ -180,7 +194,7 @@ def _build_profile_client(env: dict) -> GundiClient:
     kwargs = _client_kwargs_from_env(env)
     if env.get("username") and (pw := os.environ.get("GUNDI_PASSWORD")):
         kwargs["password"] = pw
-    if secret := os.environ.get("OAUTH_CLIENT_SECRET"):
+    if secret := _getenv("OAUTH_CLIENT_SECRET"):
         kwargs["oauth_client_secret"] = secret
     return GundiClient(**kwargs)
 
@@ -205,9 +219,9 @@ def build_client_for_login(
             "Password", hide_input=True
         )
     else:
-        kwargs["oauth_client_secret"] = os.environ.get(
-            "OAUTH_CLIENT_SECRET"
-        ) or typer.prompt("Client secret", hide_input=True)
+        kwargs["oauth_client_secret"] = _getenv("OAUTH_CLIENT_SECRET") or typer.prompt(
+            "Client secret", hide_input=True
+        )
     return GundiClient(**kwargs)
 
 
@@ -227,7 +241,8 @@ def run_command(
 
     try:
         client = _build_profile_client(config_store.get_environment(env_name))
-    except config_store.ConfigError as exc:  # e.g. env missing base_url/client_id
+    except (config_store.ConfigError, TokenCacheConfigError) as exc:
+        # e.g. env missing base_url/client_id, or a malformed GUNDI_TOKEN_CACHE_URL
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(2)
     cached = token_store.load_token(env_name)
@@ -265,6 +280,17 @@ def run_command(
     try:
         result = asyncio.run(_runner())
     except AuthenticationError as exc:
+        if exc.transport:
+            # The token endpoint never answered: logging in cannot fix that.
+            typer.echo(f"Error: request failed: {exc}", err=True)
+            raise typer.Exit(1)
+        if exc.status_code is not None and exc.status_code >= 500:
+            typer.echo(
+                f"Error: the identity provider returned HTTP {exc.status_code}; "
+                "try again later.",
+                err=True,
+            )
+            raise typer.Exit(1)
         suffix = f" --profile {env_name}" if profile else ""
         detail = f" ({exc})" if str(exc) else ""
         typer.echo(
