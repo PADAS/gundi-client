@@ -124,7 +124,6 @@ The un-prefixed `OAUTH_*` names (and, for the library, the legacy `KEYCLOAK_*` n
 | `oauth_issuer` | `GUNDI_OAUTH_ISSUER` | OIDC issuer URL. When set without `oauth_token_url`, the token endpoint is discovered via OIDC discovery. |
 | `oauth_audience` | `GUNDI_OAUTH_AUDIENCE` | OAuth audience. IdP-dependent — required for Auth0, optional for Keycloak password grant. |
 | `oauth_scope` | `GUNDI_OAUTH_SCOPE` | OAuth scope |
-| `token_cache_url` | `GUNDI_TOKEN_CACHE_URL` | Token cache backend URL. `token_cache=` injects a backend object instead. |
 | `max_http_retries` | — | Max HTTP retries (default `5`) |
 | `connect_timeout` | — | Connect timeout in seconds (default `3.1`) |
 | `data_timeout` | — | Data timeout in seconds (default `20`) |
