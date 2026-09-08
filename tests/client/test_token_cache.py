@@ -3,7 +3,12 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from gundi_client_v2.token_cache import NO_REFRESH, CachedToken
+from gundi_client_v2.token_cache import (
+    KEY_PREFIX,
+    NO_REFRESH,
+    CachedToken,
+    token_cache_key,
+)
 
 NOW = datetime(2026, 9, 8, 12, 0, 0, tzinfo=timezone.utc)
 
@@ -93,3 +98,49 @@ def test_from_json_defaults_optional_fields():
     token = CachedToken.from_json(text)
     assert token.refresh_token == ""
     assert token.token_type == "Bearer"
+
+
+_KEY_ARGS = dict(
+    token_url="https://auth.example/realms/dev/protocol/openid-connect/token",
+    grant_type="client_credentials",
+    client_id="runner",
+    username=None,
+    audience="portal",
+    scope="openid",
+    secret="s3cret",
+)
+
+
+def test_key_is_prefixed_hex_and_stable():
+    key = token_cache_key(**_KEY_ARGS)
+    assert key.startswith(KEY_PREFIX)
+    digest = key[len(KEY_PREFIX) :]
+    assert len(digest) == 32 and int(digest, 16) >= 0
+    assert key == token_cache_key(**_KEY_ARGS)
+
+
+def test_key_never_contains_the_secret_or_client_id():
+    key = token_cache_key(**_KEY_ARGS)
+    assert "s3cret" not in key
+    assert "runner" not in key
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"secret": "rotated"},
+        {"client_id": "other"},
+        {"token_url": "https://auth.example/realms/prod/protocol/openid-connect/token"},
+        {"grant_type": "password", "username": "alice"},
+        {"audience": "other-portal"},
+        {"scope": "openid email"},
+    ],
+)
+def test_key_changes_when_any_credential_component_changes(change):
+    assert token_cache_key(**{**_KEY_ARGS, **change}) != token_cache_key(**_KEY_ARGS)
+
+
+def test_key_treats_none_and_empty_alike():
+    assert token_cache_key(**{**_KEY_ARGS, "audience": None}) == token_cache_key(
+        **{**_KEY_ARGS, "audience": ""}
+    )
