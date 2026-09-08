@@ -365,7 +365,15 @@ def token_cache_from_url(url: "str | None") -> "TokenCache | None":
     if parsed.scheme in ("redis", "rediss"):
         backend = RedisTokenCache(url=url)
     elif parsed.scheme == "file":
-        if not parsed.path:
+        # file://mydir/sub parses as host "mydir", path "/sub": the tokens would go
+        # to the wrong directory without a word. Only file:///dir (or the explicit
+        # file://localhost/dir) names a local absolute path.
+        if parsed.netloc not in ("", "localhost"):
+            raise TokenCacheConfigError(
+                f"file:// token cache URL must not have a host; "
+                f"use file:///{parsed.netloc}{parsed.path}"
+            )
+        if not parsed.path.startswith("/"):
             raise TokenCacheConfigError(
                 "file:// token cache URL needs an absolute directory path"
             )

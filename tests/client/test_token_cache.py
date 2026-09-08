@@ -429,6 +429,26 @@ def test_token_cache_from_url_rejects_unsupported_urls(url):
         token_cache_from_url(url)
 
 
+@pytest.mark.parametrize("url", ["file://mydir/sub", "file://./rel"])
+def test_file_url_with_a_host_is_rejected(url):
+    """file://mydir/sub means host "mydir", path "/sub" - silently the wrong
+    directory. Say so instead of caching tokens somewhere unintended."""
+    with pytest.raises(TokenCacheConfigError, match="must not have a host"):
+        token_cache_from_url(url)
+
+
+def test_file_url_accepts_the_localhost_host():
+    cache = token_cache_from_url("file://localhost/tmp/x")
+    assert isinstance(cache, FileTokenCache)
+    assert cache.directory == Path("/tmp/x")
+
+
+@pytest.mark.parametrize("url", ["file:rel/dir", "file://"])
+def test_file_url_needs_an_absolute_path(url):
+    with pytest.raises(TokenCacheConfigError, match="absolute directory path"):
+        token_cache_from_url(url)
+
+
 def test_token_cache_from_url_returns_one_backend_per_url_per_process(tmp_path):
     a = token_cache_from_url("redis://localhost:6379/2")
     b = token_cache_from_url("redis://localhost:6379/2")
