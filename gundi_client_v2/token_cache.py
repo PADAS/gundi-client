@@ -9,14 +9,18 @@ import asyncio
 import hashlib
 import json
 import logging
+import math
 import os
 import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Protocol
+from urllib.parse import urlparse
 
 from gundi_core.schemas import OAuthToken
+
+from .errors import TokenCacheConfigError
 
 logger = logging.getLogger(__name__)
 
@@ -185,9 +189,11 @@ _PROCESS_CACHE = MemoryTokenCache()
 
 
 def clear_token_cache() -> None:
-    """Empty the process-wide token layer. For tests, and for a long-running
-    process that must drop every cached token (mirrors auth.clear_discovery_cache)."""
+    """Empty the process-wide token layer and drop the per-URL backend memo.
+    For tests, and for a long-running process that must drop every cached
+    token (mirrors auth.clear_discovery_cache)."""
     _PROCESS_CACHE.clear()
+    _BACKENDS.clear()
 
 
 class FileTokenCache:
@@ -247,3 +253,91 @@ class FileTokenCache:
             path.unlink()
         except FileNotFoundError:
             pass
+
+
+def _import_redis():
+    """Import redis lazily so `import gundi_client_v2` never requires it."""
+    import redis  # noqa: WPS433 (optional dependency)
+    import redis.asyncio  # noqa: F401
+
+    return redis
+
+
+class RedisTokenCache:
+    """Redis-backed token cache shared by every process pointed at the same
+    Redis. Values expire with the later of the two token expiries, so Redis
+    prunes itself and never holds a token past its usefulness."""
+
+    def __init__(
+        self, url: "str | None" = None, client=None, *, socket_timeout: float = 1.0
+    ) -> None:
+        if (url is None) == (client is None):
+            raise TokenCacheConfigError(
+                "RedisTokenCache takes exactly one of url= or client="
+            )
+        if client is not None:
+            self._client = client
+            return
+        try:
+            redis = _import_redis()
+        except ImportError as e:
+            raise TokenCacheConfigError(
+                "GUNDI_TOKEN_CACHE_URL points at Redis but the redis package is not "
+                "installed; install gundi-client-v2[redis]."
+            ) from e
+        # A hung Redis must not stall an API call: every operation is bounded.
+        self._client = redis.asyncio.Redis.from_url(
+            url,
+            socket_timeout=socket_timeout,
+            socket_connect_timeout=socket_timeout,
+            decode_responses=True,
+        )
+
+    async def get(self, key: str) -> "CachedToken | None":
+        raw = await self._client.get(key)
+        if raw is None:
+            return None
+        token = CachedToken.from_json(raw)
+        if token is None:
+            await self._client.delete(key)
+        return token
+
+    async def set(self, key: str, token: CachedToken) -> None:
+        latest = max(token.expires_at, token.refresh_expires_at)
+        ttl = math.ceil((latest - _now()).total_seconds())
+        if ttl <= 0:
+            return
+        await self._client.set(key, token.to_json(), ex=ttl)
+
+    async def delete(self, key: str) -> None:
+        await self._client.delete(key)
+
+
+# One backend object per URL per process: every GundiClient built from the same
+# URL shares one Redis connection pool and one failure-streak flag.
+_BACKENDS: Dict[str, "TokenCache"] = {}
+
+
+def token_cache_from_url(url: "str | None") -> "TokenCache | None":
+    """Build (once per process) the backend a GUNDI_TOKEN_CACHE_URL names;
+    None means memory only."""
+    if not url:
+        return None
+    cached = _BACKENDS.get(url)
+    if cached is not None:
+        return cached
+    parsed = urlparse(url)
+    if parsed.scheme in ("redis", "rediss"):
+        backend = RedisTokenCache(url=url)
+    elif parsed.scheme == "file":
+        if not parsed.path:
+            raise TokenCacheConfigError(
+                "file:// token cache URL needs an absolute directory path"
+            )
+        backend = FileTokenCache(Path(parsed.path))
+    else:
+        raise TokenCacheConfigError(
+            f"Unsupported token cache URL scheme {parsed.scheme!r}; use redis://, rediss:// or file:///dir"
+        )
+    _BACKENDS[url] = backend
+    return backend

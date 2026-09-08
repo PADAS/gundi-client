@@ -9,6 +9,12 @@ class AuthenticationError(GundiClientError):
     """Raised when OAuth token retrieval or authentication fails."""
 
 
+class TokenCacheConfigError(GundiClientError):
+    """Raised at construction when the token-cache configuration is unusable:
+    an unsupported GUNDI_TOKEN_CACHE_URL, or a redis:// URL without the
+    ``redis`` package installed (``pip install gundi-client-v2[redis]``)."""
+
+
 class GundiAPIError(GundiClientError):
     """Raised when the Gundi API returns a 4xx or 5xx HTTP response.
 

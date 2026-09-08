@@ -1,20 +1,25 @@
 import asyncio
 import json
+import math
 import os
 import stat
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
+from fakeredis import FakeAsyncRedis
 
 from gundi_client_v2 import token_cache as tc
+from gundi_client_v2.errors import GundiClientError, TokenCacheConfigError
 from gundi_client_v2.token_cache import (
     KEY_PREFIX,
     NO_REFRESH,
     CachedToken,
     FileTokenCache,
     MemoryTokenCache,
+    RedisTokenCache,
     clear_token_cache,
+    token_cache_from_url,
     token_cache_key,
 )
 
@@ -269,3 +274,123 @@ async def test_file_cache_treats_corrupt_and_expired_files_as_misses_and_removes
 def test_file_cache_accepts_a_string_directory(tmp_path):
     cache = FileTokenCache(str(tmp_path / "tokens"))
     assert cache.directory == tmp_path / "tokens"
+
+
+@pytest.fixture
+def fake_redis():
+    return FakeAsyncRedis(decode_responses=True)
+
+
+@pytest.mark.asyncio
+async def test_redis_cache_round_trip(fake_redis, clock):
+    cache = RedisTokenCache(client=fake_redis)
+    key = KEY_PREFIX + "aa" * 16
+    assert await cache.get(key) is None
+    await cache.set(key, _token())
+    assert await cache.get(key) == _token()
+    assert await fake_redis.exists(key) == 1
+    await cache.delete(key)
+    assert await cache.get(key) is None
+
+
+@pytest.mark.asyncio
+async def test_redis_cache_sets_ttl_to_the_later_expiry(fake_redis, clock):
+    cache = RedisTokenCache(client=fake_redis)
+    key = KEY_PREFIX + "bb" * 16
+    await cache.set(key, _token())  # refresh lives 10 h, access 1 h
+    ttl = await fake_redis.ttl(key)
+    assert 10 * 3600 - 2 <= ttl <= 10 * 3600
+
+
+@pytest.mark.asyncio
+async def test_redis_cache_skips_writing_an_already_expired_token(fake_redis, clock):
+    cache = RedisTokenCache(client=fake_redis)
+    key = KEY_PREFIX + "cc" * 16
+    clock["now"] = NOW + timedelta(hours=11)
+    await cache.set(key, _token())
+    assert await fake_redis.exists(key) == 0
+
+
+@pytest.mark.asyncio
+async def test_redis_cache_treats_a_corrupt_value_as_a_miss_and_deletes_it(
+    fake_redis, clock
+):
+    cache = RedisTokenCache(client=fake_redis)
+    key = KEY_PREFIX + "dd" * 16
+    await fake_redis.set(key, "{oops")
+    assert await cache.get(key) is None
+    assert await fake_redis.exists(key) == 0
+
+
+def test_redis_cache_requires_exactly_one_of_url_or_client(fake_redis):
+    with pytest.raises(TokenCacheConfigError):
+        RedisTokenCache()
+    with pytest.raises(TokenCacheConfigError):
+        RedisTokenCache(url="redis://localhost/2", client=fake_redis)
+
+
+def test_redis_cache_without_the_redis_package_fails_at_construction(monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def no_redis(name, *args, **kwargs):
+        if name == "redis" or name.startswith("redis."):
+            raise ImportError("No module named 'redis'")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", no_redis)
+    with pytest.raises(TokenCacheConfigError, match=r"gundi-client-v2\[redis\]"):
+        RedisTokenCache(url="redis://localhost:6379/2")
+
+
+def test_token_cache_config_error_is_a_client_error():
+    assert issubclass(TokenCacheConfigError, GundiClientError)
+
+
+def test_token_cache_from_url_selects_the_backend(tmp_path):
+    assert token_cache_from_url(None) is None
+    assert token_cache_from_url("") is None
+    assert isinstance(token_cache_from_url("redis://localhost:6379/2"), RedisTokenCache)
+    assert isinstance(
+        token_cache_from_url("rediss://localhost:6380/2"), RedisTokenCache
+    )
+    file_cache = token_cache_from_url(f"file://{tmp_path}/tokens")
+    assert isinstance(file_cache, FileTokenCache)
+    assert file_cache.directory == tmp_path / "tokens"
+
+
+@pytest.mark.parametrize("url", ["memcached://x", "http://x", "file://", "redis"])
+def test_token_cache_from_url_rejects_unsupported_urls(url):
+    with pytest.raises(TokenCacheConfigError):
+        token_cache_from_url(url)
+
+
+def test_token_cache_from_url_returns_one_backend_per_url_per_process(tmp_path):
+    a = token_cache_from_url("redis://localhost:6379/2")
+    b = token_cache_from_url("redis://localhost:6379/2")
+    c = token_cache_from_url("redis://localhost:6379/3")
+    assert a is b and a is not c
+    f1 = token_cache_from_url(f"file://{tmp_path}")
+    assert token_cache_from_url(f"file://{tmp_path}") is f1
+    clear_token_cache()
+    assert token_cache_from_url("redis://localhost:6379/2") is not a
+
+
+def test_redis_url_uses_a_short_socket_timeout(monkeypatch):
+    captured = {}
+
+    class FakeRedisModule:
+        class asyncio:
+            class Redis:
+                @staticmethod
+                def from_url(url, **kwargs):
+                    captured.update(kwargs, url=url)
+                    return object()
+
+    monkeypatch.setattr(tc, "_import_redis", lambda: FakeRedisModule)
+    RedisTokenCache(url="redis://h:1/2")
+    assert captured["url"] == "redis://h:1/2"
+    assert captured["socket_timeout"] == 1.0
+    assert captured["socket_connect_timeout"] == 1.0
+    assert captured["decode_responses"] is True
