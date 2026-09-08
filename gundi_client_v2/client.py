@@ -499,23 +499,87 @@ class GundiClient:
             "No token URL configured. Set oauth_token_url or oauth_issuer."
         )
 
-    async def _refresh_token(self):
-        now = datetime.now(tz=timezone.utc)
-        token_url = await self._resolve_token_url()
+    def _grant_type(self) -> str:
+        return "password" if (self.username and self.password) else "client_credentials"
 
+    def _token_cache_key(self, token_url: str) -> str:
+        return _token_cache.token_cache_key(
+            token_url=token_url,
+            grant_type=self._grant_type(),
+            client_id=self.client_id,
+            username=self.username if self._grant_type() == "password" else None,
+            audience=self.audience,
+            scope=self.scope,
+            secret=(
+                self.password
+                if self._grant_type() == "password"
+                else self.client_secret
+            ),
+        )
+
+    def _current_entry(self) -> "_token_cache.CachedToken | None":
+        if self.cached_token is None:
+            return None
+        return _token_cache.CachedToken(
+            access_token=self.cached_token.access_token,
+            refresh_token=self.cached_token.refresh_token or "",
+            token_type=self.cached_token.token_type or "Bearer",
+            expires_at=self.cached_token_expires_at,
+            refresh_expires_at=self.cached_token_refresh_expires_at,
+        )
+
+    def _adopt(self, entry: "_token_cache.CachedToken") -> None:
+        """Make ``entry`` this instance's token. Keeps the three public
+        attributes the CLI token store and callers read."""
+        self.cached_token = entry.to_oauth_token()
+        self.cached_token_expires_at = entry.expires_at
+        self.cached_token_refresh_expires_at = entry.refresh_expires_at
+
+    def _to_cached(
+        self, token: OAuthToken, *, refresh_rotated: bool = True, prior=None
+    ) -> "_token_cache.CachedToken":
+        # ``refresh_rotated`` is False only when a refresh-grant response omitted a
+        # new refresh_token (RFC 6749 §6): the prior refresh token and its lifetime
+        # stay valid, so they are carried over.
+        now = _token_cache._now()
+        expires_at = now + timedelta(seconds=self._expiry_with_buffer(token.expires_in))
+        if not refresh_rotated and prior is not None:
+            refresh_expires_at = prior.refresh_expires_at
+        elif token.refresh_token and token.refresh_expires_in > 0:
+            refresh_expires_at = now + timedelta(
+                seconds=self._expiry_with_buffer(token.refresh_expires_in)
+            )
+        else:
+            refresh_expires_at = _token_cache.NO_REFRESH
+        return _token_cache.CachedToken(
+            access_token=token.access_token,
+            refresh_token=token.refresh_token or "",
+            token_type=token.token_type or "Bearer",
+            expires_at=expires_at,
+            refresh_expires_at=refresh_expires_at,
+        )
+
+    def _store_token(self, token, *, refresh_rotated=True):
+        """Compatibility wrapper: adopt ``token`` onto this instance only."""
+        self._adopt(
+            self._to_cached(
+                token, refresh_rotated=refresh_rotated, prior=self._current_entry()
+            )
+        )
+
+    async def _fetch_token(self, token_url: str, prior) -> "_token_cache.CachedToken":
+        """Get a token from the IdP: the refresh grant when ``prior`` holds a live
+        refresh token, otherwise a full authentication."""
+        now = _token_cache._now()
         # 1. Prefer the refresh-token grant when we hold a live refresh token.
-        if (
-            self.cached_token
-            and self.cached_token.refresh_token
-            and self.cached_token_refresh_expires_at > now
-        ):
+        if prior is not None and prior.refresh_is_live(now):
             try:
                 token, refresh_rotated = await auth.refresh_access_token(
                     session=self._session,
                     oauth_token_url=token_url,
                     client_id=self.client_id,
-                    refresh_token=self.cached_token.refresh_token,
-                    fallback=self.cached_token,
+                    refresh_token=prior.refresh_token,
+                    fallback=prior.to_oauth_token(),
                     # Public/password clients must not send a secret on refresh.
                     client_secret=(
                         None
@@ -524,16 +588,13 @@ class GundiClient:
                     ),
                     scope=self.scope,
                 )
-                self._store_token(token, refresh_rotated=refresh_rotated)
-                return token
+                return self._to_cached(
+                    token, refresh_rotated=refresh_rotated, prior=prior
+                )
             except errors.AuthenticationError:
                 logger.info(
                     "Refresh-token grant failed; falling back to full re-authentication."
                 )
-                self.cached_token_refresh_expires_at = datetime.min.replace(
-                    tzinfo=timezone.utc
-                )
-
         # 2. Full authentication. Password grant wins when user credentials are present.
         # A client_id is required for every grant we support, so guard the password
         # branch on it too — otherwise we'd send a half-formed request and let the IdP
@@ -564,35 +625,15 @@ class GundiClient:
                 "No credentials configured. Provide a client_id with either "
                 "username/password (public client) or client_secret (confidential client)."
             )
-        self._store_token(token)
-        return token
+        return self._to_cached(token)
 
-    def _store_token(self, token, *, refresh_rotated=True):
-        # OAuthToken (gundi-core) always carries access + refresh fields on a successful parse,
-        # but for grants that don't issue refresh tokens (e.g. client_credentials) the auth
-        # helper backfills empty refresh_token and refresh_expires_in=0. Detect that here.
-        # ``refresh_rotated`` is False only when this token came from a refresh-grant response
-        # that omitted a new refresh_token (RFC 6749 §6) — in that case we preserve the
-        # existing cached_token_refresh_expires_at because the cached refresh token is still
-        # valid for its original lifetime.
-        now = datetime.now(tz=timezone.utc)
-        self.cached_token = token
-        self.cached_token_expires_at = now + timedelta(
-            seconds=self._expiry_with_buffer(token.expires_in)
+    async def _refresh_token(self):
+        """Compatibility wrapper around _fetch_token for callers of the old name."""
+        entry = await self._fetch_token(
+            await self._resolve_token_url(), self._current_entry()
         )
-        if refresh_rotated:
-            # `> 0` treats both zero (the backfilled refreshless case) and any negative
-            # `refresh_expires_in` (server bug / weird IdP) as 'no refresh available'.
-            if token.refresh_token and token.refresh_expires_in > 0:
-                self.cached_token_refresh_expires_at = now + timedelta(
-                    seconds=self._expiry_with_buffer(token.refresh_expires_in)
-                )
-            else:
-                # Refreshless grant — disable refresh tracking so the refresh-token
-                # branch in _refresh_token doesn't pick this up.
-                self.cached_token_refresh_expires_at = datetime.min.replace(
-                    tzinfo=timezone.utc
-                )
+        self._adopt(entry)
+        return self.cached_token
 
     @staticmethod
     def _expiry_with_buffer(lifetime_seconds, buffer_seconds=15):
@@ -601,34 +642,53 @@ class GundiClient:
         return max(lifetime_seconds - buffer_seconds, lifetime_seconds // 2)
 
     async def get_access_token(self, force_refresh_token: bool = False) -> OAuthToken:
-        """Return a valid OAuth access token, refreshing it when necessary.
+        """Return a valid OAuth access token, reusing one from the shared cache
+        when possible and refreshing or re-authenticating when necessary.
 
-        The token is cached in memory. On each call the expiry time is
-        checked (with a 15-second clock-skew buffer). If the token has
-        expired — or ``force_refresh_token`` is ``True`` — a new token is
-        fetched from the IdP using the refresh-token grant (when a live
-        refresh token is available) or a fresh full authentication.
+        Lookup order: this instance's token, the process-wide memory layer, the
+        configured backend (Redis or file), then the IdP (refresh grant when a
+        live refresh token is known, else full authentication). Whatever is
+        fetched is written to every layer. ``force_refresh_token=True`` (a 401,
+        or the login redirect) first evicts the shared entry so no other client
+        or replica keeps serving a token the server has rejected.
 
         Args:
-            force_refresh_token: When ``True``, bypass the cache and
-                always fetch a fresh token from the IdP, even if the
-                cached token has not yet expired.
+            force_refresh_token: When ``True``, evict the cached entry and
+                fetch a fresh token from the IdP.
 
         Returns:
-            A valid ``OAuthToken`` object containing ``access_token``,
-            ``token_type``, ``expires_in``, and related fields.
+            A valid ``OAuthToken``.
 
         Raises:
-            AuthenticationError: If token retrieval fails (bad
-                credentials, unreachable IdP, or missing configuration).
+            AuthenticationError: If no credentials are configured or the IdP
+                rejects the request.
         """
+        now = _token_cache._now()
         if (
-            force_refresh_token
-            or not self.cached_token
-            or self.cached_token_expires_at < datetime.now(tz=timezone.utc)
+            not force_refresh_token
+            and self.cached_token is not None
+            and self.cached_token_expires_at > now
         ):
-            return await self._refresh_token()
-        return self.cached_token
+            return self.cached_token
+        token_url = await self._resolve_token_url()
+        key = self._token_cache_key(token_url)
+        async with self._token_store.lock(key):
+            prior = self._current_entry()
+            if force_refresh_token:
+                await self._token_store.delete(key)
+            else:
+                shared = await self._token_store.get(key)
+                if shared is not None:
+                    if shared.is_live(_token_cache._now()):
+                        self._adopt(shared)
+                        return self.cached_token
+                    prior = (
+                        shared  # expired access token; its refresh token may still work
+                    )
+            entry = await self._fetch_token(token_url, prior)
+            await self._token_store.set(key, entry)
+            self._adopt(entry)
+            return self.cached_token
 
     async def get_auth_header(self, force_refresh_token: bool = False) -> dict:
         """Return the ``Authorization`` header dict for the current access token.
