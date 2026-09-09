@@ -1326,3 +1326,68 @@ def test_a_refresh_that_replaced_nothing_records_nothing(monkeypatch):
 
     assert "identity" not in tc._replacements
     assert tc._replacement_is_recent("identity", None) is False
+
+
+@pytest.mark.asyncio
+async def test_overlapping_refreshes_reuse_the_first_replacement(
+    auth_token_response, client_settings
+):
+    """Two requests can both reach the forced refresh before either finishes:
+    each still holds the rejected token when it checks, so the cheap
+    already-replaced comparison cannot separate them. The one that waits on the
+    refresh lock must then adopt the replacement the other installed. Reading
+    the instance's token inside the lock cannot tell, because by then it *is*
+    the replacement: the comparison comes out equal, and a token nothing
+    rejected is evicted and replaced at the cost of another token request.
+
+    Both requests are held at the API until both have sent the rejected token,
+    and the first replacement is held at the token endpoint until the other
+    request is queued on the lock, so the overlap does not depend on the
+    scheduler. Both holds are bounded, so a regression fails rather than hangs.
+    """
+    client = GundiClient(**client_settings)
+    url = f"{client.connections_endpoint}/some-id/"
+    accepted = {"tok-1"}
+    invalidated = {"yet": False}
+    both_sent = asyncio.Event()
+    sent_count = {"n": 0}
+    minted = iter(_distinct_tokens(auth_token_response))
+
+    def _lock_has_a_waiter():
+        lock = client._token_store.lock(client._token_cache_key(client.oauth_token_url))
+        return bool(getattr(lock, "_waiters", None))
+
+    async def token_handler(request):
+        if invalidated["yet"]:
+            for _ in range(500):  # let the other request queue on the lock
+                if _lock_has_a_waiter():
+                    break
+                await asyncio.sleep(0)
+        return next(minted)
+
+    async def handler(request):
+        if not invalidated["yet"]:
+            return httpx.Response(200, json={})
+        bearer = _bearer(request)
+        if bearer == "tok-0":  # the rejected token: hold until both have sent it
+            sent_count["n"] += 1
+            if sent_count["n"] >= 2:
+                both_sent.set()
+            await asyncio.wait_for(both_sent.wait(), timeout=5)
+            return httpx.Response(401, json={"detail": "Invalid token."})
+        if bearer in accepted:
+            return httpx.Response(200, json={})
+        return httpx.Response(401, json={"detail": "Invalid token."})
+
+    async with respx.mock(assert_all_called=True) as mock:
+        tokens = mock.post(TOKEN_URL)
+        tokens.side_effect = token_handler
+        mock.get(url).side_effect = handler
+
+        assert (await client._get(url)).status_code == 200  # the client holds tok-0
+        invalidated["yet"] = True
+
+        first, second = await asyncio.gather(client._get(url), client._get(url))
+
+        assert [first.status_code, second.status_code] == [200, 200]
+        assert tokens.call_count == 2, "the waiting request adopts, it does not mint"

@@ -114,6 +114,14 @@ carry the token the API rejects; the one whose response is examined second
 retries with the replacement the first installed, rather than reading that
 replacement as having been rejected in turn.
 
+That same token is named to the refresh, as `rejected_access_token` on
+`get_access_token` and `get_auth_header`, and the eviction decision compares
+against it inside the refresh lock. Otherwise a request that queues on that
+lock while a sibling replaces the token would find the replacement already on
+the instance, compare it against itself, and evict a token nothing had
+rejected, at the cost of another token request. The argument defaults to the
+instance's current token, which is the right answer for a single caller.
+
 ## Security
 
 Access tokens are bearer credentials. Point the Redis backend at a database that

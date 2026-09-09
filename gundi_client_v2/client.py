@@ -442,14 +442,16 @@ class GundiClient:
         whatever the client holds by the time the response arrives: two
         requests in flight can both carry the token the API rejects, and the
         one that looks second would otherwise see the replacement the first
-        installed and read its own 401 as that replacement being rejected.
+        installed and read its own 401 as that replacement being rejected. The
+        same token is named to the refresh, so a caller that queues on the
+        refresh lock adopts a sibling's replacement instead of evicting it.
         """
         auth_headers = await self.get_auth_header()
-        sent = self._token_fingerprint()
+        sent = getattr(self.cached_token, "access_token", None)
         response = await send(auth_headers)
         if not self._says_token_unusable(response):
             return response
-        current = self._token_fingerprint()
+        current = getattr(self.cached_token, "access_token", None)
         if current is not None and current != sent:
             # Another request on this client replaced the token while this one
             # was in flight. Retry with that replacement: forcing here would
@@ -457,14 +459,18 @@ class GundiClient:
             return await send(await self.get_auth_header())
         identity = await self._replacement_identity()
         if response.status_code == httpx.codes.UNAUTHORIZED:
-            if _token_cache._replacement_is_recent(identity, sent):
+            if _token_cache._replacement_is_recent(
+                identity, _token_cache._replacement_fingerprint(sent)
+            ):
                 # This 401 is on the token the last replacement produced:
                 # fetching another would not help the caller, and would aim the
                 # retry at the IdP. See the throttle's notes in token_cache.
                 return response
         # force_refresh_token drops the shared entry, or adopts a replacement a
         # sibling has already fetched, which costs no token request.
-        auth_headers = await self.get_auth_header(force_refresh_token=True)
+        auth_headers = await self.get_auth_header(
+            force_refresh_token=True, rejected_access_token=sent
+        )
         _token_cache._note_replacement(identity, self._token_fingerprint())
         return await send(auth_headers)
 
@@ -702,7 +708,11 @@ class GundiClient:
         # token is not treated as already expired (which would re-authenticate on every call).
         return max(lifetime_seconds - buffer_seconds, lifetime_seconds // 2)
 
-    async def get_access_token(self, force_refresh_token: bool = False) -> OAuthToken:
+    async def get_access_token(
+        self,
+        force_refresh_token: bool = False,
+        rejected_access_token: "str | None" = None,
+    ) -> OAuthToken:
         """Return a valid OAuth access token, reusing one from the shared cache
         when possible and refreshing or re-authenticating when necessary.
 
@@ -717,6 +727,15 @@ class GundiClient:
         Args:
             force_refresh_token: When ``True``, evict the cached entry and
                 fetch a fresh token from the IdP.
+            rejected_access_token: The access token the caller was actually
+                rejected on, read before it went looking for a replacement.
+                Only meaningful with ``force_refresh_token``. Give it whenever
+                the token is known: several callers can queue on the refresh
+                lock holding the same rejected token, and the one that waits
+                would otherwise find the replacement a sibling installed
+                already on the instance, compare it against itself, and evict
+                a token nothing had rejected. Defaults to the instance's
+                current token, which is the right answer for a single caller.
 
         Returns:
             A valid ``OAuthToken``.
@@ -737,18 +756,29 @@ class GundiClient:
         async with self._token_store.lock(key):
             prior = self._current_entry()
             if force_refresh_token:
-                # Evict only the token this instance was rejected on. A sibling
+                # Evict only the token the caller was rejected on. A sibling
                 # (in this process or another) may already have replaced it;
                 # adopting that replacement avoids evicting a fresh token and
-                # replaying an already-exchanged refresh token. An instance with
-                # no token of its own (`gundi auth login` validating typed
+                # replaying an already-exchanged refresh token. A caller with
+                # no token to name (`gundi auth login` validating typed
                 # credentials) always goes to the IdP.
+                #
+                # The comparison uses the token the caller named, not whatever
+                # the instance holds now: a caller that queued on this lock
+                # while a sibling refreshed would find the sibling's
+                # replacement installed here, read it as unchanged, and evict
+                # it.
                 shared = await self._token_store.reload(key)
+                rejected = (
+                    rejected_access_token
+                    if rejected_access_token is not None
+                    else getattr(prior, "access_token", None)
+                )
                 if (
-                    prior is not None
+                    rejected is not None
                     and shared is not None
                     and shared.is_live(_token_cache._now())
-                    and shared.access_token != prior.access_token
+                    and shared.access_token != rejected
                 ):
                     self._adopt(shared)
                     return self.cached_token
@@ -784,7 +814,11 @@ class GundiClient:
             self._adopt(entry)
             return self.cached_token
 
-    async def get_auth_header(self, force_refresh_token: bool = False) -> dict:
+    async def get_auth_header(
+        self,
+        force_refresh_token: bool = False,
+        rejected_access_token: "str | None" = None,
+    ) -> dict:
         """Return the ``Authorization`` header dict for the current access token.
 
         Convenience wrapper around ``get_access_token()`` that formats the
@@ -805,7 +839,8 @@ class GundiClient:
             AuthenticationError: If token retrieval fails.
         """
         token_object = await self.get_access_token(
-            force_refresh_token=force_refresh_token
+            force_refresh_token=force_refresh_token,
+            rejected_access_token=rejected_access_token,
         )
         return {
             "authorization": f"{token_object.token_type} {token_object.access_token}"
