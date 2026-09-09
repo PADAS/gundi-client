@@ -59,7 +59,8 @@ incidental `GUNDI_USERNAME` on one replica keys it apart from the others.)
 
 In Redis, entries expire with the later of the access-token and refresh-token
 lifetimes. When the API answers with its login redirect (the response it gives
-a token it no longer accepts), or when a caller passes `force_refresh_token=True`,
+a token it no longer accepts), when it answers a plain `401`, or when a caller
+passes `force_refresh_token=True`,
 the rejected token is evicted from every layer before the client re-authenticates,
 so no other replica keeps serving it. A client whose sibling, in this process or
 another, has already replaced the rejected token adopts the replacement instead of
@@ -78,6 +79,48 @@ reason, network failures included, leaves the instance with no token, so its
 next call goes to the IdP rather than serving the rejected one.
 Token-endpoint failures of every kind surface as `AuthenticationError`, which
 carries the HTTP status and the OAuth error code when there was a response.
+
+### A token rejected with a plain `401`
+
+The cache judges a token live by its expiry alone, so a token the IdP
+invalidated early — a realm key rotation, an admin revoke-all, a client secret
+rotated with immediate revocation — is not expired. Until 3.7.1 only the login
+redirect evicted it, so if the API answered such a token with a plain `401`
+instead, every client sharing the cache adopted the dead token and failed for
+the rest of its access-token lifetime. A `401` now replaces the token and
+retries, once per request.
+
+If the API rejects *every* token, because the client has lost a role or the API
+itself is broken, replacing on each request would cost one token request per
+API request, per replica, where sharing the cache had made it roughly one
+request per token lifetime. So a `401` on the token the last replacement
+produced is reported as it stands for up to
+`token_cache.REPLACEMENT_RETRY_COOLDOWN_SECONDS`. That throttle keys on *which*
+token was rejected rather than on how recently any replacement happened: a
+caller holding some older token is always allowed to ask, because a sibling
+that has already fetched a replacement heals it for free, with no token
+request. The window lapses, so a token minted before a fault was fixed is
+retried rather than leaving the process stuck on it.
+
+The record is kept per credential identity, the same identity the cache entry
+is keyed by, so clients with unrelated credentials cannot clear each other's
+and re-arm the throttle between them. Records past the cooldown are pruned as
+new ones are written, and a cap bounds the rest, so a process cycling through
+many identities does not accumulate one for each for ever.
+
+The decision reads the token each request actually sent, not whatever the
+client holds by the time the response arrives. Two requests in flight can both
+carry the token the API rejects; the one whose response is examined second
+retries with the replacement the first installed, rather than reading that
+replacement as having been rejected in turn.
+
+That same token is named to the refresh, as `rejected_access_token` on
+`get_access_token` and `get_auth_header`, and the eviction decision compares
+against it inside the refresh lock. Otherwise a request that queues on that
+lock while a sibling replaces the token would find the replacement already on
+the instance, compare it against itself, and evict a token nothing had
+rejected, at the cost of another token request. The argument defaults to the
+instance's current token, which is the right answer for a single caller.
 
 ## Security
 

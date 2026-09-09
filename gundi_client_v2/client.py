@@ -398,95 +398,113 @@ class GundiClient:
         """Exit the async context manager, closing the underlying session."""
         return await self._session.__aexit__(exc_type, exc_value, traceback)
 
-    async def _get(self, url, params=None, headers=None, **kwargs):
-        headers = headers or {}
-        auth_headers = await self.get_auth_header()
-        response = await self._session.get(
-            url,
-            params=params,
-            headers={**auth_headers, **headers},
-            **kwargs,
+    def _token_fingerprint(self) -> "str | None":
+        """Fingerprint of the access token this client currently holds."""
+        return _token_cache._replacement_fingerprint(
+            getattr(self.cached_token, "access_token", None)
         )
-        # Force refresh the token and retry if we get redirected to the login page
+
+    @staticmethod
+    def _says_token_unusable(response) -> bool:
+        """True when the response says the access token that was sent is no
+        longer usable.
+
+        Two shapes say it. The API can redirect to the IdP's login page, which
+        it has always done for an expired session. Or it can answer a plain
+        401, which is what it does for a token the IdP invalidated before its
+        expiry (realm key rotation, an admin revoke-all, a rotated client
+        secret). The shared cache judges a token live by its expiry alone, so
+        without the 401 arm every client sharing the cache adopted the dead
+        token and failed for the rest of its lifetime (issue #61).
+        """
         if response.status_code == 302 and "auth/realms" in response.headers.get(
             "location", ""
         ):
-            auth_headers = await self.get_auth_header(force_refresh_token=True)
-            response = await self._session.get(
-                url,
-                params=params,
-                headers={**auth_headers, **headers},
-                **kwargs,
+            return True
+        return response.status_code == httpx.codes.UNAUTHORIZED
+
+    async def _replacement_identity(self) -> str:
+        """What the replacement throttle is keyed by: the identity the token
+        cache entry itself uses, so clients with unrelated credentials cannot
+        clear each other's record. Resolved only on the rejection path, where
+        a token request is about to happen anyway."""
+        return self._token_cache_key(await self._resolve_token_url())
+
+    async def _authenticated_request(self, send):
+        """Send an authenticated request, replacing the token and retrying once
+        if the response says the token that was sent is no longer usable.
+
+        ``send`` takes the auth headers and returns the awaitable for one
+        attempt, so the retry re-sends the same request with fresh headers.
+        Caller-supplied headers keep precedence over the auth header on both.
+
+        The decision reads the token this attempt actually carried, not
+        whatever the client holds by the time the response arrives: two
+        requests in flight can both carry the token the API rejects, and the
+        one that looks second would otherwise see the replacement the first
+        installed and read its own 401 as that replacement being rejected. The
+        same token is named to the refresh, so a caller that queues on the
+        refresh lock adopts a sibling's replacement instead of evicting it.
+        """
+        auth_headers = await self.get_auth_header()
+        sent = getattr(self.cached_token, "access_token", None)
+        response = await send(auth_headers)
+        if not self._says_token_unusable(response):
+            return response
+        current = getattr(self.cached_token, "access_token", None)
+        if current is not None and current != sent:
+            # Another request on this client replaced the token while this one
+            # was in flight. Retry with that replacement: forcing here would
+            # discard a token nothing has rejected, and cost a token request.
+            return await send(await self.get_auth_header())
+        identity = await self._replacement_identity()
+        if response.status_code == httpx.codes.UNAUTHORIZED:
+            if _token_cache._replacement_is_recent(
+                identity, _token_cache._replacement_fingerprint(sent)
+            ):
+                # This 401 is on the token the last replacement produced:
+                # fetching another would not help the caller, and would aim the
+                # retry at the IdP. See the throttle's notes in token_cache.
+                return response
+        # force_refresh_token drops the shared entry, or adopts a replacement a
+        # sibling has already fetched, which costs no token request.
+        auth_headers = await self.get_auth_header(
+            force_refresh_token=True, rejected_access_token=sent
+        )
+        _token_cache._note_replacement(identity, self._token_fingerprint())
+        return await send(auth_headers)
+
+    async def _get(self, url, params=None, headers=None, **kwargs):
+        headers = headers or {}
+        return await self._authenticated_request(
+            lambda auth: self._session.get(
+                url, params=params, headers={**auth, **headers}, **kwargs
             )
-        return response
+        )
 
     async def _post(self, url, data: dict = None, params=None, headers=None, **kwargs):
         headers = headers or {}
-        auth_headers = await self.get_auth_header()
-        response = await self._session.post(
-            url,
-            json=data,
-            params=params,
-            headers={**auth_headers, **headers},
-            **kwargs,
-        )
-        # Force refresh the token and retry if we get redirected to the login page
-        if response.status_code == 302 and "auth/realms" in response.headers.get(
-            "location", ""
-        ):
-            auth_headers = await self.get_auth_header(force_refresh_token=True)
-            response = await self._session.post(
-                url,
-                json=data,
-                params=params,
-                headers={**auth_headers, **headers},
-                **kwargs,
+        return await self._authenticated_request(
+            lambda auth: self._session.post(
+                url, json=data, params=params, headers={**auth, **headers}, **kwargs
             )
-        return response
+        )
 
     async def _patch(self, url, data: dict = None, params=None, headers=None, **kwargs):
         headers = headers or {}
-        auth_headers = await self.get_auth_header()
-        response = await self._session.patch(
-            url,
-            json=data,
-            params=params,
-            headers={**auth_headers, **headers},
-            **kwargs,
-        )
-        if response.status_code == 302 and "auth/realms" in response.headers.get(
-            "location", ""
-        ):
-            auth_headers = await self.get_auth_header(force_refresh_token=True)
-            response = await self._session.patch(
-                url,
-                json=data,
-                params=params,
-                headers={**auth_headers, **headers},
-                **kwargs,
+        return await self._authenticated_request(
+            lambda auth: self._session.patch(
+                url, json=data, params=params, headers={**auth, **headers}, **kwargs
             )
-        return response
+        )
 
     async def _delete(self, url, params=None, headers=None, **kwargs):
         headers = headers or {}
-        auth_headers = await self.get_auth_header()
-        response = await self._session.delete(
-            url,
-            params=params,
-            headers={**auth_headers, **headers},
-            **kwargs,
-        )
-        if response.status_code == 302 and "auth/realms" in response.headers.get(
-            "location", ""
-        ):
-            auth_headers = await self.get_auth_header(force_refresh_token=True)
-            response = await self._session.delete(
-                url,
-                params=params,
-                headers={**auth_headers, **headers},
-                **kwargs,
+        return await self._authenticated_request(
+            lambda auth: self._session.delete(
+                url, params=params, headers={**auth, **headers}, **kwargs
             )
-        return response
+        )
 
     async def _resolve_token_url(self) -> str:
         """Return the token endpoint URL. Explicit oauth_token_url wins; otherwise
@@ -690,7 +708,11 @@ class GundiClient:
         # token is not treated as already expired (which would re-authenticate on every call).
         return max(lifetime_seconds - buffer_seconds, lifetime_seconds // 2)
 
-    async def get_access_token(self, force_refresh_token: bool = False) -> OAuthToken:
+    async def get_access_token(
+        self,
+        force_refresh_token: bool = False,
+        rejected_access_token: "str | None" = None,
+    ) -> OAuthToken:
         """Return a valid OAuth access token, reusing one from the shared cache
         when possible and refreshing or re-authenticating when necessary.
 
@@ -705,6 +727,15 @@ class GundiClient:
         Args:
             force_refresh_token: When ``True``, evict the cached entry and
                 fetch a fresh token from the IdP.
+            rejected_access_token: The access token the caller was actually
+                rejected on, read before it went looking for a replacement.
+                Only meaningful with ``force_refresh_token``. Give it whenever
+                the token is known: several callers can queue on the refresh
+                lock holding the same rejected token, and the one that waits
+                would otherwise find the replacement a sibling installed
+                already on the instance, compare it against itself, and evict
+                a token nothing had rejected. Defaults to the instance's
+                current token, which is the right answer for a single caller.
 
         Returns:
             A valid ``OAuthToken``.
@@ -725,18 +756,29 @@ class GundiClient:
         async with self._token_store.lock(key):
             prior = self._current_entry()
             if force_refresh_token:
-                # Evict only the token this instance was rejected on. A sibling
+                # Evict only the token the caller was rejected on. A sibling
                 # (in this process or another) may already have replaced it;
                 # adopting that replacement avoids evicting a fresh token and
-                # replaying an already-exchanged refresh token. An instance with
-                # no token of its own (`gundi auth login` validating typed
+                # replaying an already-exchanged refresh token. A caller with
+                # no token to name (`gundi auth login` validating typed
                 # credentials) always goes to the IdP.
+                #
+                # The comparison uses the token the caller named, not whatever
+                # the instance holds now: a caller that queued on this lock
+                # while a sibling refreshed would find the sibling's
+                # replacement installed here, read it as unchanged, and evict
+                # it.
                 shared = await self._token_store.reload(key)
+                rejected = (
+                    rejected_access_token
+                    if rejected_access_token is not None
+                    else getattr(prior, "access_token", None)
+                )
                 if (
-                    prior is not None
+                    rejected is not None
                     and shared is not None
                     and shared.is_live(_token_cache._now())
-                    and shared.access_token != prior.access_token
+                    and shared.access_token != rejected
                 ):
                     self._adopt(shared)
                     return self.cached_token
@@ -772,7 +814,11 @@ class GundiClient:
             self._adopt(entry)
             return self.cached_token
 
-    async def get_auth_header(self, force_refresh_token: bool = False) -> dict:
+    async def get_auth_header(
+        self,
+        force_refresh_token: bool = False,
+        rejected_access_token: "str | None" = None,
+    ) -> dict:
         """Return the ``Authorization`` header dict for the current access token.
 
         Convenience wrapper around ``get_access_token()`` that formats the
@@ -793,7 +839,8 @@ class GundiClient:
             AuthenticationError: If token retrieval fails.
         """
         token_object = await self.get_access_token(
-            force_refresh_token=force_refresh_token
+            force_refresh_token=force_refresh_token,
+            rejected_access_token=rejected_access_token,
         )
         return {
             "authorization": f"{token_object.token_type} {token_object.access_token}"

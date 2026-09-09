@@ -64,3 +64,23 @@ jobs:
 
       - name: Check formatting (black)
         run: uv run black --check .
+
+  docs:
+    # The docs workflow only builds on a push to v2, so a broken cross-reference
+    # used to reach the branch and fail the deploy there: the site went stale
+    # from #59 until this job existed. Building here fails the PR instead.
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Build the docs site
+        # No -q: it raises the log level above WARNING, and --strict only fails
+        # on warnings that were actually logged, so -q silently defeats it.
+        run: uv run --extra docs mkdocs build --strict

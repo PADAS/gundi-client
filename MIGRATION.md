@@ -23,7 +23,7 @@ are set, the `GUNDI_`-prefixed one wins.
 Every `GundiClient` in a process now shares one token per set of credentials,
 and an optional backend (`GUNDI_TOKEN_CACHE_URL` = `redis://…`, `rediss://…` or
 `file:///dir`) shares it across processes. See
-[Shared token cache](docs/authentication/token-cache.md).
+[Shared token cache](https://padas.github.io/gundi-client/authentication/token-cache/).
 
 What to check when upgrading:
 
