@@ -329,10 +329,14 @@ async def test_file_cache_write_is_atomic_and_leaves_no_temp_file(
     def broken_replace(src, dst):
         raise OSError("disk full")
 
-    monkeypatch.setattr(os, "replace", broken_replace)
-    with pytest.raises(OSError):
-        await cache.set(key, _token(access_token="second"))
-    monkeypatch.undo()
+    # A nested context, not monkeypatch.undo(): the clock fixture patches
+    # tc._now through the same function-scoped monkeypatch instance, so undo()
+    # would restore the real clock and the token written above would read as
+    # long expired, which get() treats as a miss and deletes.
+    with pytest.MonkeyPatch.context() as patched:
+        patched.setattr(os, "replace", broken_replace)
+        with pytest.raises(OSError):
+            await cache.set(key, _token(access_token="second"))
     assert (await cache.get(key)).access_token == "first"
     assert [f.name for f in (tmp_path / "tokens").iterdir()] == ["ef" * 16 + ".json"]
 
