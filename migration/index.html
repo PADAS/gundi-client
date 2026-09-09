@@ -995,6 +995,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authentication/token-cache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shared token cache
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1772,6 +1800,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#370-shared-oauth-token-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.7.0 — shared OAuth token cache
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#upgrading-to-30-from-2x" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1954,6 +1993,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#370-shared-oauth-token-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.7.0 — shared OAuth token cache
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#upgrading-to-30-from-2x" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2110,6 +2160,24 @@
 <p>No action is required: the old <code>OAUTH_*</code> names (and the pre-3.0 <code>KEYCLOAK_*</code>
 names, for the library) keep working as silent fallbacks. When both spellings
 are set, the <code>GUNDI_</code>-prefixed one wins.</p>
+<h2 id="370-shared-oauth-token-cache">3.7.0 — shared OAuth token cache<a class="headerlink" href="#370-shared-oauth-token-cache" title="Permanent link">&para;</a></h2>
+<p>Every <code>GundiClient</code> in a process now shares one token per set of credentials,
+and an optional backend (<code>GUNDI_TOKEN_CACHE_URL</code> = <code>redis://…</code>, <code>rediss://…</code> or
+<code>file:///dir</code>) shares it across processes. See
+<a href="https://padas.github.io/gundi-client/authentication/token-cache/">Shared token cache</a>.</p>
+<p>What to check when upgrading:</p>
+<ul>
+<li><strong>Tests that count token requests</strong> or construct several clients expecting
+  isolation: add an autouse fixture calling
+  <code>gundi_client_v2.token_cache.clear_token_cache()</code> (this repo's
+  <code>tests/conftest.py</code> shows the pattern).</li>
+<li><strong>A Redis URL needs the extra:</strong> <code>pip install gundi-client-v2[redis]</code>.
+  Without it, a <code>redis://</code> URL raises <code>TokenCacheConfigError</code> when the client
+  is constructed. Land the extra and the URL in the same change.</li>
+<li><code>client.cached_token.expires_in</code> / <code>refresh_expires_in</code> now report the
+  remaining lifetime (recomputed on cache hits) instead of the IdP's raw value.</li>
+<li>The CLI's per-environment token store is unchanged.</li>
+</ul>
 <h2 id="upgrading-to-30-from-2x">Upgrading to 3.0 from 2.x<a class="headerlink" href="#upgrading-to-30-from-2x" title="Permanent link">&para;</a></h2>
 <p>This release modernizes the OAuth2 implementation, bumps the <code>httpx</code> runtime
 dependency, and adds OIDC discovery and routes CRUD. Most consumers will need

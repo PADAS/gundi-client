@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://padas.github.io/gundi-client/api-reference/">
+        <link rel="canonical" href="https://padas.github.io/gundi-client/authentication/token-cache/">
       
       
-        <link rel="prev" href="../recipes/error-handling/">
+        <link rel="prev" href="../refresh-and-errors/">
       
       
-        <link rel="next" href="gundi-client/">
+        <link rel="next" href="../../reading-data/connections/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Overview - gundi-client-v2 (Python)</title>
+        <title>Shared token cache - gundi-client-v2 (Python)</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#api-reference" class="md-skip">
+        <a href="#shared-token-cache" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="gundi-client-v2 (Python)" class="md-header__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
+    <a href="../.." title="gundi-client-v2 (Python)" class="md-header__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              Shared token cache
             
           </span>
         </div>
@@ -227,7 +227,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -248,7 +248,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../getting-started/install/" class="md-tabs__link">
+        <a href="../../getting-started/install/" class="md-tabs__link">
           
   
   
@@ -268,7 +268,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../concepts/data-model/" class="md-tabs__link">
+        <a href="../../concepts/data-model/" class="md-tabs__link">
           
   
   
@@ -284,11 +284,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../authentication/overview/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../overview/" class="md-tabs__link">
           
   
   
@@ -308,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../reading-data/connections/" class="md-tabs__link">
+        <a href="../../reading-data/connections/" class="md-tabs__link">
           
   
   
@@ -328,7 +330,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../sending-data/observations/" class="md-tabs__link">
+        <a href="../../sending-data/observations/" class="md-tabs__link">
           
   
   
@@ -348,7 +350,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../recipes/pagination/" class="md-tabs__link">
+        <a href="../../recipes/pagination/" class="md-tabs__link">
           
   
   
@@ -364,13 +366,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../api-reference/" class="md-tabs__link">
           
   
   
@@ -388,7 +388,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../migration/" class="md-tabs__link">
+      <a href="../../migration/" class="md-tabs__link">
         
   
   
@@ -407,7 +407,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../troubleshooting/" class="md-tabs__link">
+      <a href="../../troubleshooting/" class="md-tabs__link">
         
   
   
@@ -426,7 +426,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../changelog/" class="md-tabs__link">
+      <a href="../../changelog/" class="md-tabs__link">
         
   
   
@@ -461,7 +461,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="gundi-client-v2 (Python)" class="md-nav__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
+    <a href="../.." title="gundi-client-v2 (Python)" class="md-nav__button md-logo" aria-label="gundi-client-v2 (Python)" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -491,7 +491,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -572,7 +572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/install/" class="md-nav__link">
+      <a href="../../getting-started/install/" class="md-nav__link">
         
   
   
@@ -600,7 +600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/auth-setup/" class="md-nav__link">
+      <a href="../../getting-started/auth-setup/" class="md-nav__link">
         
   
   
@@ -628,7 +628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/first-request/" class="md-nav__link">
+      <a href="../../getting-started/first-request/" class="md-nav__link">
         
   
   
@@ -717,7 +717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/data-model/" class="md-nav__link">
+      <a href="../../concepts/data-model/" class="md-nav__link">
         
   
   
@@ -745,7 +745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/payload-types/" class="md-nav__link">
+      <a href="../../concepts/payload-types/" class="md-nav__link">
         
   
   
@@ -773,7 +773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/tracing-lifecycle/" class="md-nav__link">
+      <a href="../../concepts/tracing-lifecycle/" class="md-nav__link">
         
   
   
@@ -805,28 +805,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -844,7 +847,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -862,7 +865,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/overview/" class="md-nav__link">
+      <a href="../overview/" class="md-nav__link">
         
   
   
@@ -890,7 +893,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/client-credentials/" class="md-nav__link">
+      <a href="../client-credentials/" class="md-nav__link">
         
   
   
@@ -918,7 +921,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/password-grant/" class="md-nav__link">
+      <a href="../password-grant/" class="md-nav__link">
         
   
   
@@ -946,7 +949,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/oidc-discovery/" class="md-nav__link">
+      <a href="../oidc-discovery/" class="md-nav__link">
         
   
   
@@ -974,7 +977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/refresh-and-errors/" class="md-nav__link">
+      <a href="../refresh-and-errors/" class="md-nav__link">
         
   
   
@@ -999,10 +1002,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../authentication/token-cache/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shared token cache
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1018,6 +1048,98 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-shared-and-with-whom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is shared, and with whom
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What is shared, and with whom">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-token-rejected-with-a-plain-401" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A token rejected with a plain 401
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1091,7 +1213,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/connections/" class="md-nav__link">
+      <a href="../../reading-data/connections/" class="md-nav__link">
         
   
   
@@ -1119,7 +1241,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/integrations/" class="md-nav__link">
+      <a href="../../reading-data/integrations/" class="md-nav__link">
         
   
   
@@ -1147,7 +1269,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/routes/" class="md-nav__link">
+      <a href="../../reading-data/routes/" class="md-nav__link">
         
   
   
@@ -1175,7 +1297,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reading-data/traces/" class="md-nav__link">
+      <a href="../../reading-data/traces/" class="md-nav__link">
         
   
   
@@ -1264,7 +1386,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sending-data/observations/" class="md-nav__link">
+      <a href="../../sending-data/observations/" class="md-nav__link">
         
   
   
@@ -1292,7 +1414,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sending-data/events/" class="md-nav__link">
+      <a href="../../sending-data/events/" class="md-nav__link">
         
   
   
@@ -1320,7 +1442,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sending-data/messages-attachments/" class="md-nav__link">
+      <a href="../../sending-data/messages-attachments/" class="md-nav__link">
         
   
   
@@ -1409,7 +1531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recipes/pagination/" class="md-nav__link">
+      <a href="../../recipes/pagination/" class="md-nav__link">
         
   
   
@@ -1437,7 +1559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recipes/filtering/" class="md-nav__link">
+      <a href="../../recipes/filtering/" class="md-nav__link">
         
   
   
@@ -1465,7 +1587,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recipes/custom-httpx/" class="md-nav__link">
+      <a href="../../recipes/custom-httpx/" class="md-nav__link">
         
   
   
@@ -1493,7 +1615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recipes/error-handling/" class="md-nav__link">
+      <a href="../../recipes/error-handling/" class="md-nav__link">
         
   
   
@@ -1525,31 +1647,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
             
   
   
@@ -1567,7 +1686,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1582,19 +1701,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../api-reference/" class="md-nav__link">
         
   
   
@@ -1610,7 +1720,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -1623,7 +1732,7 @@
   
   
     <li class="md-nav__item">
-      <a href="gundi-client/" class="md-nav__link">
+      <a href="../../api-reference/gundi-client/" class="md-nav__link">
         
   
   
@@ -1651,7 +1760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="data-sender-client/" class="md-nav__link">
+      <a href="../../api-reference/data-sender-client/" class="md-nav__link">
         
   
   
@@ -1679,7 +1788,7 @@
   
   
     <li class="md-nav__item">
-      <a href="auth/" class="md-nav__link">
+      <a href="../../api-reference/auth/" class="md-nav__link">
         
   
   
@@ -1707,7 +1816,7 @@
   
   
     <li class="md-nav__item">
-      <a href="errors/" class="md-nav__link">
+      <a href="../../api-reference/errors/" class="md-nav__link">
         
   
   
@@ -1742,7 +1851,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../migration/" class="md-nav__link">
+      <a href="../../migration/" class="md-nav__link">
         
   
   
@@ -1769,7 +1878,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/" class="md-nav__link">
+      <a href="../../troubleshooting/" class="md-nav__link">
         
   
   
@@ -1796,7 +1905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../changelog/" class="md-nav__link">
+      <a href="../../changelog/" class="md-nav__link">
         
   
   
@@ -1836,6 +1945,86 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-shared-and-with-whom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is shared, and with whom
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What is shared, and with whom">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-token-rejected-with-a-plain-401" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A token rejected with a plain 401
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1859,7 +2048,7 @@
   
   
     <li class="md-path__item">
-      <a href=".." class="md-path__link">
+      <a href="../.." class="md-path__link">
         
   <span class="md-ellipsis">
     Home
@@ -1877,10 +2066,10 @@
     
     
       <li class="md-path__item">
-        <a href="./" class="md-path__link">
+        <a href="../overview/" class="md-path__link">
           
   <span class="md-ellipsis">
-    API reference
+    Authentication
   </span>
 
         </a>
@@ -1899,7 +2088,7 @@
 
 
   
-    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/api-reference/index.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/PADAS/gundi-client/edit/v2/docs/authentication/token-cache.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1907,36 +2096,147 @@
   
 
 
-<h1 id="api-reference">API reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
-<p>Auto-generated from the in-source docstrings of <code>gundi_client_v2</code>. For
-conceptual and tutorial content see the rest of the site; this section is
-a method-by-method reference.</p>
+<h1 id="shared-token-cache">Shared token cache<a class="headerlink" href="#shared-token-cache" title="Permanent link">&para;</a></h1>
+<p>Every <code>GundiClient</code> shares one OAuth token per set of credentials.</p>
+<h2 id="why">Why<a class="headerlink" href="#why" title="Permanent link">&para;</a></h2>
+<p>Without a shared cache, each <code>GundiClient</code> instance requests its own token and
+forgets it when the instance goes away. Services that build a client per call
+mint a new Keycloak token for nearly every request, although the token would be
+valid for hours or days. The cache keeps that token and hands it to every client
+that has the same credentials, for as long as it is valid.</p>
+<h2 id="layers">Layers<a class="headerlink" href="#layers" title="Permanent link">&para;</a></h2>
+<p><strong>Process memory (always on).</strong> Every client in a process reads and writes one
+in-memory table keyed by credentials. Concurrent clients that miss at the same
+moment wait for one token request instead of each making their own. Nothing to
+configure. <code>gundi_client_v2.token_cache.clear_token_cache()</code> empties it (tests,
+or a long-running process that must drop every cached token).</p>
+<p><strong>One durable backend (optional).</strong> Chosen by <code>GUNDI_TOKEN_CACHE_URL</code> or the
+<code>token_cache_url=</code> kwarg:</p>
 <table>
 <thead>
 <tr>
-<th>Module</th>
-<th>Contents</th>
+<th>URL</th>
+<th>Backend</th>
+<th>Use it for</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><a href="gundi-client/">GundiClient</a></td>
-<td>Portal/configuration API client (auth, Connections, Integrations, Routes, Traces).</td>
+<td><code>redis://host:port/db</code>, <code>rediss://…</code></td>
+<td>Redis (<code>pip install gundi-client-v2[redis]</code>)</td>
+<td>Several replicas or processes sharing one Redis</td>
 </tr>
 <tr>
-<td><a href="data-sender-client/">GundiDataSenderClient</a></td>
-<td>Sender for Observations, Events, Messages, and Attachments using an Integration API key.</td>
+<td><code>file:///absolute/dir</code></td>
+<td>One private file per credential set (0600 files in a directory dedicated to the cache; created 0700, never re-moded if it already exists)</td>
+<td>Local runs, scripts, hosts without Redis</td>
 </tr>
 <tr>
-<td><a href="auth/">auth</a></td>
-<td>Standalone OAuth2 grant and OIDC discovery functions.</td>
-</tr>
-<tr>
-<td><a href="errors/">errors</a></td>
-<td>Exception hierarchy: <code>GundiClientError</code>, <code>AuthenticationError</code>, <code>GundiAPIError</code>.</td>
+<td>unset</td>
+<td>none</td>
+<td>Tokens shared within the process only</td>
 </tr>
 </tbody>
 </table>
+<p><code>token_cache=</code> accepts any object with async <code>get(key)</code>, <code>set(key, token)</code> and
+<code>delete(key)</code> and takes precedence over the URL.</p>
+<p>The file backend is for local disk only: it does blocking file I/O on the event
+loop, so a network filesystem (NFS, SMB, a mounted bucket) is not a supported
+target; point those deployments at Redis.</p>
+<p>There is no fallback chain. When the backend is unreachable the client logs one
+warning per outage and runs on the memory layer until it recovers; the cache
+never raises into an API call. A bad URL, or <code>redis://</code> without the <code>redis</code>
+package, raises <code>TokenCacheConfigError</code> when the client is constructed. A Redis
+backend built from a URL is memoized per process and its connection pool is
+bound to the event loop that first used it, so a process that runs more than one
+event loop over its life degrades to the memory layer, with one warning, on the
+other loops.</p>
+<h2 id="what-is-shared-and-with-whom">What is shared, and with whom<a class="headerlink" href="#what-is-shared-and-with-whom" title="Permanent link">&para;</a></h2>
+<p>The cache key is a SHA-256 over the resolved token endpoint, grant type, client
+id, username, audience, scope, and, for the client-credentials grant, the client
+secret. Two clients share a token exactly when all of those match. Rotating a
+client secret produces a new key, so a token minted under the old secret is never
+reused. A password is never part of the key: hashed next to guessable material it
+would let anyone who can list the cache's keys brute-force it offline, and
+changing a password does not invalidate tokens already issued. The username is
+always in the key: a CLI profile client carries a username and a restored token
+but no password, and several such clients under one client id must never share
+an entry. (Replicas share only when their settings are identical, so an
+incidental <code>GUNDI_USERNAME</code> on one replica keys it apart from the others.)</p>
+<p>In Redis, entries expire with the later of the access-token and refresh-token
+lifetimes. When the API answers with its login redirect (the response it gives
+a token it no longer accepts), when it answers a plain <code>401</code>, or when a caller
+passes <code>force_refresh_token=True</code>,
+the rejected token is evicted from every layer before the client re-authenticates,
+so no other replica keeps serving it. A client whose sibling, in this process or
+another, has already replaced the rejected token adopts the replacement instead of
+evicting it; a client that holds no token of its own always goes to the IdP, so
+<code>gundi auth login</code> really validates the typed credentials. If the backend is
+unreachable, the forced refresh still sees what siblings in the same process
+wrote. When the IdP answers the refresh grant with <code>invalid_grant</code> (400 on
+Keycloak, 403 on Auth0), or with a bare 400 carrying no error code, and the full
+authentication also fails, the shared entry is dropped and this client stops
+trying that refresh token; any other status, whatever its body says, leaves the
+refresh token in place, since it may still be good. A transport failure on the
+refresh grant (<code>AuthenticationError.transport</code>) is raised at once rather than
+retried with the full authentication on the same broken network; a malformed
+response body is not a transport failure and falls back like any other error. A forced refresh that fails for any
+reason, network failures included, leaves the instance with no token, so its
+next call goes to the IdP rather than serving the rejected one.
+Token-endpoint failures of every kind surface as <code>AuthenticationError</code>, which
+carries the HTTP status and the OAuth error code when there was a response.</p>
+<h3 id="a-token-rejected-with-a-plain-401">A token rejected with a plain <code>401</code><a class="headerlink" href="#a-token-rejected-with-a-plain-401" title="Permanent link">&para;</a></h3>
+<p>The cache judges a token live by its expiry alone, so a token the IdP
+invalidated early — a realm key rotation, an admin revoke-all, a client secret
+rotated with immediate revocation — is not expired. Until 3.7.1 only the login
+redirect evicted it, so if the API answered such a token with a plain <code>401</code>
+instead, every client sharing the cache adopted the dead token and failed for
+the rest of its access-token lifetime. A <code>401</code> now replaces the token and
+retries, once per request.</p>
+<p>If the API rejects <em>every</em> token, because the client has lost a role or the API
+itself is broken, replacing on each request would cost one token request per
+API request, per replica, where sharing the cache had made it roughly one
+request per token lifetime. So a <code>401</code> on the token the last replacement
+produced is reported as it stands for up to
+<code>token_cache.REPLACEMENT_RETRY_COOLDOWN_SECONDS</code>. That throttle keys on <em>which</em>
+token was rejected rather than on how recently any replacement happened: a
+caller holding some older token is always allowed to ask, because a sibling
+that has already fetched a replacement heals it for free, with no token
+request. The window lapses, so a token minted before a fault was fixed is
+retried rather than leaving the process stuck on it.</p>
+<p>The record is kept per credential identity, the same identity the cache entry
+is keyed by, so clients with unrelated credentials cannot clear each other's
+and re-arm the throttle between them. Records past the cooldown are pruned as
+new ones are written, and a cap bounds the rest, so a process cycling through
+many identities does not accumulate one for each for ever.</p>
+<p>The decision reads the token each request actually sent, not whatever the
+client holds by the time the response arrives. Two requests in flight can both
+carry the token the API rejects; the one whose response is examined second
+retries with the replacement the first installed, rather than reading that
+replacement as having been rejected in turn.</p>
+<p>That same token is named to the refresh, as <code>rejected_access_token</code> on
+<code>get_access_token</code> and <code>get_auth_header</code>, and the eviction decision compares
+against it inside the refresh lock. Otherwise a request that queues on that
+lock while a sibling replaces the token would find the replacement already on
+the instance, compare it against itself, and evict a token nothing had
+rejected, at the cost of another token request. The argument defaults to the
+instance's current token, which is the right answer for a single caller.</p>
+<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
+<p>Access tokens are bearer credentials. Point the Redis backend at a database that
+is as protected as the rest of your service's Redis data, and treat the file
+backend's directory as you would a credentials file, and give the cache a
+directory of its own: the cache creates it 0700 but never changes the mode of a
+directory that already exists (it warns once if that directory is wider than
+0700). A client secret enters the cache key only inside a one-way hash; a
+password never enters it.</p>
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gundi_client_v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">GundiClient</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># All three share one token: same credentials, same process.</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">a</span> <span class="o">=</span> <span class="n">GundiClient</span><span class="p">()</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">b</span> <span class="o">=</span> <span class="n">GundiClient</span><span class="p">()</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">c</span> <span class="o">=</span> <span class="n">GundiClient</span><span class="p">(</span><span class="n">token_cache_url</span><span class="o">=</span><span class="s2">"redis://redis:6379/2"</span><span class="p">)</span>  <span class="c1"># and with other replicas</span>
+</code></pre></div>
 
 
 
@@ -1992,10 +2292,10 @@ a method-by-method reference.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -995,6 +995,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication/token-cache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shared token cache
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2582,6 +2610,16 @@ setting.</p>
   Env: <code>GUNDI_OAUTH_SCOPE</code> / <code>OAUTH_SCOPE</code> (default
   <code>"openid"</code>).</li>
 </ul>
+<p><strong>Token cache settings</strong></p>
+<ul>
+<li><code>token_cache_url</code> (str): Durable token cache backend
+  shared with other processes: <code>redis://host:port/db</code>,
+  <code>rediss://…</code> or <code>file:///dir</code>. Env:
+  <code>GUNDI_TOKEN_CACHE_URL</code>. Unset means tokens are shared
+  only within this process (always on).</li>
+<li><code>token_cache</code> (TokenCache): An injected backend; takes
+  precedence over <code>token_cache_url</code>.</li>
+</ul>
 <p><strong>Retry / timeout settings</strong></p>
 <ul>
 <li><code>max_http_retries</code> (int): Number of automatic HTTP
@@ -2692,17 +2730,20 @@ client should not be used again.</p>
   </span>
 
 <a href="#gundi_client_v2.client.GundiClient.get_access_token" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_access_token</span><span class="p">(</span><span class="n">force_refresh_token</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OAuthToken</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_access_token</span><span class="p">(</span><span class="n">force_refresh_token</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">rejected_access_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OAuthToken</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Return a valid OAuth access token, refreshing it when necessary.</p>
-<p>The token is cached in memory. On each call the expiry time is
-checked (with a 15-second clock-skew buffer). If the token has
-expired — or <code>force_refresh_token</code> is <code>True</code> — a new token is
-fetched from the IdP using the refresh-token grant (when a live
-refresh token is available) or a fresh full authentication.</p>
+        <p>Return a valid OAuth access token, reusing one from the shared cache
+when possible and refreshing or re-authenticating when necessary.</p>
+<p>Lookup order: this instance's token, the process-wide memory layer, the
+configured backend (Redis or file), then the IdP (refresh grant when a
+live refresh token is known, else full authentication). Whatever is
+fetched is written to every layer. <code>force_refresh_token=True</code> (which
+the request helpers pass after the API's login redirect) first evicts
+the shared entry so no other client or replica keeps serving a token
+the server has rejected.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2725,13 +2766,36 @@ refresh token is available) or a fresh full authentication.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>When <code>True</code>, bypass the cache and
-always fetch a fresh token from the IdP, even if the
-cached token has not yet expired.</p>
+                <p>When <code>True</code>, evict the cached entry and
+fetch a fresh token from the IdP.</p>
               </div>
             </td>
             <td>
                   <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>rejected_access_token</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The access token the caller was actually
+rejected on, read before it went looking for a replacement.
+Only meaningful with <code>force_refresh_token</code>. Give it whenever
+the token is known: several callers can queue on the refresh
+lock holding the same rejected token, and the one that waits
+would otherwise find the replacement a sibling installed
+already on the instance, compare it against itself, and evict
+a token nothing had rejected. Defaults to the instance's
+current token, which is the right answer for a single caller.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -2753,17 +2817,7 @@ cached token has not yet expired.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A valid <code>OAuthToken</code> object containing <code>access_token</code>,</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="gundi_core.schemas.OAuthToken">OAuthToken</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p><code>token_type</code>, <code>expires_in</code>, and related fields.</p>
+                <p>A valid <code>OAuthToken</code>.</p>
               </div>
             </td>
           </tr>
@@ -2786,8 +2840,8 @@ cached token has not yet expired.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If token retrieval fails (bad
-credentials, unreachable IdP, or missing configuration).</p>
+                <p>If no credentials are configured or the IdP
+rejects the request.</p>
               </div>
             </td>
           </tr>
@@ -2811,7 +2865,7 @@ credentials, unreachable IdP, or missing configuration).</p>
   </span>
 
 <a href="#gundi_client_v2.client.GundiClient.get_auth_header" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_auth_header</span><span class="p">(</span><span class="n">force_refresh_token</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_auth_header</span><span class="p">(</span><span class="n">force_refresh_token</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">rejected_access_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

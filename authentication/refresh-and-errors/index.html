@@ -16,7 +16,7 @@
         <link rel="prev" href="../oidc-discovery/">
       
       
-        <link rel="next" href="../../reading-data/connections/">
+        <link rel="next" href="../token-cache/">
       
       
         
@@ -1172,6 +1172,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../token-cache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shared token cache
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2182,8 +2210,10 @@
 <p>How the library reuses tokens, when it re-authenticates, and the errors
 you'll see when something goes wrong.</p>
 <h2 id="token-lifecycle-inside-gundiclient">Token lifecycle inside <code>GundiClient</code><a class="headerlink" href="#token-lifecycle-inside-gundiclient" title="Permanent link">&para;</a></h2>
-<p>The client caches the most recent <code>OAuthToken</code> in memory, along with two
-computed timestamps:</p>
+<p>The client keeps the most recent <code>OAuthToken</code> on the instance and in a
+process-wide cache shared by every <code>GundiClient</code> with the same credentials
+(optionally also in Redis or a file; see <a href="../token-cache/">Shared token cache</a>),
+along with two computed timestamps:</p>
 <ul>
 <li><code>expires_at</code> — when the access token will become invalid</li>
 <li><code>refresh_expires_at</code> — when the refresh token will become invalid</li>
