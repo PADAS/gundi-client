@@ -102,6 +102,18 @@ that has already fetched a replacement heals it for free, with no token
 request. The window lapses, so a token minted before a fault was fixed is
 retried rather than leaving the process stuck on it.
 
+The record is kept per credential identity, the same identity the cache entry
+is keyed by, so clients with unrelated credentials cannot clear each other's
+and re-arm the throttle between them. Records past the cooldown are pruned as
+new ones are written, and a cap bounds the rest, so a process cycling through
+many identities does not accumulate one for each for ever.
+
+The decision reads the token each request actually sent, not whatever the
+client holds by the time the response arrives. Two requests in flight can both
+carry the token the API rejects; the one whose response is examined second
+retries with the replacement the first installed, rather than reading that
+replacement as having been rejected in turn.
+
 ## Security
 
 Access tokens are bearer credentials. Point the Redis backend at a database that

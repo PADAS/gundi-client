@@ -1047,7 +1047,7 @@ def test_a_malformed_client_credentials_token_body_is_an_authentication_error():
 # --- Issue #61: a token the API rejects with a plain 401 -----------------------
 
 
-def _distinct_tokens(auth_token_response, count=8):
+def _distinct_tokens(auth_token_response, count=16):
     """Token-endpoint responses with distinct access tokens, so a test can tell
     which token a given API request carried."""
     return [
@@ -1207,9 +1207,122 @@ async def test_clear_token_cache_resets_the_replacement_throttle(auth_token_resp
     test throttles the next."""
     from gundi_client_v2 import token_cache as tc
 
-    tc._note_replacement("deadbeef")
-    assert tc._replacement_is_recent("deadbeef") is True
+    tc._note_replacement("some-identity", "deadbeef")
+    assert tc._replacement_is_recent("some-identity", "deadbeef") is True
 
     clear_token_cache()
 
-    assert tc._replacement_is_recent("deadbeef") is False
+    assert tc._replacement_is_recent("some-identity", "deadbeef") is False
+
+
+@pytest.mark.asyncio
+async def test_concurrent_requests_sharing_a_rejected_token_both_recover(
+    auth_token_response, client_settings
+):
+    """Two requests in flight on one client can both carry the token the API
+    then rejects. Whichever of them examines its 401 second finds the
+    replacement already installed on the client: it has to retry with that,
+    not read it as the replacement itself having been rejected and report its
+    own 401 as final.
+
+    The API holds the marked request until the other has replaced the token, so
+    the ordering that exposes this does not depend on the scheduler. The hold
+    is bounded, so a regression fails the test instead of hanging it.
+    """
+    client = GundiClient(**client_settings)
+    url = f"{client.connections_endpoint}/some-id/"
+    accepted = {"tok-0"}
+    replaced = asyncio.Event()
+
+    async def handler(request):
+        if "x-hold" in request.headers and not replaced.is_set():
+            await asyncio.wait_for(replaced.wait(), timeout=5)
+        if _bearer(request) not in accepted:
+            return httpx.Response(401, json={"detail": "Invalid token."})
+        return httpx.Response(200, json={})
+
+    async def replace_then_release():
+        try:
+            return await client._get(url)
+        finally:
+            replaced.set()
+
+    async with respx.mock(assert_all_called=True) as mock:
+        tokens = mock.post(TOKEN_URL)
+        tokens.side_effect = _distinct_tokens(auth_token_response)
+        mock.get(url).side_effect = handler
+
+        assert (await client._get(url)).status_code == 200  # the client holds tok-0
+
+        accepted.clear()
+        accepted.add("tok-1")  # the IdP invalidates tok-0
+        held, releaser = (
+            client._get(url, headers={"x-hold": "1"}),
+            replace_then_release(),
+        )
+        held_response, releaser_response = await asyncio.gather(held, releaser)
+
+        assert [releaser_response.status_code, held_response.status_code] == [200, 200]
+        assert tokens.call_count == 2, "one replacement serves both requests"
+
+
+@pytest.mark.asyncio
+async def test_two_credential_identities_keep_separate_throttles(
+    auth_token_response, client_settings, monkeypatch
+):
+    """The throttle is per credential identity. Two clients with different
+    secrets key apart in the token cache, so alternating requests must not each
+    displace the other's record, which would mint a fresh token on every
+    request despite both being inside the window."""
+    from gundi_client_v2 import token_cache as tc
+
+    monkeypatch.setattr(tc, "_monotonic", lambda: 1000.0)
+    first = GundiClient(**{**client_settings, "keycloak_client_secret": "secret-a"})
+    second = GundiClient(**{**client_settings, "keycloak_client_secret": "secret-b"})
+    url = f"{first.connections_endpoint}/some-id/"
+    async with respx.mock(assert_all_called=True) as mock:
+        tokens = mock.post(TOKEN_URL)
+        tokens.side_effect = _distinct_tokens(auth_token_response)
+        api = mock.get(url)
+        api.side_effect = _api_accepting(set())
+
+        for _ in range(3):
+            assert (await first._get(url)).status_code == 401
+            assert (await second._get(url)).status_code == 401
+
+        assert tokens.call_count == 4, "one token and one replacement per identity"
+
+
+def test_the_throttle_state_stays_bounded(monkeypatch):
+    """A process cycling through credential identities must not accumulate a
+    record per identity for ever. Entries past the cooldown are pruned on
+    write, and a cap covers more identities inside their window at once."""
+    from gundi_client_v2 import token_cache as tc
+
+    now = {"t": 1000.0}
+    monkeypatch.setattr(tc, "_monotonic", lambda: now["t"])
+
+    for n in range(5):
+        tc._note_replacement(f"identity-{n}", f"fp-{n}")
+    assert len(tc._replacements) == 5
+
+    now["t"] += tc.REPLACEMENT_RETRY_COOLDOWN_SECONDS + 1
+    tc._note_replacement("identity-new", "fp-new")
+    assert set(tc._replacements) == {"identity-new"}, "expired identities are pruned"
+
+    for n in range(tc._MAX_TRACKED_IDENTITIES + 20):
+        tc._note_replacement(f"live-{n}", f"fp-live-{n}")
+    assert len(tc._replacements) <= tc._MAX_TRACKED_IDENTITIES
+
+
+def test_a_refresh_that_replaced_nothing_records_nothing(monkeypatch):
+    """A forced refresh that left the client with no token must clear the
+    record rather than storing None, which would otherwise read as a match for
+    any tokenless client."""
+    from gundi_client_v2 import token_cache as tc
+
+    tc._note_replacement("identity", "fp")
+    tc._note_replacement("identity", None)
+
+    assert "identity" not in tc._replacements
+    assert tc._replacement_is_recent("identity", None) is False
