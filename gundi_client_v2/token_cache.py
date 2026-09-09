@@ -14,6 +14,7 @@ import os
 import stat
 import tempfile
 import threading
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -165,6 +166,15 @@ def _now() -> datetime:
     return datetime.now(tz=timezone.utc)
 
 
+def _monotonic() -> float:
+    """The module's elapsed-time clock; tests replace it.
+
+    Indirection on purpose: patching ``time.monotonic`` itself would also move
+    asyncio's loop clock, hanging any test that awaits a timer.
+    """
+    return time.monotonic()
+
+
 class TokenCache(Protocol):
     """A durable token store. Implementations may raise; TokenStore contains it."""
 
@@ -253,6 +263,54 @@ class MemoryTokenCache:
 
 _PROCESS_CACHE = MemoryTokenCache()
 
+# How long a rejected replacement is taken at its word.
+#
+# A caller that gets a 401 replaces its token (client._token_was_rejected). If
+# the API rejects *every* token — the client lost a role, the API broke — that
+# would cost one token request per API request, per client, per replica, where
+# sharing the cache had made it about one request per token lifetime. So a 401
+# on the token the last replacement produced is reported as it stands.
+#
+# Keyed on WHICH token was rejected, never on how recently any replacement
+# happened: a caller holding some older token must always be allowed to ask,
+# because a sibling that has already fetched a replacement heals it for free
+# (TokenStore hands the shared entry over with no token request). An
+# elapsed-time throttle would fail exactly those callers, on a fault the
+# process had already fixed. The window lapses so a token minted before a
+# fault was fixed is eventually retried rather than leaving the process stuck.
+REPLACEMENT_RETRY_COOLDOWN_SECONDS = 60.0
+_last_replacement: "str | None" = None
+_last_replacement_at = 0.0
+
+
+def _replacement_fingerprint(access_token: "str | None") -> "str | None":
+    """A hash of an access token, or None when there is nothing to fingerprint.
+
+    Hashed rather than kept: an access token is a bearer credential and module
+    state can surface in a traceback or a repr. Anything that is not a
+    non-empty string reads as absent instead of raising, since callers reach
+    this while already handling a failed request.
+    """
+    if not isinstance(access_token, str) or not access_token:
+        return None
+    return hashlib.sha256(access_token.encode()).hexdigest()
+
+
+def _note_replacement(fingerprint: "str | None") -> None:
+    """Record what a forced refresh produced. Called only once the refresh has
+    returned: one that raised replaced nothing."""
+    global _last_replacement, _last_replacement_at
+    _last_replacement = fingerprint
+    _last_replacement_at = _monotonic()
+
+
+def _replacement_is_recent(fingerprint: "str | None") -> bool:
+    """True when this is the token the last replacement produced and that was
+    recent, so replacing it again would only fetch another rejected token."""
+    if fingerprint is None or fingerprint != _last_replacement:
+        return False
+    return _monotonic() - _last_replacement_at < REPLACEMENT_RETRY_COOLDOWN_SECONDS
+
 
 def clear_token_cache() -> None:
     """Empty the process-wide token layer and drop the per-URL backend memo.
@@ -263,9 +321,14 @@ def clear_token_cache() -> None:
     Memoized Redis backends are dropped without closing their connection pools,
     so this is for tests and rare manual resets, not something to run on a
     timer: that would leak a pool per call."""
+    global _last_replacement, _last_replacement_at
     _PROCESS_CACHE.clear()
     _BACKENDS.clear()
     _FAILING_BACKENDS.clear()
+    # The replacement throttle is process state beside the process token layer:
+    # a token replaced in one test would otherwise throttle the next.
+    _last_replacement = None
+    _last_replacement_at = 0.0
 
 
 class FileTokenCache:

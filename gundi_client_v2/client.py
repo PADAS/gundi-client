@@ -398,95 +398,84 @@ class GundiClient:
         """Exit the async context manager, closing the underlying session."""
         return await self._session.__aexit__(exc_type, exc_value, traceback)
 
-    async def _get(self, url, params=None, headers=None, **kwargs):
-        headers = headers or {}
-        auth_headers = await self.get_auth_header()
-        response = await self._session.get(
-            url,
-            params=params,
-            headers={**auth_headers, **headers},
-            **kwargs,
+    def _token_fingerprint(self) -> "str | None":
+        """Fingerprint of the access token this client currently holds."""
+        return _token_cache._replacement_fingerprint(
+            getattr(self.cached_token, "access_token", None)
         )
-        # Force refresh the token and retry if we get redirected to the login page
+
+    def _token_was_rejected(self, response) -> bool:
+        """True when the response says the access token we sent is no longer
+        usable, so fetching a fresh one and retrying is worth a round trip.
+
+        Two shapes say it. The API can redirect to the IdP's login page, which
+        it has always done for an expired session. Or it can answer a plain
+        401, which is what it does for a token the IdP invalidated before its
+        expiry (realm key rotation, an admin revoke-all, a rotated client
+        secret). The shared cache judges a token live by its expiry alone, so
+        without the 401 arm every client sharing the cache adopted the dead
+        token and failed for the rest of its lifetime (issue #61).
+
+        The 401 is throttled and the redirect is not: see
+        token_cache.REPLACEMENT_RETRY_COOLDOWN_SECONDS for why, and for why the
+        throttle keys on which token was rejected rather than on elapsed time.
+        """
         if response.status_code == 302 and "auth/realms" in response.headers.get(
             "location", ""
         ):
-            auth_headers = await self.get_auth_header(force_refresh_token=True)
-            response = await self._session.get(
-                url,
-                params=params,
-                headers={**auth_headers, **headers},
-                **kwargs,
+            return True
+        if response.status_code != httpx.codes.UNAUTHORIZED:
+            return False
+        return not _token_cache._replacement_is_recent(self._token_fingerprint())
+
+    async def _authenticated_request(self, send):
+        """Send an authenticated request, replacing the token and retrying once
+        if the response says the token we sent is no longer usable.
+
+        ``send`` takes the auth headers and returns the awaitable for one
+        attempt, so the retry re-sends the same request with fresh headers.
+        Caller-supplied headers keep precedence over the auth header on both.
+        """
+        response = await send(await self.get_auth_header())
+        if not self._token_was_rejected(response):
+            return response
+        # force_refresh_token drops the shared entry, or adopts a replacement a
+        # sibling has already fetched, which costs no token request.
+        auth_headers = await self.get_auth_header(force_refresh_token=True)
+        _token_cache._note_replacement(self._token_fingerprint())
+        return await send(auth_headers)
+
+    async def _get(self, url, params=None, headers=None, **kwargs):
+        headers = headers or {}
+        return await self._authenticated_request(
+            lambda auth: self._session.get(
+                url, params=params, headers={**auth, **headers}, **kwargs
             )
-        return response
+        )
 
     async def _post(self, url, data: dict = None, params=None, headers=None, **kwargs):
         headers = headers or {}
-        auth_headers = await self.get_auth_header()
-        response = await self._session.post(
-            url,
-            json=data,
-            params=params,
-            headers={**auth_headers, **headers},
-            **kwargs,
-        )
-        # Force refresh the token and retry if we get redirected to the login page
-        if response.status_code == 302 and "auth/realms" in response.headers.get(
-            "location", ""
-        ):
-            auth_headers = await self.get_auth_header(force_refresh_token=True)
-            response = await self._session.post(
-                url,
-                json=data,
-                params=params,
-                headers={**auth_headers, **headers},
-                **kwargs,
+        return await self._authenticated_request(
+            lambda auth: self._session.post(
+                url, json=data, params=params, headers={**auth, **headers}, **kwargs
             )
-        return response
+        )
 
     async def _patch(self, url, data: dict = None, params=None, headers=None, **kwargs):
         headers = headers or {}
-        auth_headers = await self.get_auth_header()
-        response = await self._session.patch(
-            url,
-            json=data,
-            params=params,
-            headers={**auth_headers, **headers},
-            **kwargs,
-        )
-        if response.status_code == 302 and "auth/realms" in response.headers.get(
-            "location", ""
-        ):
-            auth_headers = await self.get_auth_header(force_refresh_token=True)
-            response = await self._session.patch(
-                url,
-                json=data,
-                params=params,
-                headers={**auth_headers, **headers},
-                **kwargs,
+        return await self._authenticated_request(
+            lambda auth: self._session.patch(
+                url, json=data, params=params, headers={**auth, **headers}, **kwargs
             )
-        return response
+        )
 
     async def _delete(self, url, params=None, headers=None, **kwargs):
         headers = headers or {}
-        auth_headers = await self.get_auth_header()
-        response = await self._session.delete(
-            url,
-            params=params,
-            headers={**auth_headers, **headers},
-            **kwargs,
-        )
-        if response.status_code == 302 and "auth/realms" in response.headers.get(
-            "location", ""
-        ):
-            auth_headers = await self.get_auth_header(force_refresh_token=True)
-            response = await self._session.delete(
-                url,
-                params=params,
-                headers={**auth_headers, **headers},
-                **kwargs,
+        return await self._authenticated_request(
+            lambda auth: self._session.delete(
+                url, params=params, headers={**auth, **headers}, **kwargs
             )
-        return response
+        )
 
     async def _resolve_token_url(self) -> str:
         """Return the token endpoint URL. Explicit oauth_token_url wins; otherwise
